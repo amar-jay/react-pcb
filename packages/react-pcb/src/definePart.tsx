@@ -1,0 +1,81 @@
+import React from 'react';
+import {Part, type PartProps} from './components/index.tsx';
+
+type Net = PartProps['connect'][string];
+
+export type ElectricalType =
+  | 'power-input'
+  | 'power-output'
+  | 'input'
+  | 'output'
+  | 'bidirectional'
+  | 'passive';
+
+export type PinDefinition = Readonly<{
+  pad: string | readonly string[];
+  electricalType: ElectricalType;
+  functions?: readonly string[];
+  required?: boolean;
+}>;
+
+export type DatasheetSource = Readonly<{
+  url: string;
+  document: string;
+  revision?: string;
+  page?: number;
+}>;
+
+export type PartDefinition<Pins extends Record<string, PinDefinition>> = Readonly<{
+  manufacturer: string;
+  mpn: string;
+  package: string;
+  footprint: string;
+  datasheet: DatasheetSource;
+  pinoutCoverage: 'complete' | 'partial';
+  pins: Pins;
+}>;
+
+type RequiredPins<Pins extends Record<string, PinDefinition>> = {
+  [Name in keyof Pins]-?: Pins[Name] extends {required: true} ? Name : never;
+}[keyof Pins];
+
+export type PartConnections<Pins extends Record<string, PinDefinition>> =
+  Partial<Record<Extract<keyof Pins, string>, Net>> &
+  Record<Extract<RequiredPins<Pins>, string>, Net>;
+
+export type DefinedPartProps<Pins extends Record<string, PinDefinition>> =
+  Pick<PartProps, 'id' | 'at'> & {
+    connect: PartConnections<Pins>;
+  };
+
+export function definePart<const Pins extends Record<string, PinDefinition>>(
+  definition: PartDefinition<Pins>,
+) {
+  function DefinedPart({id, at, connect}: DefinedPartProps<Pins>) {
+    for (const name of Object.keys(connect)) {
+      if (!(name in definition.pins)) {
+        throw new Error(`${definition.mpn} has no pin named ${name}`);
+      }
+    }
+
+    for (const [name, pin] of Object.entries(definition.pins)) {
+      if (pin.required && !(name in connect)) {
+        throw new Error(`${definition.mpn} requires a connection for ${name}`);
+      }
+    }
+
+    return (
+      <Part
+        id={id}
+        mpn={definition.mpn}
+        footprint={definition.footprint}
+        at={at}
+        connect={connect}
+        definition={definition}
+      />
+    );
+  }
+
+  DefinedPart.displayName = definition.mpn;
+  return DefinedPart;
+}

@@ -1,7 +1,9 @@
 import React, {type ReactNode} from 'react';
+import type {CopperLayer} from '../layers.ts';
 
 export type PartProps = {
   id: Part;
+  definition?: unknown;
   mpn?: string;
   value?: string;
   footprint: string;
@@ -37,7 +39,7 @@ export function DifferentialPair({children, ...props}: DifferentialPairProps) {
 
 export type ZoneProps = {
   net: Net;
-  layers: readonly string[];
+  layers: readonly CopperLayer[];
   boundary: Region | 'board';
   clearance?: number;
 };

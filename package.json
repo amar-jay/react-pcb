@@ -5,7 +5,7 @@
   "type": "module",
   "workspaces": ["packages/*"],
   "scripts": {
-    "example": "bun run examples/illustrative.tsx",
+    "example": "bun run examples/basic.tsx",
     "test": "bun test",
     "typecheck": "bunx tsc --noEmit",
     "rust:check": "cargo check --workspace --all-targets",

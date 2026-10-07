@@ -1,0 +1,135 @@
+import React from 'react';
+import {
+  Board,
+  DifferentialPair,
+  Keepout,
+  Module,
+  Part,
+  Route,
+  RouteThrough,
+  Zone,
+  compile,
+  copperLayer,
+  defineLayerSet,
+  defineStackup,
+  dielectricLayer,
+  mechanicalLayer,
+  pad,
+  pasteLayer,
+  rect,
+  silkscreenLayer,
+  solderMaskLayer,
+  useNet,
+  usePart,
+  type PartProps,
+} from '@react-pcb/core';
+import {STM32G0B1CBT6} from './parts/STM32G0B1CBT6.ts';
+import {USB4105GFA} from './parts/USB4105GFA.ts';
+
+const frontCopper = copperLayer('F.Cu', {thickness: 0.035, role: 'signal'});
+const groundPlane = copperLayer('In1.Cu', {thickness: 0.018, role: 'plane'});
+const powerPlane = copperLayer('In2.Cu', {thickness: 0.018, role: 'plane'});
+const backCopper = copperLayer('B.Cu', {thickness: 0.035, role: 'signal'});
+
+const boardLayers = defineLayerSet({
+  stackup: defineStackup([
+    frontCopper,
+    dielectricLayer('Prepreg 1', {material: 'FR-4', thickness: 0.18, epsilonR: 4.2, lossTangent: 0.02}),
+    groundPlane,
+    dielectricLayer('Core', {material: 'FR-4', thickness: 1.0, epsilonR: 4.2, lossTangent: 0.02}),
+    powerPlane,
+    dielectricLayer('Prepreg 2', {material: 'FR-4', thickness: 0.18, epsilonR: 4.2, lossTangent: 0.02}),
+    backCopper,
+  ]),
+  artwork: [
+    solderMaskLayer('F.Mask', {side: 'front', expansion: 0.05}),
+    solderMaskLayer('B.Mask', {side: 'back', expansion: 0.05}),
+    pasteLayer('F.Paste', {side: 'front'}),
+    pasteLayer('B.Paste', {side: 'back'}),
+    silkscreenLayer('F.Silkscreen', {side: 'front', color: 'white'}),
+    silkscreenLayer('B.Silkscreen', {side: 'back', color: 'white'}),
+    mechanicalLayer('Edge.Cuts', {purpose: 'board-outline'}),
+    mechanicalLayer('F.Assembly', {purpose: 'assembly', side: 'front'}),
+  ],
+});
+
+type Net = PartProps['connect'][string];
+
+type UsbControllerProps = {
+  ground: Net;
+  supply: Net;
+  vbus: Net;
+};
+
+function UsbController({ground, supply, vbus}: UsbControllerProps) {
+  const dataPlus = useNet('USB_D+');
+  const dataMinus = useNet('USB_D-');
+  const cc1 = useNet('CC1');
+  const cc2 = useNet('CC2');
+  const mcu = usePart('U1');
+  const connector = usePart('J1');
+  const decoupling = usePart('C1');
+
+  return (
+    <>
+      <STM32G0B1CBT6
+        id={mcu}
+        at={[30, 20]}
+        connect={{'VSS/VSSA': ground, 'VDD/VDDA': supply, PA11: dataMinus, PA12: dataPlus}}
+      />
+      <USB4105GFA
+        id={connector}
+        at={[5, 20]}
+        connect={{GND: ground, VBUS: vbus, CC1: cc1, CC2: cc2, DPlus: dataPlus, DMinus: dataMinus}}
+      />
+      <Part id={decoupling} value="100nF" footprint="0402" at={[27, 18]} connect={{1: supply, 2: ground}} />
+
+      <DifferentialPair
+        positive={dataPlus}
+        negative={dataMinus}
+        width={0.18}
+        gap={0.15}
+        targetImpedance={90}
+        from={[pad(connector, 'DPlus'), pad(connector, 'DMinus')]}
+        to={[pad(mcu, 'PA12'), pad(mcu, 'PA11')]}
+      >
+        <RouteThrough region={rect(8, 16, 20, 8)} />
+        <RouteThrough region={rect(24, 17, 4, 6)} />
+      </DifferentialPair>
+
+      <Route net={supply} from={pad(decoupling, '1')} to={pad(mcu, 'VDD/VDDA')}>
+        <RouteThrough region={rect(27, 17, 3, 3)} />
+      </Route>
+    </>
+  );
+}
+
+export default function MyBoard() {
+  const ground = useNet('GND');
+  const vbus = useNet('VBUS');
+  const supply = useNet('3V3');
+
+  return (
+    <Board
+      outline={rect(0, 0, 60, 40)}
+      layers={boardLayers}
+      metadata={{
+        title: 'USB controller',
+        revision: '0.1.0',
+        description: 'Four-layer USB controller board',
+      }}
+    >
+      <Module name="usb-controller">
+        <UsbController ground={ground} supply={supply} vbus={vbus} />
+      </Module>
+      <Zone net={ground} layers={[groundPlane]} boundary="board" clearance={0.2} />
+      <Keepout
+        region={rect(0, 14, 8, 12)}
+        disallow={['vias', 'copper']}
+      />
+    </Board>
+  );
+}
+
+const result = await compile(<MyBoard />, {cwd: import.meta.dir + '/..'});
+console.log(JSON.stringify(result, null, 2));

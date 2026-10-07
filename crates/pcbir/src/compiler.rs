@@ -5,7 +5,9 @@ use serde::Serialize;
 use serde_json::Value;
 
 use crate::diagnostic::{Diagnostic, Severity};
-use crate::ir::{Board, BoardIr, NetId, Part, PinRef, Rect, Revision, RouteConstraint};
+use crate::ir::{
+    Board, BoardIr, LayerSet, NetId, Part, PinRef, Rect, Revision, RouteConstraint, StackupLayer,
+};
 use crate::protocol::{DeclarationNode, DeclarationTransaction, PROTOCOL_VERSION};
 
 #[derive(Debug, Serialize)]
@@ -55,26 +57,13 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
     let mut nets = BTreeSet::new();
     let mut diagnostics = Vec::new();
 
-    for child in &board_node.children {
-        match child.node_type.as_str() {
-            "pcb-part" => {
-                let part = parse_part(&child.props)?;
-                nets.extend(part.connections.values().cloned());
-                parts.push(part);
-            }
-            "pcb-route" => {
-                let route = parse_route(child)?;
-                nets.insert(route.net.clone());
-                routes.push(route);
-            }
-            other => diagnostics.push(Diagnostic {
-                code: "PCBIR001",
-                severity: Severity::Warning,
-                message: format!("declaration {other} is not compiled yet"),
-                entity: None,
-            }),
-        }
-    }
+    compile_nodes(
+        &board_node.children,
+        &mut parts,
+        &mut routes,
+        &mut nets,
+        &mut diagnostics,
+    )?;
 
     let known_parts: BTreeSet<_> = parts.iter().map(|part| part.id.as_str()).collect();
     for route in &routes {
@@ -102,6 +91,37 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
     })
 }
 
+fn compile_nodes(
+    nodes: &[DeclarationNode],
+    parts: &mut Vec<Part>,
+    routes: &mut Vec<RouteConstraint>,
+    nets: &mut BTreeSet<NetId>,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> Result<(), CompileError> {
+    for child in nodes {
+        match child.node_type.as_str() {
+            "pcb-module" => compile_nodes(&child.children, parts, routes, nets, diagnostics)?,
+            "pcb-part" => {
+                let part = parse_part(&child.props)?;
+                nets.extend(part.connections.values().cloned());
+                parts.push(part);
+            }
+            "pcb-route" => {
+                let route = parse_route(child)?;
+                nets.insert(route.net.clone());
+                routes.push(route);
+            }
+            other => diagnostics.push(Diagnostic {
+                code: "PCBIR001",
+                severity: Severity::Warning,
+                message: format!("declaration {other} is not compiled yet"),
+                entity: None,
+            }),
+        }
+    }
+    Ok(())
+}
+
 fn parse_board(props: &Value) -> Result<Board, CompileError> {
     let outline = props
         .get("outline")
@@ -111,12 +131,28 @@ fn parse_board(props: &Value) -> Result<Board, CompileError> {
             "only rectangular outlines are supported by the scaffold".into(),
         ));
     }
-    let layer_count = props
-        .get("layers")
-        .and_then(Value::as_u64)
-        .ok_or_else(|| CompileError("board layers must be a positive integer".into()))?;
-    if !(1..=32).contains(&layer_count) {
-        return Err(CompileError("board layers must be between 1 and 32".into()));
+    let layers: LayerSet = serde_json::from_value(
+        props
+            .get("layers")
+            .cloned()
+            .ok_or_else(|| CompileError("board layers are required".into()))?,
+    )
+    .map_err(|error| CompileError(format!("invalid board layers: {error}")))?;
+    if layers.kind != "layer-set" || layers.stackup.kind != "stackup" {
+        return Err(CompileError("invalid layer set kind".into()));
+    }
+    let copper_count = layers
+        .stackup
+        .entries
+        .iter()
+        .filter(|entry| matches!(entry, StackupLayer::Copper { .. }))
+        .count();
+    if !(1..=32).contains(&copper_count)
+        || copper_count != usize::from(layers.stackup.copper_layer_count)
+    {
+        return Err(CompileError(
+            "stackup copperLayerCount does not match its copper entries".into(),
+        ));
     }
     let metadata = props
         .get("metadata")
@@ -132,7 +168,7 @@ fn parse_board(props: &Value) -> Result<Board, CompileError> {
             width: number(outline, "width")?,
             height: number(outline, "height")?,
         },
-        layer_count: layer_count as u8,
+        layers,
         metadata,
     })
 }
@@ -168,6 +204,7 @@ fn parse_part(props: &Value) -> Result<Part, CompileError> {
         mpn: optional_string(props, "mpn"),
         value: optional_string(props, "value"),
         footprint: string(props, "footprint")?,
+        definition: props.get("definition").cloned(),
         at,
         connections,
     })
@@ -257,7 +294,15 @@ mod tests {
             "protocolVersion": 1, "baseRevision": 7,
             "declarations": {"kind": "react-pcb-declarations", "children": [{
                 "type": "pcb-board",
-                "props": {"outline": {"kind": "rect", "x": 0, "y": 0, "width": 40, "height": 30}, "layers": 2, "metadata": {"title": "Test board"}},
+                "props": {"outline": {"kind": "rect", "x": 0, "y": 0, "width": 40, "height": 30}, "layers": {
+                    "kind": "layer-set",
+                    "stackup": {"kind": "stackup", "copperLayerCount": 2, "entries": [
+                        {"kind": "copper", "id": "F.Cu", "name": "F.Cu", "thickness": 0.035, "role": "signal"},
+                        {"kind": "dielectric", "id": "Core", "name": "Core", "material": "FR-4", "thickness": 1.5, "epsilonR": 4.2},
+                        {"kind": "copper", "id": "B.Cu", "name": "B.Cu", "thickness": 0.035, "role": "signal"}
+                    ]},
+                    "artwork": []
+                }, "metadata": {"title": "Test board"}},
                 "children": [{"type": "pcb-part", "props": {
                     "id": {"id": "U1", "reference": "U1"}, "footprint": "QFN-32",
                     "connect": {"VDD": {"id": "3V3"}}
@@ -266,6 +311,7 @@ mod tests {
         })).unwrap();
         let output = compile(transaction).unwrap();
         assert_eq!(output.ir.revision.0, 8);
+        assert_eq!(output.ir.board.layers.stackup.copper_layer_count, 2);
         assert_eq!(output.ir.parts[0].id, "U1");
         assert_eq!(output.ir.nets[0].0, "3V3");
     }

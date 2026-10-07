@@ -20,8 +20,104 @@ pub struct BoardIr {
 #[serde(rename_all = "camelCase")]
 pub struct Board {
     pub outline: Rect,
-    pub layer_count: u8,
+    pub layers: LayerSet,
     pub metadata: BTreeMap<String, Value>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LayerSet {
+    pub kind: String,
+    pub stackup: Stackup,
+    pub artwork: Vec<ArtworkLayer>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Stackup {
+    pub kind: String,
+    pub entries: Vec<StackupLayer>,
+    pub copper_layer_count: u8,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "kind")]
+pub enum StackupLayer {
+    #[serde(rename = "copper")]
+    Copper {
+        id: String,
+        name: String,
+        thickness: f64,
+        role: CopperRole,
+    },
+    #[serde(rename = "dielectric")]
+    Dielectric {
+        id: String,
+        name: String,
+        material: String,
+        thickness: f64,
+        #[serde(rename = "epsilonR")]
+        epsilon_r: f64,
+        #[serde(rename = "lossTangent")]
+        loss_tangent: Option<f64>,
+    },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum CopperRole {
+    Signal,
+    Plane,
+    Mixed,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "kind")]
+pub enum ArtworkLayer {
+    #[serde(rename = "solder-mask")]
+    SolderMask {
+        id: String,
+        name: String,
+        side: BoardSide,
+        expansion: Option<f64>,
+    },
+    #[serde(rename = "paste")]
+    Paste {
+        id: String,
+        name: String,
+        side: BoardSide,
+    },
+    #[serde(rename = "silkscreen")]
+    Silkscreen {
+        id: String,
+        name: String,
+        side: BoardSide,
+        color: Option<String>,
+    },
+    #[serde(rename = "mechanical")]
+    Mechanical {
+        id: String,
+        name: String,
+        purpose: MechanicalPurpose,
+        side: Option<BoardSide>,
+    },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum BoardSide {
+    Front,
+    Back,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum MechanicalPurpose {
+    BoardOutline,
+    Assembly,
+    Courtyard,
+    Fabrication,
+    Other,
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Rect {
@@ -37,6 +133,7 @@ pub struct Part {
     pub mpn: Option<String>,
     pub value: Option<String>,
     pub footprint: String,
+    pub definition: Option<Value>,
     pub at: Option<[f64; 2]>,
     pub connections: BTreeMap<String, NetId>,
 }
