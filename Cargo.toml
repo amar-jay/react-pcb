@@ -1,10 +1,8 @@
-[package]
-name = "react-pcb"
+[workspace]
+members = ["crates/pcbir"]
+resolver = "3"
+
+[workspace.package]
 version = "0.0.0"
 edition = "2024"
-
-[[bin]]
-name = "pcbir"
-path = "crates/pcbir/main.rs"
-
-[dependencies]
+license = "MIT"

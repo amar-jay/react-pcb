@@ -11,7 +11,6 @@ import {
   DifferentialPair,
   Zone,
   Keepout,
-  Via,
   net,
   part,
   pad,
@@ -33,7 +32,12 @@ export default function MyBoard() {
   return (
     <Board
       outline={rect(0, 0, 60, 40)}
-      layers={['F.Cu', 'In1.Cu', 'In2.Cu', 'B.Cu']}
+      layers={4}
+      metadata={{
+        title: 'USB controller',
+        revision: '0.1.0',
+        description: 'Four-layer USB controller board',
+      }}
     >
       <Part
         id={U1}
