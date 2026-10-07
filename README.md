@@ -167,3 +167,20 @@ export default function MyBoard() {
 ```
 
 The first step is to design a tool-independent PCB IR that serves as the canonical representation of a board. The IR should describe the board without depending on JSX, a particular autorouter, KiCad, Gerber, or any PCB manufacturer. It should contain the board outline and layer stack, components and their exact selected parts (manufacturer, MPN, supplier/SKU and relevant specifications), footprints, pads, nets and connectivity, component placement, design rules, copper zones, keepouts, routing and electrical constraints such as differential pairs and impedance requirements, and any physical geometry that has already been explicitly resolved. The BOM should be derivable directly from the component and part information stored in the IR rather than maintained as a separate source of truth. Initially, the goal is not to implement routing or manufacturing output, but to define a sufficiently complete and stable representation so that future frontends can compile designs into it and future tools—autorouters, simulators, validators, exporters, and manufacturing backends—can operate on the same IR without changing its fundamental model.
+
+**Illustrative PCB IR Tree**
+```
+PCB IR
+├── board
+│   ├── outline
+│   ├── physical stackup
+│   └── technical/fabrication layers
+├── parts
+│   ├── identity / BOM
+│   ├── component definition
+│   ├── placement
+│   └── connectivity
+├── nets
+├── routeConstraints
+└── diagnostics
+```
