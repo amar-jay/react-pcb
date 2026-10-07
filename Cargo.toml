@@ -1,0 +1,10 @@
+[package]
+name = "react-pcb"
+version = "0.0.0"
+edition = "2024"
+
+[[bin]]
+name = "pcbir"
+path = "crates/pcbir/main.rs"
+
+[dependencies]
