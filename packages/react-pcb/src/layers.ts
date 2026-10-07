@@ -1,94 +1,83 @@
 export type BoardSide = 'front' | 'back';
 export type CopperRole = 'signal' | 'plane' | 'mixed';
 
-type NamedLayer<Kind extends string> = Readonly<{kind: Kind; id: string; name: string}>;
+type Layer<Kind extends string> = Readonly<{kind: Kind}>;
 
-export type CopperLayer = NamedLayer<'copper'> & Readonly<{
+export type CopperLayer = Layer<'copper'> & Readonly<{
   thickness: number;
   role: CopperRole;
 }>;
 
-export type DielectricLayer = NamedLayer<'dielectric'> & Readonly<{
+export type DielectricLayer = Layer<'dielectric'> & Readonly<{
   material: string;
   thickness: number;
   epsilonR: number;
   lossTangent?: number;
 }>;
 
-export type SolderMaskLayer = NamedLayer<'solder-mask'> & Readonly<{
+export type SolderMaskLayer = Layer<'solder-mask'> & Readonly<{
   side: BoardSide;
   expansion?: number;
 }>;
 
-export type PasteLayer = NamedLayer<'paste'> & Readonly<{side: BoardSide}>;
-export type SilkscreenLayer = NamedLayer<'silkscreen'> & Readonly<{
+export type PasteLayer = Layer<'paste'> & Readonly<{side: BoardSide}>;
+export type SilkscreenLayer = Layer<'silkscreen'> & Readonly<{
   side: BoardSide;
   color?: string;
 }>;
-export type MechanicalLayer = NamedLayer<'mechanical'> & Readonly<{
-  purpose: 'board-outline' | 'assembly' | 'courtyard' | 'fabrication' | 'other';
+export type MechanicalLayer = Layer<'mechanical'> & Readonly<{
+  purpose: 'assembly' | 'courtyard' | 'fabrication' | 'other';
   side?: BoardSide;
 }>;
 
 export type StackupLayer = CopperLayer | DielectricLayer;
-export type ArtworkLayer = SolderMaskLayer | PasteLayer | SilkscreenLayer | MechanicalLayer;
+export type TechnicalLayer = SolderMaskLayer | PasteLayer | SilkscreenLayer | MechanicalLayer;
 export type Stackup = Readonly<{
   kind: 'stackup';
   entries: readonly StackupLayer[];
-  copperLayerCount: number;
 }>;
 export type LayerSet = Readonly<{
   kind: 'layer-set';
   stackup: Stackup;
-  artwork: readonly ArtworkLayer[];
+  technical: readonly TechnicalLayer[];
 }>;
-
-type LayerOptions = Readonly<{id?: string}>;
 
 function positive(value: number, label: string) {
   if (!Number.isFinite(value) || value <= 0) throw new Error(`${label} must be positive`);
 }
 
-function named<Kind extends string>(kind: Kind, name: string, id?: string): NamedLayer<Kind> {
-  if (!name.trim()) throw new Error('layer name must not be empty');
-  return {kind, id: id ?? name, name};
-}
-
 export function copperLayer(
-  name: string,
-  options: LayerOptions & Readonly<{thickness: number; role?: CopperRole}>,
+  options: Readonly<{thickness: number; role?: CopperRole}>,
 ): CopperLayer {
-  positive(options.thickness, `${name} thickness`);
-  return Object.freeze({...named('copper', name, options.id), thickness: options.thickness, role: options.role ?? 'signal'});
+  positive(options.thickness, 'copper thickness');
+  return Object.freeze({kind: 'copper', thickness: options.thickness, role: options.role ?? 'signal'});
 }
 
 export function dielectricLayer(
-  name: string,
-  options: LayerOptions & Readonly<{material: string; thickness: number; epsilonR: number; lossTangent?: number}>,
+  options: Readonly<{material: string; thickness: number; epsilonR: number; lossTangent?: number}>,
 ): DielectricLayer {
-  positive(options.thickness, `${name} thickness`);
-  positive(options.epsilonR, `${name} epsilonR`);
-  if (options.lossTangent !== undefined && options.lossTangent < 0) throw new Error(`${name} lossTangent must not be negative`);
-  return Object.freeze({...named('dielectric', name, options.id), ...options, id: options.id ?? name});
+  positive(options.thickness, 'dielectric thickness');
+  positive(options.epsilonR, 'dielectric epsilonR');
+  if (options.lossTangent !== undefined && options.lossTangent < 0) throw new Error('dielectric lossTangent must not be negative');
+  return Object.freeze({kind: 'dielectric', ...options});
 }
 
-export function solderMaskLayer(name: string, options: LayerOptions & Readonly<{side: BoardSide; expansion?: number}>): SolderMaskLayer {
-  return Object.freeze({...named('solder-mask', name, options.id), side: options.side, expansion: options.expansion});
+export function solderMaskLayer(options: Readonly<{side: BoardSide; expansion?: number}>): SolderMaskLayer {
+  return Object.freeze({kind: 'solder-mask', side: options.side, expansion: options.expansion});
 }
 
-export function pasteLayer(name: string, options: LayerOptions & Readonly<{side: BoardSide}>): PasteLayer {
-  return Object.freeze({...named('paste', name, options.id), side: options.side});
+export function pasteLayer(options: Readonly<{side: BoardSide}>): PasteLayer {
+  return Object.freeze({kind: 'paste', side: options.side});
 }
 
-export function silkscreenLayer(name: string, options: LayerOptions & Readonly<{side: BoardSide; color?: string}>): SilkscreenLayer {
-  return Object.freeze({...named('silkscreen', name, options.id), side: options.side, color: options.color});
+export function silkscreenLayer(options: Readonly<{side: BoardSide; color?: string}>): SilkscreenLayer {
+  return Object.freeze({kind: 'silkscreen', side: options.side, color: options.color});
 }
 
 export function mechanicalLayer(
-  name: string,
-  options: LayerOptions & Readonly<{purpose: MechanicalLayer['purpose']; side?: BoardSide}>,
+  options: Readonly<{purpose: MechanicalLayer['purpose']; side?: BoardSide}>,
 ): MechanicalLayer {
-  return Object.freeze({...named('mechanical', name, options.id), purpose: options.purpose, side: options.side});
+  return Object.freeze({kind: 'mechanical', purpose: options.purpose, side: options.side});
 }
 
 export function defineStackup(entries: readonly StackupLayer[]): Stackup {
@@ -100,12 +89,10 @@ export function defineStackup(entries: readonly StackupLayer[]): Stackup {
   });
   const copperLayerCount = entries.filter(entry => entry.kind === 'copper').length;
   if (copperLayerCount > 32) throw new Error('a stackup may contain at most 32 copper layers');
-  return Object.freeze({kind: 'stackup', entries: Object.freeze([...entries]), copperLayerCount});
+  return Object.freeze({kind: 'stackup', entries: Object.freeze([...entries])});
 }
 
-export function defineLayerSet(options: Readonly<{stackup: Stackup; artwork?: readonly ArtworkLayer[]}>): LayerSet {
-  const artwork = options.artwork ?? [];
-  const ids = [...options.stackup.entries, ...artwork].map(layer => layer.id);
-  if (new Set(ids).size !== ids.length) throw new Error('layer ids must be unique');
-  return Object.freeze({kind: 'layer-set', stackup: options.stackup, artwork: Object.freeze([...artwork])});
+export function defineLayerSet(options: Readonly<{stackup: Stackup; technical?: readonly TechnicalLayer[]}>): LayerSet {
+  const technical = options.technical ?? [];
+  return Object.freeze({kind: 'layer-set', stackup: options.stackup, technical: Object.freeze([...technical])});
 }

@@ -1,5 +1,5 @@
 import React, {type ReactNode} from 'react';
-import type {CopperLayer} from '../layers.ts';
+import type {BoardSide, CopperLayer} from '../layers.ts';
 
 export type PartProps = {
   id: Part;
@@ -8,6 +8,8 @@ export type PartProps = {
   value?: string;
   footprint: string;
   at?: readonly [number, number];
+  side?: BoardSide;
+  rotation?: number;
   connect: Readonly<Record<string, Net>>;
 };
 export function Part(props: PartProps) {
@@ -57,4 +59,4 @@ export function Keepout(props: KeepoutProps) {
 }
 
 
-export { Board, type BoardProps } from './board';
+export { Board, type BoardProps, type LengthUnit } from './board';

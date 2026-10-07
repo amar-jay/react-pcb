@@ -8,9 +8,9 @@ import {renderDeclarations} from './renderer/index.ts';
 
 const testLayers = defineLayerSet({
   stackup: defineStackup([
-    copperLayer('F.Cu', {thickness: 0.035}),
-    dielectricLayer('Core', {material: 'FR-4', thickness: 1.5, epsilonR: 4.2}),
-    copperLayer('B.Cu', {thickness: 0.035}),
+    copperLayer({thickness: 0.035}),
+    dielectricLayer({material: 'FR-4', thickness: 1.5, epsilonR: 4.2}),
+    copperLayer({thickness: 0.035}),
   ]),
 });
 
@@ -21,8 +21,8 @@ describe('React PCB renderer', () => {
     const C1 = part('C1');
     const declarations = await renderDeclarations(
       <Board outline={rect(0, 0, 40, 30)} layers={testLayers} metadata={{title: 'Test board'}}>
-        <Part id={U1} footprint="QFN-32" connect={{VDD: VCC}} />
-        <Part id={C1} footprint="0402" value="100nF" connect={{1: VCC}} />
+        <Part id={U1} footprint="QFN-32" rotation={90} connect={{VDD: VCC}} />
+        <Part id={C1} footprint="0402" value="100nF" side="back" connect={{1: VCC}} />
         <Route net={VCC} from={pad(C1, '1')} to={pad(U1, 'VDD')}>
           <RouteThrough region={rect(10, 10, 5, 5)} />
         </Route>
@@ -30,10 +30,8 @@ describe('React PCB renderer', () => {
     );
     expect(declarations.children).toHaveLength(1);
     expect(declarations.children[0]?.type).toBe('pcb-board');
-    expect(declarations.children[0]?.props.layers).toMatchObject({
-      kind: 'layer-set',
-      stackup: {kind: 'stackup', copperLayerCount: 2},
-    });
+    expect(declarations.children[0]?.props.layers).toMatchObject({kind: 'layer-set'});
+    expect(declarations.children[0]?.props.layers).not.toHaveProperty('stackup.copperLayerCount');
     expect(declarations.children[0]?.children.map(node => node.type)).toEqual(['pcb-part', 'pcb-part', 'pcb-route']);
     expect(declarations.children[0]?.children[2]?.children[0]?.type).toBe('pcb-route-through');
   });

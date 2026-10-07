@@ -11,7 +11,9 @@ pub struct NetId(pub String);
 #[serde(rename_all = "camelCase")]
 pub struct BoardIr {
     pub revision: Revision,
+    pub units: LengthUnit,
     pub board: Board,
+    pub components: BTreeMap<String, Value>,
     pub parts: Vec<Part>,
     pub nets: Vec<NetId>,
     pub route_constraints: Vec<RouteConstraint>,
@@ -29,7 +31,7 @@ pub struct Board {
 pub struct LayerSet {
     pub kind: String,
     pub stackup: Stackup,
-    pub artwork: Vec<ArtworkLayer>,
+    pub technical: Vec<TechnicalLayer>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -37,23 +39,15 @@ pub struct LayerSet {
 pub struct Stackup {
     pub kind: String,
     pub entries: Vec<StackupLayer>,
-    pub copper_layer_count: u8,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "kind")]
 pub enum StackupLayer {
     #[serde(rename = "copper")]
-    Copper {
-        id: String,
-        name: String,
-        thickness: f64,
-        role: CopperRole,
-    },
+    Copper { thickness: f64, role: CopperRole },
     #[serde(rename = "dielectric")]
     Dielectric {
-        id: String,
-        name: String,
         material: String,
         thickness: f64,
         #[serde(rename = "epsilonR")]
@@ -73,31 +67,21 @@ pub enum CopperRole {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "kind")]
-pub enum ArtworkLayer {
+pub enum TechnicalLayer {
     #[serde(rename = "solder-mask")]
     SolderMask {
-        id: String,
-        name: String,
         side: BoardSide,
         expansion: Option<f64>,
     },
     #[serde(rename = "paste")]
-    Paste {
-        id: String,
-        name: String,
-        side: BoardSide,
-    },
+    Paste { side: BoardSide },
     #[serde(rename = "silkscreen")]
     Silkscreen {
-        id: String,
-        name: String,
         side: BoardSide,
         color: Option<String>,
     },
     #[serde(rename = "mechanical")]
     Mechanical {
-        id: String,
-        name: String,
         purpose: MechanicalPurpose,
         side: Option<BoardSide>,
     },
@@ -110,10 +94,17 @@ pub enum BoardSide {
     Back,
 }
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum LengthUnit {
+    Mm,
+    Mil,
+    In,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum MechanicalPurpose {
-    BoardOutline,
     Assembly,
     Courtyard,
     Fabrication,
@@ -130,11 +121,10 @@ pub struct Rect {
 pub struct Part {
     pub id: String,
     pub reference: String,
-    pub mpn: Option<String>,
-    pub value: Option<String>,
-    pub footprint: String,
-    pub definition: Option<Value>,
+    pub component: String,
     pub at: Option<[f64; 2]>,
+    pub side: BoardSide,
+    pub rotation: f64,
     pub connections: BTreeMap<String, NetId>,
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]

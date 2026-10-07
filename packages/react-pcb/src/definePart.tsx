@@ -44,14 +44,14 @@ export type PartConnections<Pins extends Record<string, PinDefinition>> =
   Record<Extract<RequiredPins<Pins>, string>, Net>;
 
 export type DefinedPartProps<Pins extends Record<string, PinDefinition>> =
-  Pick<PartProps, 'id' | 'at'> & {
+  Pick<PartProps, 'id' | 'at' | 'side' | 'rotation'> & {
     connect: PartConnections<Pins>;
   };
 
 export function definePart<const Pins extends Record<string, PinDefinition>>(
   definition: PartDefinition<Pins>,
 ) {
-  function DefinedPart({id, at, connect}: DefinedPartProps<Pins>) {
+  function DefinedPart({id, at, side, rotation, connect}: DefinedPartProps<Pins>) {
     for (const name of Object.keys(connect)) {
       if (!(name in definition.pins)) {
         throw new Error(`${definition.mpn} has no pin named ${name}`);
@@ -70,6 +70,8 @@ export function definePart<const Pins extends Record<string, PinDefinition>>(
         mpn={definition.mpn}
         footprint={definition.footprint}
         at={at}
+        side={side}
+        rotation={rotation}
         connect={connect}
         definition={definition}
       />

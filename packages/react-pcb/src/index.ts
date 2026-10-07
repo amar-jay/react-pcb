@@ -1,5 +1,5 @@
 export {Board, DifferentialPair, Keepout, Part, Route, RouteThrough, Zone} from './components/index.tsx';
-export type {BoardProps, DifferentialPairProps, KeepoutProps, PartProps, RouteProps, RouteThroughProps, ZoneProps} from './components/index.tsx';
+export type {BoardProps, DifferentialPairProps, KeepoutProps, LengthUnit, PartProps, RouteProps, RouteThroughProps, ZoneProps} from './components/index.tsx';
 export {compile} from './compiler.ts';
 export type {CompileOptions} from './compiler.ts';
 export {definePart} from './definePart.tsx';
@@ -18,7 +18,6 @@ export {
   solderMaskLayer,
 } from './layers.ts';
 export type {
-  ArtworkLayer,
   BoardSide,
   CopperLayer,
   CopperRole,
@@ -30,4 +29,5 @@ export type {
   SolderMaskLayer,
   Stackup,
   StackupLayer,
+  TechnicalLayer,
 } from './layers.ts';

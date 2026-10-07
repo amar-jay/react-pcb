@@ -6,7 +6,8 @@ use serde_json::Value;
 
 use crate::diagnostic::{Diagnostic, Severity};
 use crate::ir::{
-    Board, BoardIr, LayerSet, NetId, Part, PinRef, Rect, Revision, RouteConstraint, StackupLayer,
+    Board, BoardIr, BoardSide, LayerSet, LengthUnit, NetId, Part, PinRef, Rect, Revision,
+    RouteConstraint, StackupLayer,
 };
 use crate::protocol::{DeclarationNode, DeclarationTransaction, PROTOCOL_VERSION};
 
@@ -51,7 +52,9 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
         ));
     }
 
+    let units = parse_units(&board_node.props)?;
     let board = parse_board(&board_node.props)?;
+    let mut components = BTreeMap::new();
     let mut parts = Vec::new();
     let mut routes = Vec::new();
     let mut nets = BTreeSet::new();
@@ -59,6 +62,7 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
 
     compile_nodes(
         &board_node.children,
+        &mut components,
         &mut parts,
         &mut routes,
         &mut nets,
@@ -82,7 +86,9 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
     Ok(CompileOutput {
         ir: BoardIr {
             revision: Revision(transaction.base_revision.unwrap_or(0) + 1),
+            units,
             board,
+            components,
             parts,
             nets: nets.into_iter().collect(),
             route_constraints: routes,
@@ -93,6 +99,7 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
 
 fn compile_nodes(
     nodes: &[DeclarationNode],
+    components: &mut BTreeMap<String, Value>,
     parts: &mut Vec<Part>,
     routes: &mut Vec<RouteConstraint>,
     nets: &mut BTreeSet<NetId>,
@@ -100,9 +107,26 @@ fn compile_nodes(
 ) -> Result<(), CompileError> {
     for child in nodes {
         match child.node_type.as_str() {
-            "pcb-module" => compile_nodes(&child.children, parts, routes, nets, diagnostics)?,
+            "pcb-module" => compile_nodes(
+                &child.children,
+                components,
+                parts,
+                routes,
+                nets,
+                diagnostics,
+            )?,
             "pcb-part" => {
-                let part = parse_part(&child.props)?;
+                let (part, definition) = parse_part(&child.props)?;
+                if let Some(existing) = components.get(&part.component) {
+                    if existing != &definition {
+                        return Err(CompileError(format!(
+                            "component {} has conflicting definitions",
+                            part.component
+                        )));
+                    }
+                } else {
+                    components.insert(part.component.clone(), definition);
+                }
                 nets.extend(part.connections.values().cloned());
                 parts.push(part);
             }
@@ -147,11 +171,9 @@ fn parse_board(props: &Value) -> Result<Board, CompileError> {
         .iter()
         .filter(|entry| matches!(entry, StackupLayer::Copper { .. }))
         .count();
-    if !(1..=32).contains(&copper_count)
-        || copper_count != usize::from(layers.stackup.copper_layer_count)
-    {
+    if !(1..=32).contains(&copper_count) {
         return Err(CompileError(
-            "stackup copperLayerCount does not match its copper entries".into(),
+            "stackup must contain 1 to 32 copper layers".into(),
         ));
     }
     let metadata = props
@@ -173,7 +195,17 @@ fn parse_board(props: &Value) -> Result<Board, CompileError> {
     })
 }
 
-fn parse_part(props: &Value) -> Result<Part, CompileError> {
+fn parse_units(props: &Value) -> Result<LengthUnit, CompileError> {
+    props
+        .get("units")
+        .cloned()
+        .map(serde_json::from_value)
+        .transpose()
+        .map_err(|error| CompileError(format!("invalid board units: {error}")))
+        .map(|units| units.unwrap_or(LengthUnit::Mm))
+}
+
+fn parse_part(props: &Value) -> Result<(Part, Value), CompileError> {
     let id_value = props
         .get("id")
         .ok_or_else(|| CompileError("part id is required".into()))?;
@@ -198,16 +230,56 @@ fn parse_part(props: &Value) -> Result<Part, CompileError> {
             Ok([value_number(&point[0])?, value_number(&point[1])?])
         })
         .transpose()?;
-    Ok(Part {
-        id,
-        reference,
-        mpn: optional_string(props, "mpn"),
-        value: optional_string(props, "value"),
-        footprint: string(props, "footprint")?,
-        definition: props.get("definition").cloned(),
-        at,
-        connections,
-    })
+    let side: BoardSide = props
+        .get("side")
+        .cloned()
+        .map(serde_json::from_value)
+        .transpose()
+        .map_err(|error| CompileError(format!("invalid side for part {reference}: {error}")))?
+        .unwrap_or(BoardSide::Front);
+    let rotation = props
+        .get("rotation")
+        .map(value_number)
+        .transpose()?
+        .unwrap_or(0.0)
+        .rem_euclid(360.0);
+    let footprint = string(props, "footprint")?;
+    let (component, definition) = component_definition(props, &footprint)?;
+    Ok((
+        Part {
+            id,
+            reference,
+            component,
+            at,
+            side,
+            rotation,
+            connections,
+        },
+        definition,
+    ))
+}
+
+fn component_definition(props: &Value, footprint: &str) -> Result<(String, Value), CompileError> {
+    if let Some(definition) = props.get("definition") {
+        let component = string(definition, "mpn")?;
+        return Ok((component, definition.clone()));
+    }
+
+    let mpn = optional_string(props, "mpn");
+    let value = optional_string(props, "value");
+    let component = mpn
+        .clone()
+        .or_else(|| value.as_ref().map(|value| format!("{value}@{footprint}")))
+        .unwrap_or_else(|| format!("footprint:{footprint}"));
+    let mut definition =
+        serde_json::Map::from_iter([("footprint".into(), Value::String(footprint.into()))]);
+    if let Some(mpn) = mpn {
+        definition.insert("mpn".into(), Value::String(mpn));
+    }
+    if let Some(value) = value {
+        definition.insert("value".into(), Value::String(value));
+    }
+    Ok((component, Value::Object(definition)))
 }
 
 fn parse_route(node: &DeclarationNode) -> Result<RouteConstraint, CompileError> {
@@ -296,23 +368,36 @@ mod tests {
                 "type": "pcb-board",
                 "props": {"outline": {"kind": "rect", "x": 0, "y": 0, "width": 40, "height": 30}, "layers": {
                     "kind": "layer-set",
-                    "stackup": {"kind": "stackup", "copperLayerCount": 2, "entries": [
-                        {"kind": "copper", "id": "F.Cu", "name": "F.Cu", "thickness": 0.035, "role": "signal"},
-                        {"kind": "dielectric", "id": "Core", "name": "Core", "material": "FR-4", "thickness": 1.5, "epsilonR": 4.2},
-                        {"kind": "copper", "id": "B.Cu", "name": "B.Cu", "thickness": 0.035, "role": "signal"}
+                    "stackup": {"kind": "stackup", "entries": [
+                        {"kind": "copper", "thickness": 0.035, "role": "signal"},
+                        {"kind": "dielectric", "material": "FR-4", "thickness": 1.5, "epsilonR": 4.2},
+                        {"kind": "copper", "thickness": 0.035, "role": "signal"}
                     ]},
-                    "artwork": []
+                    "technical": []
                 }, "metadata": {"title": "Test board"}},
-                "children": [{"type": "pcb-part", "props": {
-                    "id": {"id": "U1", "reference": "U1"}, "footprint": "QFN-32",
-                    "connect": {"VDD": {"id": "3V3"}}
-                }, "children": []}]
+                "children": [
+                    {"type": "pcb-part", "props": {
+                        "id": {"id": "U1", "reference": "U1"}, "footprint": "QFN-32",
+                        "connect": {"VDD": {"id": "3V3"}}
+                    }, "children": []},
+                    {"type": "pcb-part", "props": {
+                        "id": {"id": "U2", "reference": "U2"}, "footprint": "QFN-32",
+                        "connect": {"VDD": {"id": "3V3"}}
+                    }, "children": []}
+                ]
             }]}
         })).unwrap();
         let output = compile(transaction).unwrap();
         assert_eq!(output.ir.revision.0, 8);
-        assert_eq!(output.ir.board.layers.stackup.copper_layer_count, 2);
+        assert!(matches!(output.ir.units, crate::ir::LengthUnit::Mm));
         assert_eq!(output.ir.parts[0].id, "U1");
+        assert!(matches!(
+            output.ir.parts[0].side,
+            crate::ir::BoardSide::Front
+        ));
+        assert_eq!(output.ir.parts[0].rotation, 0.0);
+        assert_eq!(output.ir.components.len(), 1);
+        assert_eq!(output.ir.parts[0].component, output.ir.parts[1].component);
         assert_eq!(output.ir.nets[0].0, "3V3");
     }
 }

@@ -26,30 +26,29 @@ import {
 import {STM32G0B1CBT6} from './parts/STM32G0B1CBT6.ts';
 import {USB4105GFA} from './parts/USB4105GFA.ts';
 
-const frontCopper = copperLayer('F.Cu', {thickness: 0.035, role: 'signal'});
-const groundPlane = copperLayer('In1.Cu', {thickness: 0.018, role: 'plane'});
-const powerPlane = copperLayer('In2.Cu', {thickness: 0.018, role: 'plane'});
-const backCopper = copperLayer('B.Cu', {thickness: 0.035, role: 'signal'});
+const frontCopper = copperLayer({thickness: 0.035, role: 'signal'});
+const groundPlane = copperLayer({thickness: 0.018, role: 'plane'});
+const powerPlane = copperLayer({thickness: 0.018, role: 'plane'});
+const backCopper = copperLayer({thickness: 0.035, role: 'signal'});
 
 const boardLayers = defineLayerSet({
   stackup: defineStackup([
     frontCopper,
-    dielectricLayer('Prepreg 1', {material: 'FR-4', thickness: 0.18, epsilonR: 4.2, lossTangent: 0.02}),
+    dielectricLayer({material: 'FR-4', thickness: 0.18, epsilonR: 4.2, lossTangent: 0.02}),
     groundPlane,
-    dielectricLayer('Core', {material: 'FR-4', thickness: 1.0, epsilonR: 4.2, lossTangent: 0.02}),
+    dielectricLayer({material: 'FR-4', thickness: 1.0, epsilonR: 4.2, lossTangent: 0.02}),
     powerPlane,
-    dielectricLayer('Prepreg 2', {material: 'FR-4', thickness: 0.18, epsilonR: 4.2, lossTangent: 0.02}),
+    dielectricLayer({material: 'FR-4', thickness: 0.18, epsilonR: 4.2, lossTangent: 0.02}),
     backCopper,
   ]),
-  artwork: [
-    solderMaskLayer('F.Mask', {side: 'front', expansion: 0.05}),
-    solderMaskLayer('B.Mask', {side: 'back', expansion: 0.05}),
-    pasteLayer('F.Paste', {side: 'front'}),
-    pasteLayer('B.Paste', {side: 'back'}),
-    silkscreenLayer('F.Silkscreen', {side: 'front', color: 'white'}),
-    silkscreenLayer('B.Silkscreen', {side: 'back', color: 'white'}),
-    mechanicalLayer('Edge.Cuts', {purpose: 'board-outline'}),
-    mechanicalLayer('F.Assembly', {purpose: 'assembly', side: 'front'}),
+  technical: [
+    solderMaskLayer({side: 'front', expansion: 0.05}),
+    solderMaskLayer({side: 'back', expansion: 0.05}),
+    pasteLayer({side: 'front'}),
+    pasteLayer({side: 'back'}),
+    silkscreenLayer({side: 'front', color: 'white'}),
+    silkscreenLayer({side: 'back', color: 'white'}),
+    mechanicalLayer({purpose: 'assembly', side: 'front'}),
   ],
 });
 
@@ -80,9 +79,16 @@ function UsbController({ground, supply, vbus}: UsbControllerProps) {
       <USB4105GFA
         id={connector}
         at={[5, 20]}
+        rotation={270}
         connect={{GND: ground, VBUS: vbus, CC1: cc1, CC2: cc2, DPlus: dataPlus, DMinus: dataMinus}}
       />
-      <Part id={decoupling} value="100nF" footprint="0402" at={[27, 18]} connect={{1: supply, 2: ground}} />
+      <Part
+        id={decoupling}
+        value="100nF"
+        footprint="0402"
+        at={[27, 18]}
+        connect={{1: supply, 2: ground}}
+      />
 
       <DifferentialPair
         positive={dataPlus}
