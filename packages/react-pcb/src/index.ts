@@ -20,7 +20,7 @@ export {
 export type {
   BoardSide,
   CopperLayer,
-  CopperRole,
+  CopperUsage,
   DielectricLayer,
   LayerSet,
   MechanicalLayer,

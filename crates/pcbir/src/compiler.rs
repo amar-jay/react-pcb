@@ -369,9 +369,9 @@ mod tests {
                 "props": {"outline": {"kind": "rect", "x": 0, "y": 0, "width": 40, "height": 30}, "layers": {
                     "kind": "layer-set",
                     "stackup": {"kind": "stackup", "entries": [
-                        {"kind": "copper", "thickness": 0.035, "role": "signal"},
+                        {"kind": "copper", "thickness": 0.035, "usage": "signal"},
                         {"kind": "dielectric", "material": "FR-4", "thickness": 1.5, "epsilonR": 4.2},
-                        {"kind": "copper", "thickness": 0.035, "role": "signal"}
+                        {"kind": "copper", "thickness": 0.035, "usage": "signal"}
                     ]},
                     "technical": []
                 }, "metadata": {"title": "Test board"}},

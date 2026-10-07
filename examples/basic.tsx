@@ -26,10 +26,10 @@ import {
 import {STM32G0B1CBT6} from './parts/STM32G0B1CBT6.ts';
 import {USB4105GFA} from './parts/USB4105GFA.ts';
 
-const frontCopper = copperLayer({thickness: 0.035, role: 'signal'});
-const groundPlane = copperLayer({thickness: 0.018, role: 'plane'});
-const powerPlane = copperLayer({thickness: 0.018, role: 'plane'});
-const backCopper = copperLayer({thickness: 0.035, role: 'signal'});
+const frontCopper = copperLayer({thickness: 0.035, usage: 'signal'});
+const groundPlane = copperLayer({thickness: 0.018, usage: 'plane'});
+const powerPlane = copperLayer({thickness: 0.018, usage: 'plane'});
+const backCopper = copperLayer({thickness: 0.035, usage: 'signal'});
 
 const boardLayers = defineLayerSet({
   stackup: defineStackup([

@@ -1,11 +1,11 @@
 export type BoardSide = 'front' | 'back';
-export type CopperRole = 'signal' | 'plane' | 'mixed';
+export type CopperUsage = 'signal' | 'plane' | 'mixed';
 
 type Layer<Kind extends string> = Readonly<{kind: Kind}>;
 
 export type CopperLayer = Layer<'copper'> & Readonly<{
   thickness: number;
-  role: CopperRole;
+  usage: CopperUsage;
 }>;
 
 export type DielectricLayer = Layer<'dielectric'> & Readonly<{
@@ -47,10 +47,10 @@ function positive(value: number, label: string) {
 }
 
 export function copperLayer(
-  options: Readonly<{thickness: number; role?: CopperRole}>,
+  options: Readonly<{thickness: number; usage?: CopperUsage}>,
 ): CopperLayer {
   positive(options.thickness, 'copper thickness');
-  return Object.freeze({kind: 'copper', thickness: options.thickness, role: options.role ?? 'signal'});
+  return Object.freeze({kind: 'copper', thickness: options.thickness, usage: options.usage ?? 'signal'});
 }
 
 export function dielectricLayer(

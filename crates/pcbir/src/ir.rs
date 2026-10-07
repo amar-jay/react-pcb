@@ -45,7 +45,7 @@ pub struct Stackup {
 #[serde(tag = "kind")]
 pub enum StackupLayer {
     #[serde(rename = "copper")]
-    Copper { thickness: f64, role: CopperRole },
+    Copper { thickness: f64, usage: CopperUsage },
     #[serde(rename = "dielectric")]
     Dielectric {
         material: String,
@@ -59,7 +59,7 @@ pub enum StackupLayer {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub enum CopperRole {
+pub enum CopperUsage {
     Signal,
     Plane,
     Mixed,

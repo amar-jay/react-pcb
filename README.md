@@ -2,91 +2,122 @@ The proposal is a declarative, constraint-driven PCB design framework in which e
 
 **Illustrative JSX API**
 
-```jsx
+```tsx
 import {
   Board,
+  DifferentialPair,
+  Keepout,
+  Module,
   Part,
   Route,
   RouteThrough,
-  DifferentialPair,
   Zone,
-  Keepout,
-  definePart,
   copperLayer,
-  dielectricLayer,
-  defineStackup,
   defineLayerSet,
-  solderMaskLayer,
-  pasteLayer,
-  silkscreenLayer,
+  defineStackup,
+  dielectricLayer,
   mechanicalLayer,
-  net,
-  part,
   pad,
-  point,
+  pasteLayer,
   rect,
+  silkscreenLayer,
+  solderMaskLayer,
+  useNet,
+  usePart,
+  type PartProps,
 } from '@react-pcb/core';
+import {STM32G0B1CBT6} from './parts/STM32G0B1CBT6';
 import {USB4105GFA} from './parts/USB4105GFA';
 
-const frontCopper = copperLayer('F.Cu', {thickness: 0.035, role: 'signal'});
-const groundPlane = copperLayer('In1.Cu', {thickness: 0.018, role: 'plane'});
-const powerPlane = copperLayer('In2.Cu', {thickness: 0.018, role: 'plane'});
-const backCopper = copperLayer('B.Cu', {thickness: 0.035, role: 'signal'});
+const frontCopper = copperLayer({thickness: 0.035, usage: 'signal'});
+const groundPlane = copperLayer({thickness: 0.018, usage: 'plane'});
+const powerPlane = copperLayer({thickness: 0.018, usage: 'plane'});
+const backCopper = copperLayer({thickness: 0.035, usage: 'signal'});
 
 const boardLayers = defineLayerSet({
   stackup: defineStackup([
     frontCopper,
-    dielectricLayer('Prepreg 1', {material: 'FR-4', thickness: 0.18, epsilonR: 4.2}),
+    dielectricLayer({material: 'FR-4', thickness: 0.18, epsilonR: 4.2, lossTangent: 0.02}),
     groundPlane,
-    dielectricLayer('Core', {material: 'FR-4', thickness: 1.0, epsilonR: 4.2}),
+    dielectricLayer({material: 'FR-4', thickness: 1.0, epsilonR: 4.2, lossTangent: 0.02}),
     powerPlane,
-    dielectricLayer('Prepreg 2', {material: 'FR-4', thickness: 0.18, epsilonR: 4.2}),
+    dielectricLayer({material: 'FR-4', thickness: 0.18, epsilonR: 4.2, lossTangent: 0.02}),
     backCopper,
   ]),
-  artwork: [
-    solderMaskLayer('F.Mask', {side: 'front'}),
-    solderMaskLayer('B.Mask', {side: 'back'}),
-    pasteLayer('F.Paste', {side: 'front'}),
-    pasteLayer('B.Paste', {side: 'back'}),
-    silkscreenLayer('F.Silkscreen', {side: 'front'}),
-    silkscreenLayer('B.Silkscreen', {side: 'back'}),
-    mechanicalLayer('Edge.Cuts', {purpose: 'board-outline'}),
+  technical: [
+    solderMaskLayer({side: 'front', expansion: 0.05}),
+    solderMaskLayer({side: 'back', expansion: 0.05}),
+    pasteLayer({side: 'front'}),
+    pasteLayer({side: 'back'}),
+    silkscreenLayer({side: 'front', color: 'white'}),
+    silkscreenLayer({side: 'back', color: 'white'}),
+    mechanicalLayer({purpose: 'assembly', side: 'front'}),
   ],
 });
 
-const STM32G0B1CBT6 = definePart({
-  manufacturer: 'STMicroelectronics',
-  mpn: 'STM32G0B1CBT6',
-  package: 'LQFP48 7x7 mm',
-  footprint: 'LQFP-48_7x7mm_P0.5mm',
-  datasheet: {
-    url: 'https://www.st.com/resource/en/datasheet/stm32g0b1cb.pdf',
-    document: 'DS13560',
-    revision: '6',
-    page: 38,
-  },
-  pinoutCoverage: 'partial',
-  pins: {
-    'VDD/VDDA': {pad: '6', electricalType: 'power-input', required: true},
-    'VSS/VSSA': {pad: '7', electricalType: 'power-input', required: true},
-    PA11: {pad: '33', electricalType: 'bidirectional', functions: ['GPIO', 'USB_DM']},
-    PA12: {pad: '34', electricalType: 'bidirectional', functions: ['GPIO', 'USB_DP']},
-  },
-});
+type Net = PartProps['connect'][string];
 
-const GND = net('GND');
-const VBUS = net('VBUS');
-const VCC_3V3 = net('3V3');
-const USB_DP = net('USB_D+');
-const USB_DM = net('USB_D-');
-const USB_CC1 = net('USB_CC1');
-const USB_CC2 = net('USB_CC2');
+type UsbControllerProps = {
+  ground: Net;
+  supply: Net;
+  vbus: Net;
+};
 
-const U1 = part('U1');
-const J1 = part('J1');
-const C1 = part('C1');
+function UsbController({ground, supply, vbus}: UsbControllerProps) {
+  const dataPlus = useNet('USB_D+');
+  const dataMinus = useNet('USB_D-');
+  const cc1 = useNet('CC1');
+  const cc2 = useNet('CC2');
+  const mcu = usePart('U1');
+  const connector = usePart('J1');
+  const decoupling = usePart('C1');
+
+  return (
+    <>
+      <STM32G0B1CBT6
+        id={mcu}
+        at={[30, 20]}
+        connect={{'VSS/VSSA': ground, 'VDD/VDDA': supply, PA11: dataMinus, PA12: dataPlus}}
+      />
+      <USB4105GFA
+        id={connector}
+        at={[5, 20]}
+        rotation={270}
+        connect={{GND: ground, VBUS: vbus, CC1: cc1, CC2: cc2, DPlus: dataPlus, DMinus: dataMinus}}
+      />
+      <Part
+        id={decoupling}
+        value="100nF"
+        footprint="0402"
+        at={[27, 18]}
+        connect={{1: supply, 2: ground}}
+      />
+
+      <DifferentialPair
+        positive={dataPlus}
+        negative={dataMinus}
+        width={0.18}
+        gap={0.15}
+        targetImpedance={90}
+        from={[pad(connector, 'DPlus'), pad(connector, 'DMinus')]}
+        to={[pad(mcu, 'PA12'), pad(mcu, 'PA11')]}
+      >
+        <RouteThrough region={rect(8, 16, 20, 8)} />
+        <RouteThrough region={rect(24, 17, 4, 6)} />
+      </DifferentialPair>
+
+      <Route net={supply} from={pad(decoupling, '1')} to={pad(mcu, 'VDD/VDDA')}>
+        <RouteThrough region={rect(27, 17, 3, 3)} />
+      </Route>
+    </>
+  );
+}
 
 export default function MyBoard() {
+  const ground = useNet('GND');
+  const vbus = useNet('VBUS');
+  const supply = useNet('3V3');
+
   return (
     <Board
       outline={rect(0, 0, 60, 40)}
@@ -97,70 +128,11 @@ export default function MyBoard() {
         description: 'Four-layer USB controller board',
       }}
     >
-      <STM32G0B1CBT6
-        id={U1}
-        at={[30, 20]}
-        connect={{
-          'VSS/VSSA': GND,
-          'VDD/VDDA': VCC_3V3,
-          PA11: USB_DM,
-          PA12: USB_DP,
-        }}
-      />
-
-      <USB4105GFA
-        id={J1}
-        at={[5, 20]}
-        connect={{
-          GND,
-          VBUS,
-          CC1: USB_CC1,
-          CC2: USB_CC2,
-          DPlus: USB_DP,
-          DMinus: USB_DM,
-        }}
-      />
-
-      <Part
-        id={C1}
-        value="100nF"
-        footprint="0402"
-        at={[27, 18]}
-        connect={{
-          1: VCC_3V3,
-          2: GND,
-        }}
-      />
-
-      <DifferentialPair
-        positive={USB_DP}
-        negative={USB_DM}
-        width={0.18}
-        gap={0.15}
-        targetImpedance={90}
-        from={[pad(J1, 'DPlus'), pad(J1, 'DMinus')]}
-        to={[pad(U1, 'PA12'), pad(U1, 'PA11')]}
-      >
-        <RouteThrough region={rect(8, 16, 20, 8)} />
-        <RouteThrough region={rect(24, 17, 4, 6)} />
-      </DifferentialPair>
-
-      <Route net={VCC_3V3} from={pad(C1, '1')} to={pad(U1, 'VDD/VDDA')}>
-        <RouteThrough region={rect(27, 17, 3, 3)} />
-      </Route>
-
-      <Zone
-        net={GND}
-        layers={[groundPlane]}
-        boundary="board"
-        clearance={0.2}
-      />
-
-      <Keepout
-        region={rect(0, 14, 8, 12)}
-        disallow={['vias', 'copper']}
-        except={[USB_DP, USB_DM]}
-      />
+      <Module name="usb-controller">
+        <UsbController ground={ground} supply={supply} vbus={vbus} />
+      </Module>
+      <Zone net={ground} layers={[groundPlane]} boundary="board" clearance={0.2} />
+      <Keepout region={rect(0, 14, 8, 12)} disallow={['vias', 'copper']} />
     </Board>
   );
 }
