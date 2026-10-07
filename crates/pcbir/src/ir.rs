@@ -13,8 +13,8 @@ pub struct BoardIr {
     pub revision: Revision,
     pub units: LengthUnit,
     pub board: Board,
-    pub components: BTreeMap<String, Value>,
-    pub parts: Vec<Part>,
+    pub component_definitions: BTreeMap<String, Value>,
+    pub component_instances: Vec<ComponentInstance>,
     pub nets: Vec<NetId>,
     pub route_constraints: Vec<RouteConstraint>,
 }
@@ -118,10 +118,10 @@ pub struct Rect {
     pub height: f64,
 }
 #[derive(Debug, Clone, Serialize)]
-pub struct Part {
+pub struct ComponentInstance {
     pub id: String,
     pub reference: String,
-    pub component: String,
+    pub definition: String,
     pub at: Option<[f64; 2]>,
     pub side: BoardSide,
     pub rotation: f64,

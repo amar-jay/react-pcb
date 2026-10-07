@@ -6,8 +6,8 @@ use serde_json::Value;
 
 use crate::diagnostic::{Diagnostic, Severity};
 use crate::ir::{
-    Board, BoardIr, BoardSide, LayerSet, LengthUnit, NetId, Part, PinRef, Rect, Revision,
-    RouteConstraint, StackupLayer,
+    Board, BoardIr, BoardSide, ComponentInstance, LayerSet, LengthUnit, NetId, PinRef, Rect,
+    Revision, RouteConstraint, StackupLayer,
 };
 use crate::protocol::{DeclarationNode, DeclarationTransaction, PROTOCOL_VERSION};
 
@@ -54,25 +54,28 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
 
     let units = parse_units(&board_node.props)?;
     let board = parse_board(&board_node.props)?;
-    let mut components = BTreeMap::new();
-    let mut parts = Vec::new();
+    let mut component_definitions = BTreeMap::new();
+    let mut component_instances = Vec::new();
     let mut routes = Vec::new();
     let mut nets = BTreeSet::new();
     let mut diagnostics = Vec::new();
 
     compile_nodes(
         &board_node.children,
-        &mut components,
-        &mut parts,
+        &mut component_definitions,
+        &mut component_instances,
         &mut routes,
         &mut nets,
         &mut diagnostics,
     )?;
 
-    let known_parts: BTreeSet<_> = parts.iter().map(|part| part.id.as_str()).collect();
+    let known_instances: BTreeSet<_> = component_instances
+        .iter()
+        .map(|instance| instance.id.as_str())
+        .collect();
     for route in &routes {
         for endpoint in [&route.from, &route.to] {
-            if !known_parts.contains(endpoint.part.as_str()) {
+            if !known_instances.contains(endpoint.part.as_str()) {
                 diagnostics.push(Diagnostic {
                     code: "PCBIR002",
                     severity: Severity::Error,
@@ -88,8 +91,8 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
             revision: Revision(transaction.base_revision.unwrap_or(0) + 1),
             units,
             board,
-            components,
-            parts,
+            component_definitions,
+            component_instances,
             nets: nets.into_iter().collect(),
             route_constraints: routes,
         },
@@ -99,8 +102,8 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
 
 fn compile_nodes(
     nodes: &[DeclarationNode],
-    components: &mut BTreeMap<String, Value>,
-    parts: &mut Vec<Part>,
+    component_definitions: &mut BTreeMap<String, Value>,
+    component_instances: &mut Vec<ComponentInstance>,
     routes: &mut Vec<RouteConstraint>,
     nets: &mut BTreeSet<NetId>,
     diagnostics: &mut Vec<Diagnostic>,
@@ -109,26 +112,26 @@ fn compile_nodes(
         match child.node_type.as_str() {
             "pcb-module" => compile_nodes(
                 &child.children,
-                components,
-                parts,
+                component_definitions,
+                component_instances,
                 routes,
                 nets,
                 diagnostics,
             )?,
             "pcb-part" => {
-                let (part, definition) = parse_part(&child.props)?;
-                if let Some(existing) = components.get(&part.component) {
+                let (instance, definition) = parse_part(&child.props)?;
+                if let Some(existing) = component_definitions.get(&instance.definition) {
                     if existing != &definition {
                         return Err(CompileError(format!(
-                            "component {} has conflicting definitions",
-                            part.component
+                            "component definition {} conflicts with an existing definition",
+                            instance.definition
                         )));
                     }
                 } else {
-                    components.insert(part.component.clone(), definition);
+                    component_definitions.insert(instance.definition.clone(), definition);
                 }
-                nets.extend(part.connections.values().cloned());
-                parts.push(part);
+                nets.extend(instance.connections.values().cloned());
+                component_instances.push(instance);
             }
             "pcb-route" => {
                 let route = parse_route(child)?;
@@ -205,7 +208,7 @@ fn parse_units(props: &Value) -> Result<LengthUnit, CompileError> {
         .map(|units| units.unwrap_or(LengthUnit::Mm))
 }
 
-fn parse_part(props: &Value) -> Result<(Part, Value), CompileError> {
+fn parse_part(props: &Value) -> Result<(ComponentInstance, Value), CompileError> {
     let id_value = props
         .get("id")
         .ok_or_else(|| CompileError("part id is required".into()))?;
@@ -246,10 +249,10 @@ fn parse_part(props: &Value) -> Result<(Part, Value), CompileError> {
     let footprint = string(props, "footprint")?;
     let (component, definition) = component_definition(props, &footprint)?;
     Ok((
-        Part {
+        ComponentInstance {
             id,
             reference,
-            component,
+            definition: component,
             at,
             side,
             rotation,
@@ -390,14 +393,50 @@ mod tests {
         let output = compile(transaction).unwrap();
         assert_eq!(output.ir.revision.0, 8);
         assert!(matches!(output.ir.units, crate::ir::LengthUnit::Mm));
-        assert_eq!(output.ir.parts[0].id, "U1");
+        assert_eq!(output.ir.component_instances[0].id, "U1");
         assert!(matches!(
-            output.ir.parts[0].side,
+            output.ir.component_instances[0].side,
             crate::ir::BoardSide::Front
         ));
-        assert_eq!(output.ir.parts[0].rotation, 0.0);
-        assert_eq!(output.ir.components.len(), 1);
-        assert_eq!(output.ir.parts[0].component, output.ir.parts[1].component);
+        assert_eq!(output.ir.component_instances[0].rotation, 0.0);
+        assert_eq!(output.ir.component_definitions.len(), 1);
+        assert_eq!(
+            output.ir.component_instances[0].definition,
+            output.ir.component_instances[1].definition
+        );
         assert_eq!(output.ir.nets[0].0, "3V3");
+    }
+
+    #[test]
+    fn rejects_conflicting_definitions_for_one_component_key() {
+        let transaction: DeclarationTransaction = serde_json::from_value(serde_json::json!({
+            "protocolVersion": 1,
+            "declarations": {"kind": "react-pcb-declarations", "children": [{
+                "type": "pcb-board",
+                "props": {
+                    "outline": {"kind": "rect", "x": 0, "y": 0, "width": 10, "height": 10},
+                    "layers": {"kind": "layer-set", "stackup": {"kind": "stackup", "entries": [
+                        {"kind": "copper", "thickness": 0.035, "usage": "signal"}
+                    ]}, "technical": []}
+                },
+                "children": [
+                    {"type": "pcb-part", "props": {
+                        "id": {"id": "U1", "reference": "U1"}, "footprint": "A", "connect": {},
+                        "definition": {"mpn": "SAME", "footprint": "A"}
+                    }, "children": []},
+                    {"type": "pcb-part", "props": {
+                        "id": {"id": "U2", "reference": "U2"}, "footprint": "B", "connect": {},
+                        "definition": {"mpn": "SAME", "footprint": "B"}
+                    }, "children": []}
+                ]
+            }]}
+        }))
+        .unwrap();
+
+        let error = compile(transaction).unwrap_err();
+        assert_eq!(
+            error.0,
+            "component definition SAME conflicts with an existing definition"
+        );
     }
 }
