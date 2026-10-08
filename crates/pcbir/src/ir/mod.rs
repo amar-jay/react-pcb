@@ -23,7 +23,7 @@ pub use footprint::{
 pub use geometry::{Rect, RegionDefinition};
 pub use routing::{NetDefinition, NetId, PinRef, RouteConstraint};
 
-pub const SCHEMA_VERSION: u32 = 1;
+pub const SCHEMA_VERSION: u32 = 2;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Revision(pub u64);

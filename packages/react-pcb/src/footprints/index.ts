@@ -1,4 +1,5 @@
 import type {CopperLayerInput, PasteLayerInput, SolderMaskLayerInput} from '../layers/index.ts';
+import type {PhysicalFootprint, PhysicalFootprintInput} from './physical.ts';
 import {assertFinite, assertName, assertPositive} from '../validation/index.ts';
 
 /** A board layer object, its ID, or an explicit selector for through-hole copper. */
@@ -18,7 +19,7 @@ export type FootprintDefinition = Readonly<{
 }>;
 export type PinMap = Readonly<Record<string, string | readonly string[]>>;
 export type FootprintBinding = Readonly<{
-  footprint: FootprintDefinition | string;
+  footprint: FootprintDefinition | PhysicalFootprint | PhysicalFootprintInput | string;
   pinMap: PinMap;
 }>;
 

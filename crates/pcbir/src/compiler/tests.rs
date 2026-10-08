@@ -80,6 +80,34 @@ fn canonical_ir_round_trips_through_json() {
 }
 
 #[test]
+fn schema_one_documents_retain_identity_and_legacy_geometry() {
+    let original = compile(transaction(vec![part(
+        "U1",
+        "TEST",
+        json!({"1":{"id":"GND"}}),
+    )]))
+    .unwrap()
+    .ir;
+    let mut value = serde_json::to_value(&original).unwrap();
+    value["schemaVersion"] = json!(1);
+    for footprint in value["footprintDefinitions"]
+        .as_object_mut()
+        .unwrap()
+        .values_mut()
+    {
+        footprint.as_object_mut().unwrap().remove("physical");
+    }
+    for part in value["parts"].as_array_mut().unwrap() {
+        part.as_object_mut().unwrap().remove("physicalFeatures");
+    }
+    let legacy: crate::BoardIr = serde_json::from_value(value).unwrap();
+    assert_eq!(legacy.parts[0].id, original.parts[0].id);
+    assert_eq!(legacy.schema_version, 1);
+    assert!(legacy.parts[0].physical_features.is_empty());
+    assert!(legacy.footprint_definitions["TEST"].physical.is_none());
+}
+
+#[test]
 fn rejects_conflicting_names_for_one_net_id() {
     let error = compile(transaction(vec![
         part("U1", "TEST", json!({"1": {"id": "supply", "name": "3V3"}})),

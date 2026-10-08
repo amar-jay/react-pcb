@@ -133,10 +133,27 @@ fn binding_error(code: &'static str, message: impl Into<String>, entity: &str) -
 }
 
 fn validate_footprint(footprint: &FootprintDefinition) -> Result<(), CompileError> {
+    if let Some(physical) = &footprint.physical {
+        physical.validate()?;
+        if footprint.pads != physical.compatibility_pads() || !footprint.resolved {
+            return Err(binding_error(
+                "PCBFP001",
+                "physical footprint compatibility index disagrees with exact geometry",
+                &footprint.key,
+            ));
+        }
+        if physical.key != footprint.key {
+            return Err(binding_error(
+                "PCBFP001",
+                "footprint key mismatch",
+                &footprint.key,
+            ));
+        }
+    }
     if !footprint.resolved {
         return Ok(());
     }
-    if footprint.pads.is_empty() {
+    if footprint.pads.is_empty() && footprint.physical.is_none() {
         return Err(binding_error(
             "PCBIR025",
             "resolved footprint has no pads",

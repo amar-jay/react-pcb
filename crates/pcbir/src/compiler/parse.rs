@@ -167,8 +167,12 @@ pub fn parse_part(
             key: key.to_owned(),
             resolved: false,
             pads: Vec::new(),
+            physical: None,
         }
     } else {
+        if footprint_value.get("schemaVersion").is_some() {
+            return parse_physical_part(props, footprint_value);
+        }
         let mut value = footprint_value.clone();
         value
             .as_object_mut()
@@ -206,6 +210,7 @@ pub fn parse_part(
             footprint: footprint.key.clone(),
             pin_map,
             pad_layers: BTreeMap::new(),
+            physical_features: BTreeMap::new(),
             at,
             side,
             rotation,
@@ -215,6 +220,42 @@ pub fn parse_part(
         footprint,
         nets,
     ))
+}
+
+fn parse_physical_part(
+    props: &Value,
+    value: &Value,
+) -> Result<
+    (
+        PartInstance,
+        ComponentDefinition,
+        FootprintDefinition,
+        Vec<NetDefinition>,
+    ),
+    CompileError,
+> {
+    let physical = if value.get("units").is_some() {
+        let physical: crate::physical::PhysicalFootprint = serde_json::from_value(value.clone())
+            .map_err(|e| CompileError::invalid(format!("invalid physical footprint: {e}")))?;
+        physical.validate()?;
+        physical
+    } else {
+        crate::physical::compile_footprint(
+            serde_json::from_value(value.clone())
+                .map_err(|e| CompileError::invalid(format!("invalid footprint authoring: {e}")))?,
+        )?
+    };
+    let pads = physical.compatibility_pads();
+    let footprint = FootprintDefinition {
+        key: physical.key.clone(),
+        resolved: true,
+        pads,
+        physical: Some(physical),
+    };
+    let mut normalized = props.clone();
+    normalized["footprint"] =
+        serde_json::to_value(&footprint).map_err(|e| CompileError::invalid(e.to_string()))?;
+    parse_part(&normalized)
 }
 
 type ParsedComponent = (String, ComponentDefinition, BTreeMap<String, Vec<String>>);

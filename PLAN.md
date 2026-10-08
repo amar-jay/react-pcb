@@ -61,12 +61,12 @@ Unsupported properties must produce actionable diagnostics rather than being ign
 
 ### 1. Physical geometry and layer contract
 
-- [ ] Define checked physical lengths, bounds, transforms, and typed shapes.
-- [ ] Introduce semantic footprint layers and per-instance role resolution.
-- [ ] Preserve stable pad and graphic IDs independently of positions and layout order.
-- [ ] Represent copper, drills, mask openings, paste openings, and documentation graphics distinctly.
-- [ ] Specify and implement the versioned migration from existing footprint definitions.
-- [ ] Retain an explicit-coordinate authoring path alongside future layout authoring.
+- [x] Define checked physical lengths, bounds, transforms, and typed shapes.
+- [x] Introduce semantic footprint layers and per-instance role resolution.
+- [x] Preserve stable pad and graphic IDs independently of positions and layout order.
+- [x] Represent copper, drills, mask openings, paste openings, and documentation graphics distinctly.
+- [x] Specify and implement the versioned migration from existing footprint definitions.
+- [x] Retain an explicit-coordinate authoring path alongside future layout authoring.
 
 Acceptance: one shared footprint can compile without a board and be placed on two boards with different layer IDs. Front and back placements resolve their own geometry and layer bindings without changing the definition. Exact unit conversion, overflow rejection, JSON round trips, and reference validation have contract tests.
 

@@ -36,7 +36,7 @@ test('JSX without constraint IDs compiles to stable IR identities and normalized
   const secondResult = await compile(design(true, 3), options);
   const before = firstResult.ir;
   const after = secondResult.ir;
-  expect(after.schemaVersion).toBe(1);
+  expect(after.schemaVersion).toBe(2);
   expect(after.revision).toBe(11);
   expect(after.board).toEqual(before.board);
   expect(after.routeConstraints[0]?.id).toBe(before.routeConstraints[0]?.id);

@@ -1,7 +1,8 @@
 import type {BoardSide, CopperUsage} from '../layers/index.ts';
 import type {DatasheetSource, ElectricalType} from '../parts/index.tsx';
+import type {FootprintRole, PhysicalFootprint, PlacedPhysicalFeature} from '../footprints/physical.ts';
 
-export const PCB_IR_SCHEMA_VERSION = 1 as const;
+export const PCB_IR_SCHEMA_VERSION = 2 as const;
 
 export type IrStackupLayer =
   | Readonly<{kind: 'copper'; id: string; thickness: number; usage: CopperUsage}>
@@ -50,13 +51,14 @@ export type IrFootprintPad = Readonly<{
   shape: 'rect' | 'circle' | 'oval';
   size: readonly [number, number];
   rotation: number;
-  layers: readonly (string | Readonly<{kind: 'all-copper'}>)[];
+  layers: readonly (string | Readonly<{kind: 'all-copper'}> | Readonly<{role: FootprintRole}>)[];
   drill: Readonly<{diameter: number; plated: boolean}> | null;
 }>;
 export type IrFootprintDefinition = Readonly<{
   key: string;
   resolved: boolean;
   pads: readonly IrFootprintPad[];
+  physical: PhysicalFootprint | null;
 }>;
 export type IrPart = Readonly<{
   id: string;
@@ -65,6 +67,7 @@ export type IrPart = Readonly<{
   footprint: string;
   pinMap: Readonly<Record<string, readonly string[]>>;
   padLayers: Readonly<Record<string, readonly string[]>>;
+  physicalFeatures: Readonly<Record<string, PlacedPhysicalFeature>>;
   at: readonly [number, number] | null;
   side: BoardSide;
   rotation: number;

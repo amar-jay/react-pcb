@@ -70,6 +70,8 @@ pub struct PartInstance {
     pub pin_map: BTreeMap<String, Vec<String>>,
     /// Concrete board layer IDs per physical pad, after side resolution.
     pub pad_layers: BTreeMap<String, Vec<String>>,
+    #[serde(default)]
+    pub physical_features: BTreeMap<String, crate::physical::PlacedFeature>,
     pub at: Option<[f64; 2]>,
     pub side: BoardSide,
     pub rotation: f64,

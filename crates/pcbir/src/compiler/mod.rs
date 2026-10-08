@@ -119,6 +119,54 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
         return Err(error.with_diagnostics(context.compiler_diagnostics));
     }
 
+    let physical_result = (|| -> Result<(), CompileError> {
+        for part in &mut context.component_instances {
+            if let Some(physical) = &context.footprint_definitions[&part.footprint].physical {
+                for feature in &physical.features {
+                    let mut targets = BTreeSet::new();
+                    for role in &feature.layers {
+                        for target in
+                            role.resolve(&board.layers, part.side == crate::BoardSide::Back)?
+                        {
+                            if !targets.insert(target) {
+                                return Err(CompileError::invalid(
+                                    "overlapping semantic feature layers",
+                                ));
+                            }
+                        }
+                    }
+                }
+                // New physical footprints have independent nm coordinates. Board placement
+                // remains in board units during the compatibility period.
+                if let Some(at) = part.at {
+                    let unit = match units {
+                        crate::LengthUnit::Mm => "mm",
+                        crate::LengthUnit::Mil => "mil",
+                        crate::LengthUnit::In => "in",
+                    };
+                    let at = [
+                        crate::physical::length(&format!("{}{unit}", at[0]))?,
+                        crate::physical::length(&format!("{}{unit}", at[1]))?,
+                    ];
+                    if ![0.0, 90.0, 180.0, 270.0].contains(&part.rotation) {
+                        return Err(CompileError::invalid(
+                            "physical footprints require quarter-turn placement rotation",
+                        ));
+                    }
+                    part.physical_features = physical.place(
+                        at,
+                        part.rotation as u16,
+                        part.side == crate::BoardSide::Back,
+                        &board.layers,
+                    )?;
+                }
+            }
+        }
+        Ok(())
+    })();
+    if let Err(error) = physical_result {
+        return Err(error.with_diagnostics(context.compiler_diagnostics));
+    }
     let known_instances: BTreeMap<_, _> = context
         .component_instances
         .iter()

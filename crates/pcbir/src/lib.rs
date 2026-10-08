@@ -3,6 +3,7 @@
 mod compiler;
 mod diagnostic;
 mod ir;
+pub mod physical;
 mod protocol;
 
 pub use compiler::{CompileError, CompileOutput, compile};

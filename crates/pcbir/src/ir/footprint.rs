@@ -7,6 +7,8 @@ pub struct FootprintDefinition {
     /// False for library references whose geometry has not been loaded.
     pub resolved: bool,
     pub pads: Vec<FootprintPad>,
+    #[serde(default)]
+    pub physical: Option<crate::physical::PhysicalFootprint>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -34,6 +36,7 @@ pub enum PadShape {
 pub enum PadLayer {
     Id(String),
     Selector(CopperLayerSelector),
+    Role { role: crate::physical::Role },
 }
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(tag = "kind")]

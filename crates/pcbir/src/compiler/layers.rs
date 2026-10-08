@@ -69,6 +69,13 @@ pub fn resolve_pad_layers(
             let mut resolved = BTreeSet::new();
             for target in &pad.layers {
                 match target {
+                    PadLayer::Role { role } => {
+                        for id in role.resolve(layers, part.side == BoardSide::Back)? {
+                            if !resolved.insert(id) {
+                                return Err(error("overlapping semantic pad layers", &part.id));
+                            }
+                        }
+                    }
                     PadLayer::Id(id) => {
                         if !valid.contains(id.as_str()) {
                             return Err(error(

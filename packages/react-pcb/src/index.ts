@@ -80,4 +80,6 @@ export type {
 } from './layers/index.ts';
 
 export {defineFootprint} from './footprints/index.ts';
+export {definePhysicalFootprint, compileFootprint, migrateFootprint, footprintLayer, FOOTPRINT_SCHEMA_VERSION} from './footprints/physical.ts';
+export type {PhysicalLength, PhysicalShape, PhysicalFeature, PhysicalFootprint, PhysicalFootprintInput, FootprintRole, FeatureInput, FeaturePurpose, PlacedPhysicalFeature} from './footprints/physical.ts';
 export type {FootprintDefinition, FootprintPad, FootprintBinding, PadLayer, PinMap} from './footprints/index.ts';
