@@ -17,10 +17,11 @@ test('compiles reusable footprints and many-pad pin bindings end to end', async 
     <Device id={part('J1')} at={[2, 3]} rotation={90} side="back" connect={{GND: net('GND')}} />
     <Device id={part('J2')} connect={{GND: net('GND')}} />
   </Board>, {cwd: import.meta.dir + '/../../../..'});
-  expect(result.ir).toMatchObject({componentDefinitions: {TEST: {pins: {GND: {electricalType: 'passive'}}}},
+  const componentKey = 'part:["Test","TEST"]';
+  expect(result.ir).toMatchObject({componentDefinitions: {[componentKey]: {pins: {GND: {electricalType: 'passive'}}}},
     footprintDefinitions: {'TEST-SMD': {resolved: true, pads: footprint.pads.map(pad => ({...pad, rotation: 0, drill: null}))}},
-    parts: [{component: 'TEST', footprint: 'TEST-SMD', pinMap: {GND: ['1', '2']}, padLayers: {'1': ['copper/2', 'paste/back', 'solder-mask/back'], '2': ['copper/2', 'paste/back', 'solder-mask/back']}, at: [2, 3], rotation: 90, side: 'back'},
-      {component: 'TEST', footprint: 'TEST-SMD'}]});
+    parts: [{component: componentKey, footprint: 'TEST-SMD', pinMap: {GND: ['1', '2']}, padLayers: {'1': ['copper/2', 'paste/back', 'solder-mask/back'], '2': ['copper/2', 'paste/back', 'solder-mask/back']}, at: [2, 3], rotation: 90, side: 'back'},
+      {component: componentKey, footprint: 'TEST-SMD'}]});
   expect(result.diagnostics).toEqual([]);
 });
 

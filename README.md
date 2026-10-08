@@ -29,29 +29,29 @@ import {
 import {STM32G0B1CBT6} from './parts/STM32G0B1CBT6';
 import {USB4105GFA} from './parts/USB4105GFA';
 
-const frontCopper = copperLayer({thickness: 0.035, usage: 'signal'});
-const groundPlane = copperLayer({thickness: 0.018, usage: 'plane'});
-const powerPlane = copperLayer({thickness: 0.018, usage: 'plane'});
-const backCopper = copperLayer({thickness: 0.035, usage: 'signal'});
+const frontCopper = copperLayer({id: 'copper/1', thickness: 0.035, usage: 'signal'});
+const groundPlane = copperLayer({id: 'copper/2', thickness: 0.018, usage: 'plane'});
+const powerPlane = copperLayer({id: 'copper/3', thickness: 0.018, usage: 'plane'});
+const backCopper = copperLayer({id: 'copper/4', thickness: 0.035, usage: 'signal'});
 
 const boardLayers = defineLayerSet({
   stackup: defineStackup([
     frontCopper,
-    dielectricLayer({material: 'FR-4', thickness: 0.18, epsilonR: 4.2, lossTangent: 0.02}),
+    dielectricLayer({id: 'dielectric/1', material: 'FR-4', thickness: 0.18, epsilonR: 4.2, lossTangent: 0.02}),
     groundPlane,
-    dielectricLayer({material: 'FR-4', thickness: 1.0, epsilonR: 4.2, lossTangent: 0.02}),
+    dielectricLayer({id: 'dielectric/2', material: 'FR-4', thickness: 1.0, epsilonR: 4.2, lossTangent: 0.02}),
     powerPlane,
-    dielectricLayer({material: 'FR-4', thickness: 0.18, epsilonR: 4.2, lossTangent: 0.02}),
+    dielectricLayer({id: 'dielectric/3', material: 'FR-4', thickness: 0.18, epsilonR: 4.2, lossTangent: 0.02}),
     backCopper,
   ]),
   technical: [
-    solderMaskLayer({side: 'front', expansion: 0.05}),
-    solderMaskLayer({side: 'back', expansion: 0.05}),
-    pasteLayer({side: 'front'}),
-    pasteLayer({side: 'back'}),
-    silkscreenLayer({side: 'front', color: 'white'}),
-    silkscreenLayer({side: 'back', color: 'white'}),
-    mechanicalLayer({purpose: 'assembly', side: 'front'}),
+    solderMaskLayer({id: 'solder-mask/front', side: 'front', expansion: 0.05}),
+    solderMaskLayer({id: 'solder-mask/back', side: 'back', expansion: 0.05}),
+    pasteLayer({id: 'paste/front', side: 'front'}),
+    pasteLayer({id: 'paste/back', side: 'back'}),
+    silkscreenLayer({id: 'silkscreen/front', side: 'front', color: 'white'}),
+    silkscreenLayer({id: 'silkscreen/back', side: 'back', color: 'white'}),
+    mechanicalLayer({id: 'mechanical/assembly/front', purpose: 'assembly', side: 'front'}),
   ],
 });
 
@@ -141,6 +141,8 @@ export default function MyBoard() {
 The first step is to design a tool-independent PCB IR that serves as the canonical representation of a board. The IR should describe the board without depending on JSX, a particular autorouter, KiCad, Gerber, or any PCB manufacturer. It should contain the board outline and layer stack, components and their exact selected parts (manufacturer, MPN, supplier/SKU and relevant specifications), footprints, pads, nets and connectivity, component placement, design rules, copper zones, keepouts, routing and electrical constraints such as differential pairs and impedance requirements, and any physical geometry that has already been explicitly resolved. The BOM should be derivable directly from the component and part information stored in the IR rather than maintained as a separate source of truth. Initially, the goal is not to implement routing or manufacturing output, but to define a sufficiently complete and stable representation so that future frontends can compile designs into it and future tools—autorouters, simulators, validators, exporters, and manufacturing backends—can operate on the same IR without changing its fundamental model.
 
 PCB IR is a normalized, serializable representation of PCB design intent, connectivity, manufacturing-relevant component identity, constraints, and physical realization. It is independent of source syntax, EDA software, routing implementation, and fabrication output format. Everything that can be referenced has a stable ID. It serves as a human-readable, machine-processable blueprint for visualization, validation, and subsequent physical routing.
+
+The serialized contract currently uses `schemaVersion: 1`. Rust can serialize and deserialize `BoardIr`, while the TypeScript package exports its matching `BoardIr` type and `PCB_IR_SCHEMA_VERSION` constant. Net definitions retain stable IDs and descriptive names. Manufacturer parts default to an identity derived from manufacturer and MPN; reusable libraries may provide an explicit `key` to `definePart`. `compile` returns all diagnostics programmatically and accepts `baseRevision` when compiling a successor document.
 
 **Illustrative PCB IR Tree**
 ```

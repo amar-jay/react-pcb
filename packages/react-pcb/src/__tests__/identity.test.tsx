@@ -7,7 +7,7 @@ const positive = net('P');
 const negative = net('N');
 const first = part('U1');
 const second = part('U2');
-const options = {cwd: import.meta.dir + '/../../../..', hideWarnings: true};
+const options = {cwd: import.meta.dir + '/../../../..', hideWarnings: true, baseRevision: 10};
 
 function design(reverse: boolean, width: number) {
   const corridors = [
@@ -31,20 +31,13 @@ function design(reverse: boolean, width: number) {
   </Board>;
 }
 
-type IdentityIr = {
-  board: {id: string; outline: string};
-  routeConstraints: {id: string; through: string[]}[];
-  differentialPairs: {id: string}[];
-  zones: {id: string; layers: string[]; boundary: string}[];
-  keepouts: {id: string; region: string}[];
-  regions: Record<string, {id: string; geometry: {width: number}}>;
-};
-
 test('JSX without constraint IDs compiles to stable IR identities and normalized references', async () => {
   const firstResult = await compile(design(false, 2), options);
   const secondResult = await compile(design(true, 3), options);
-  const before = firstResult.ir as IdentityIr;
-  const after = secondResult.ir as IdentityIr;
+  const before = firstResult.ir;
+  const after = secondResult.ir;
+  expect(after.schemaVersion).toBe(1);
+  expect(after.revision).toBe(11);
   expect(after.board).toEqual(before.board);
   expect(after.routeConstraints[0]?.id).toBe(before.routeConstraints[0]?.id);
   expect(after.routeConstraints[0]?.through).toEqual([...before.routeConstraints[0]!.through].reverse());
@@ -56,7 +49,7 @@ test('JSX without constraint IDs compiles to stable IR identities and normalized
   expect(after.regions[after.keepouts[0]!.region]?.geometry.width).toBe(3);
   for (const [id, region] of Object.entries(after.regions)) expect(region.id).toBe(id);
   expect(JSON.stringify(after)).not.toContain('sourceKey');
-  expect(secondResult.diagnostics).toEqual([]);
+  expect(secondResult.diagnostics.map(diagnostic => diagnostic.code)).toEqual(['PCBIR024']);
 });
 
 test('invalid references fail through the TypeScript compiler bridge', async () => {

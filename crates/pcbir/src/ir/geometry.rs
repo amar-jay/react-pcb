@@ -9,7 +9,7 @@ pub struct Rect {
 }
 
 /// Referenceable region identity is separate from its mutable geometry.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RegionDefinition {
     pub id: String,
     pub geometry: Rect,

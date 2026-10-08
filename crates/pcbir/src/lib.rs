@@ -8,8 +8,10 @@ mod protocol;
 pub use compiler::{CompileError, CompileOutput, compile};
 pub use diagnostic::{Diagnostic, Severity};
 pub use ir::{
-    Board, BoardIr, BoardSide, CopperUsage, LayerSet, LengthUnit, MechanicalPurpose, NetId,
-    PartInstance, PinRef, Rect, Revision, RouteConstraint, Stackup, StackupLayer, TechnicalLayer,
+    Board, BoardIr, BoardSide, ComponentDefinition, CopperUsage, DatasheetSource, ElectricalType,
+    LayerSet, LengthUnit, MechanicalPurpose, NetDefinition, NetId, PartInstance, PinDefinition,
+    PinRef, PinoutCoverage, Rect, Revision, RouteConstraint, SCHEMA_VERSION, Stackup, StackupLayer,
+    TechnicalLayer,
 };
 pub use ir::{
     CopperLayerSelector, FootprintDefinition, FootprintPad, PadDrill, PadLayer, PadShape,

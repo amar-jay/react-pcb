@@ -1,15 +1,15 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use serde_json::Value;
-
 use crate::diagnostic::Diagnostic;
-use crate::ir::{FootprintDefinition, PartInstance, PinRef, RouteConstraint};
+use crate::ir::{
+    ComponentDefinition, FootprintDefinition, PartInstance, PinRef, PinoutCoverage, RouteConstraint,
+};
 
 use super::CompileError;
 
 pub fn validate_instances(
     instances: &[PartInstance],
-    definitions: &BTreeMap<String, Value>,
+    definitions: &BTreeMap<String, ComponentDefinition>,
     footprints: &BTreeMap<String, FootprintDefinition>,
 ) -> Result<(), CompileError> {
     for footprint in footprints.values() {
@@ -19,16 +19,11 @@ pub fn validate_instances(
         let definition = definitions
             .get(&instance.component)
             .expect("every instance definition is inserted while compiling");
-        let Some(pins) = definition.get("pins") else {
+        if definition.pins.is_empty() {
             validate_binding(instance, definitions, footprints)?;
             continue;
-        };
-        let pins = pins.as_object().ok_or_else(|| {
-            CompileError::invalid(format!(
-                "component definition {} pins must be an object",
-                instance.component
-            ))
-        })?;
+        }
+        let pins = &definition.pins;
 
         for pin in instance.connections.keys() {
             if !pins.contains_key(pin) {
@@ -45,9 +40,7 @@ pub fn validate_instances(
         validate_pin_definition(&instance.component, definition, pins)?;
         validate_binding(instance, definitions, footprints)?;
         for (name, pin) in pins {
-            if pin.get("required").and_then(Value::as_bool) == Some(true)
-                && !instance.connections.contains_key(name)
-            {
+            if pin.required && !instance.connections.contains_key(name) {
                 return Err(CompileError::diagnostic(
                     Diagnostic::error("PCBIR009", format!("required pin {name} is not connected"))
                         .with_entity(&instance.id)
@@ -61,11 +54,11 @@ pub fn validate_instances(
 
 fn validate_pin_definition(
     definition_key: &str,
-    definition: &Value,
-    pins: &serde_json::Map<String, Value>,
+    definition: &ComponentDefinition,
+    pins: &BTreeMap<String, crate::ir::PinDefinition>,
 ) -> Result<(), CompileError> {
-    let coverage = definition.get("pinoutCoverage").and_then(Value::as_str);
-    if !matches!(coverage, Some("complete" | "partial")) {
+    let coverage = definition.pinout_coverage;
+    if coverage.is_none() {
         return Err(CompileError::diagnostic(
             Diagnostic::error(
                 "PCBIR022",
@@ -75,7 +68,7 @@ fn validate_pin_definition(
             .with_help("Set pinoutCoverage to complete or partial."),
         ));
     }
-    if coverage == Some("complete") && pins.is_empty() {
+    if coverage == Some(PinoutCoverage::Complete) && pins.is_empty() {
         return Err(CompileError::diagnostic(
             Diagnostic::error("PCBIR010", "complete component definition has no pins")
                 .with_entity(definition_key)
@@ -83,42 +76,8 @@ fn validate_pin_definition(
         ));
     }
 
-    for (name, pin) in pins {
+    for name in pins.keys() {
         super::parse::require_name(name, "logical pin ID", "PCBIR022")?;
-        let pin = pin.as_object().ok_or_else(|| {
-            CompileError::diagnostic(
-                Diagnostic::error("PCBIR022", format!("pin {name} must be an object"))
-                    .with_entity(definition_key),
-            )
-        })?;
-        if pin
-            .get("required")
-            .is_some_and(|required| !required.is_boolean())
-        {
-            return Err(CompileError::diagnostic(
-                Diagnostic::error("PCBIR022", format!("pin {name} required must be boolean"))
-                    .with_entity(definition_key),
-            ));
-        }
-        let electrical_type = pin.get("electricalType").and_then(Value::as_str);
-        let valid_types = [
-            "power-input",
-            "power-output",
-            "input",
-            "output",
-            "bidirectional",
-            "passive",
-        ];
-        if electrical_type.is_none_or(|kind| !valid_types.contains(&kind)) {
-            return Err(CompileError::diagnostic(
-                Diagnostic::error(
-                    "PCBIR022",
-                    format!("pin {name} has invalid electrical type"),
-                )
-                .with_entity(definition_key)
-                .with_help("Use a supported electricalType value."),
-            ));
-        }
     }
     Ok(())
 }
@@ -127,14 +86,12 @@ pub fn validate_route_endpoint(
     route: &RouteConstraint,
     endpoint: &PinRef,
     instance: &PartInstance,
-    definitions: &BTreeMap<String, Value>,
+    definitions: &BTreeMap<String, ComponentDefinition>,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
-    if let Some(pins) = definitions
-        .get(&instance.component)
-        .and_then(|definition| definition.get("pins"))
-        .and_then(Value::as_object)
-        && !pins.contains_key(&endpoint.name)
+    if let Some(definition) = definitions.get(&instance.component)
+        && !definition.pins.is_empty()
+        && !definition.pins.contains_key(&endpoint.name)
     {
         diagnostics.push(
             Diagnostic::error(
@@ -220,13 +177,12 @@ fn validate_footprint(footprint: &FootprintDefinition) -> Result<(), CompileErro
 
 fn validate_binding(
     instance: &PartInstance,
-    definitions: &BTreeMap<String, Value>,
+    definitions: &BTreeMap<String, ComponentDefinition>,
     footprints: &BTreeMap<String, FootprintDefinition>,
 ) -> Result<(), CompileError> {
     let footprint = &footprints[&instance.footprint];
-    let pins = definitions[&instance.component]
-        .get("pins")
-        .and_then(Value::as_object);
+    let definition = &definitions[&instance.component];
+    let pins = (!definition.pins.is_empty()).then_some(&definition.pins);
     let mut mapped = BTreeSet::new();
     for (pin, pads) in &instance.pin_map {
         if pins.is_some_and(|pins| !pins.contains_key(pin)) {
@@ -262,20 +218,16 @@ fn validate_binding(
             ));
         }
     }
-    if definitions[&instance.component]
-        .get("pinoutCoverage")
-        .and_then(Value::as_str)
-        == Some("complete")
+    if definition.pinout_coverage == Some(PinoutCoverage::Complete)
+        && let Some(pins) = pins
     {
-        if let Some(pins) = pins {
-            for pin in pins.keys() {
-                if !instance.pin_map.contains_key(pin) {
-                    return Err(binding_error(
-                        "PCBIR026",
-                        format!("complete pinout has no mapping for {pin}"),
-                        &instance.id,
-                    ));
-                }
+        for pin in pins.keys() {
+            if !instance.pin_map.contains_key(pin) {
+                return Err(binding_error(
+                    "PCBIR026",
+                    format!("complete pinout has no mapping for {pin}"),
+                    &instance.id,
+                ));
             }
         }
     }

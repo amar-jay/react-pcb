@@ -25,6 +25,8 @@ export type DatasheetSource = Readonly<{
 }>;
 
 export type PartDefinition<Pins extends Record<string, PinDefinition>> = Readonly<{
+  /** Stable library identity. Defaults to a key derived from manufacturer and MPN. */
+  key?: string;
   manufacturer: string;
   mpn: string;
   package: string;
@@ -50,6 +52,9 @@ export function definePart<const Pins extends Record<string, PinDefinition>>(
   definition: PartDefinition<Pins>,
   binding: FootprintBinding,
 ) {
+  if (definition.key !== undefined && definition.key.trim().length === 0) {
+    throw new Error('part definition key must be non-empty');
+  }
   function DefinedPart({id, at, side, rotation, connect}: DefinedPartProps<Pins>) {
     for (const name of Object.keys(connect)) {
       if (!(name in definition.pins)) {

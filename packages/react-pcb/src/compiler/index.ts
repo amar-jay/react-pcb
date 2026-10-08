@@ -3,6 +3,7 @@ import {createDeclarationTransaction} from '../protocol/index.ts';
 import {renderDeclarations} from '../renderer/index.ts';
 import {compilerError, formatDiagnostic} from './diagnostics.ts';
 import type {CompilerDiagnostic} from './diagnostics.ts';
+import {PCB_IR_SCHEMA_VERSION, type BoardIr} from '../ir/index.ts';
 
 export {formatDiagnostic, PcbCompileError} from './diagnostics.ts';
 export type {CompilerDiagnostic, DiagnosticSeverity} from './diagnostics.ts';
@@ -11,10 +12,11 @@ export type CompileOptions = {
   command?: readonly string[];
   cwd?: string;
   hideWarnings?: boolean;
+  baseRevision?: number | null;
 };
 
 export type CompileResult = {
-  ir: unknown;
+  ir: BoardIr;
   diagnostics: CompilerDiagnostic[];
 };
 
@@ -28,7 +30,7 @@ export async function compile(
   const command = options.command ?? ['cargo', 'run', '--quiet', '-p', 'pcbir', '--', 'compile'];
   const process = Bun.spawn([...command], {
     cwd: options.cwd,
-    stdin: new Blob([JSON.stringify(createDeclarationTransaction(declarations))]),
+    stdin: new Blob([JSON.stringify(createDeclarationTransaction(declarations, options.baseRevision ?? null))]),
     stdout: 'pipe',
     stderr: 'pipe',
   });
@@ -39,11 +41,21 @@ export async function compile(
   ]);
   if (exitCode !== 0) throw compilerError(stderr, exitCode);
   if (stderr.trim()) console.error(stderr.trim());
-  const {compilerDiagnostics, ...result} = JSON.parse(stdout) as CompilerResponse;
+  const response = JSON.parse(stdout) as CompilerResponse;
+  if (response.ir.schemaVersion !== PCB_IR_SCHEMA_VERSION) {
+    throw new PcbCompileError({
+      code: 'PCBCLI002',
+      severity: 'error',
+      message: `unsupported PCB IR schema version ${String(response.ir.schemaVersion)}`,
+      entity: null,
+      help: `Use a compiler that emits schema version ${PCB_IR_SCHEMA_VERSION}.`,
+    });
+  }
+  const {compilerDiagnostics, ...result} = response;
   if (!options.hideWarnings) {
     for (const diagnostic of compilerDiagnostics) {
       console.error(formatDiagnostic(diagnostic));
     }
   }
-  return result;
+  return {...result, diagnostics: [...compilerDiagnostics, ...result.diagnostics]};
 }

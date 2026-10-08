@@ -9,8 +9,9 @@
     "test": "bun test",
     "typecheck": "bunx tsc --noEmit",
     "rust:check": "cargo check --workspace --all-targets",
+    "rust:lint": "cargo clippy --workspace --all-targets -- -D warnings",
     "rust:test": "cargo test --workspace",
-    "check": "bun run typecheck && bun test && bun run rust:check && bun run rust:test"
+    "check": "bun run typecheck && bun test && bun run rust:check && bun run rust:lint && bun run rust:test"
   },
   "devDependencies": {
     "@types/bun": "^1.4.2",

@@ -1,7 +1,7 @@
 use super::{NetId, PinRef};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DifferentialPairConstraint {
     pub id: String,
@@ -15,7 +15,7 @@ pub struct DifferentialPairConstraint {
     pub through: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ZoneConstraint {
     pub id: String,
     pub net: NetId,
@@ -24,7 +24,7 @@ pub struct ZoneConstraint {
     pub clearance: Option<f64>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KeepoutConstraint {
     pub id: String,
     pub region: String,

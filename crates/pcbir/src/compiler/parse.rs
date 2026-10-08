@@ -1,11 +1,11 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use serde_json::Value;
+use serde_json::{Value, json};
 
 use crate::Diagnostic;
 use crate::ir::{
-    Board, BoardSide, FootprintDefinition, LayerSet, LengthUnit, NetId, PartInstance, PinRef, Rect,
-    RegionDefinition, StackupLayer,
+    Board, BoardSide, ComponentDefinition, FootprintDefinition, LayerSet, LengthUnit,
+    NetDefinition, NetId, PartInstance, PinRef, Rect, RegionDefinition, StackupLayer,
 };
 use crate::protocol::DeclarationNode;
 
@@ -101,7 +101,15 @@ pub fn parse_units(props: &Value) -> Result<LengthUnit, CompileError> {
 
 pub fn parse_part(
     props: &Value,
-) -> Result<(PartInstance, Value, FootprintDefinition), CompileError> {
+) -> Result<
+    (
+        PartInstance,
+        ComponentDefinition,
+        FootprintDefinition,
+        Vec<NetDefinition>,
+    ),
+    CompileError,
+> {
     let id_value = props
         .get("id")
         .ok_or_else(|| CompileError::invalid("part id is required"))?;
@@ -109,18 +117,21 @@ pub fn parse_part(
     let reference = string(id_value, "reference")?;
     require_name(&id, "part ID", "PCBIR019")?;
     require_name(&reference, "part reference", "PCBIR019")?;
-    let connections = props
+    let parsed_connections = props
         .get("connect")
         .and_then(Value::as_object)
         .ok_or_else(|| CompileError::invalid(format!("part {reference} connections are required")))?
         .iter()
         .map(|(pin, net)| {
             require_name(pin, "pin name", "PCBIR019")?;
-            let net = string(net, "id")?;
-            require_name(&net, "net ID", "PCBIR019")?;
-            Ok((pin.clone(), NetId(net)))
+            Ok((pin.clone(), parse_net(net)?))
         })
         .collect::<Result<BTreeMap<_, _>, CompileError>>()?;
+    let connections: BTreeMap<String, NetId> = parsed_connections
+        .iter()
+        .map(|(pin, net)| (pin.clone(), net.id.clone()))
+        .collect();
+    let nets = parsed_connections.into_values().collect();
     let at = props
         .get("at")
         .and_then(Value::as_array)
@@ -167,16 +178,10 @@ pub fn parse_part(
             .map_err(|error| CompileError::invalid(format!("invalid footprint: {error}")))?
     };
     require_name(&footprint.key, "footprint key", "PCBIR019")?;
-    let (component, mut definition) = component_definition(props)?;
+    let (component, definition, embedded_pin_map) = component_definition(props)?;
     require_name(&component, "component key", "PCBIR019")?;
     let mut pin_map = BTreeMap::new();
-    if let Some(pins) = definition.get_mut("pins").and_then(Value::as_object_mut) {
-        for (name, pin) in pins {
-            if let Some(pad) = pin.as_object_mut().and_then(|pin| pin.remove("pad")) {
-                pin_map.insert(name.clone(), parse_pad_ids(&pad)?);
-            }
-        }
-    }
+    pin_map.extend(embedded_pin_map);
     if let Some(mapping) = props.get("pinMap") {
         let mapping = mapping
             .as_object()
@@ -186,15 +191,12 @@ pub fn parse_part(
             pin_map.insert(name.clone(), parse_pad_ids(pads)?);
         }
     }
-    if definition.get("pins").is_none() && pin_map.is_empty() {
+    if definition.pins.is_empty() && pin_map.is_empty() {
         pin_map.extend(
             connections
                 .keys()
                 .map(|name| (name.clone(), vec![name.clone()])),
         );
-    }
-    if let Some(object) = definition.as_object_mut() {
-        object.remove("footprint");
     }
     Ok((
         PartInstance {
@@ -211,13 +213,49 @@ pub fn parse_part(
         },
         definition,
         footprint,
+        nets,
     ))
 }
 
-fn component_definition(props: &Value) -> Result<(String, Value), CompileError> {
+type ParsedComponent = (String, ComponentDefinition, BTreeMap<String, Vec<String>>);
+
+fn component_definition(props: &Value) -> Result<ParsedComponent, CompileError> {
     if let Some(definition) = props.get("definition") {
-        let component = string(definition, "mpn")?;
-        return Ok((component, definition.clone()));
+        let mpn = string(definition, "mpn")?;
+        require_name(&mpn, "component MPN", "PCBIR019")?;
+        let manufacturer = definition.get("manufacturer").and_then(Value::as_str);
+        if let Some(manufacturer) = manufacturer {
+            require_name(manufacturer, "component manufacturer", "PCBIR019")?;
+        }
+        let component = definition
+            .get("key")
+            .and_then(Value::as_str)
+            .map(str::to_owned)
+            .unwrap_or_else(|| match manufacturer {
+                Some(manufacturer) => format!("part:{}", json!([manufacturer, mpn])),
+                None => mpn.clone(),
+            });
+        let mut value = definition.clone();
+        let object = value
+            .as_object_mut()
+            .ok_or_else(|| CompileError::invalid("component definition must be an object"))?;
+        object.remove("key");
+        object.remove("footprint");
+        let mut pin_map = BTreeMap::new();
+        if let Some(pins) = object.get_mut("pins").and_then(Value::as_object_mut) {
+            for (name, pin) in pins {
+                if let Some(pad) = pin.as_object_mut().and_then(|pin| pin.remove("pad")) {
+                    pin_map.insert(name.clone(), parse_pad_ids(&pad)?);
+                }
+            }
+        }
+        let definition = serde_json::from_value(value).map_err(|error| {
+            CompileError::diagnostic(
+                Diagnostic::error("PCBIR022", format!("invalid component definition: {error}"))
+                    .with_entity(&component),
+            )
+        })?;
+        return Ok((component, definition, pin_map));
     }
 
     let mpn = optional_string(props, "mpn");
@@ -226,14 +264,34 @@ fn component_definition(props: &Value) -> Result<(String, Value), CompileError> 
         .clone()
         .or_else(|| value.as_ref().map(|value| format!("value:{value}")))
         .unwrap_or_else(|| "primitive".to_owned());
-    let mut definition = serde_json::Map::new();
-    if let Some(mpn) = mpn {
-        definition.insert("mpn".into(), Value::String(mpn));
-    }
-    if let Some(value) = value {
-        definition.insert("value".into(), Value::String(value));
-    }
-    Ok((component, Value::Object(definition)))
+    Ok((
+        component,
+        ComponentDefinition {
+            manufacturer: None,
+            mpn,
+            value,
+            package: None,
+            datasheet: None,
+            pinout_coverage: None,
+            pins: BTreeMap::new(),
+        },
+        BTreeMap::new(),
+    ))
+}
+
+pub(super) fn parse_net(value: &Value) -> Result<NetDefinition, CompileError> {
+    let id = string(value, "id")?;
+    require_name(&id, "net ID", "PCBIR019")?;
+    let name = value
+        .get("name")
+        .and_then(Value::as_str)
+        .unwrap_or(&id)
+        .to_owned();
+    require_name(&name, "net name", "PCBIR019")?;
+    Ok(NetDefinition {
+        id: NetId(id),
+        name,
+    })
 }
 
 pub fn constraint_key(node: &DeclarationNode) -> Result<String, CompileError> {

@@ -21,6 +21,25 @@ export type {
   CompilerDiagnostic,
   DiagnosticSeverity,
 } from './compiler/index.ts';
+export {PCB_IR_SCHEMA_VERSION} from './ir/index.ts';
+export type {
+  BoardIr,
+  IrComponentDefinition,
+  IrDifferentialPair,
+  IrFootprintDefinition,
+  IrFootprintPad,
+  IrKeepout,
+  IrLayerSet,
+  IrNet,
+  IrPart,
+  IrPinDefinition,
+  IrPinRef,
+  IrRegion,
+  IrRouteConstraint,
+  IrStackupLayer,
+  IrTechnicalLayer,
+  IrZone,
+} from './ir/index.ts';
 export {net, pad, part, point, rect} from './model/index.ts';
 export type {Children, Net, Pin, Point, Rect, Region} from './model/index.ts';
 export {definePart} from './parts/index.tsx';

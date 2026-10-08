@@ -48,6 +48,7 @@ fn compiles_declarations_into_canonical_ir() {
     input.base_revision = Some(7);
 
     let output = compile(input).unwrap();
+    assert_eq!(output.ir.schema_version, crate::SCHEMA_VERSION);
     assert_eq!(output.ir.revision.0, 8);
     assert!(matches!(output.ir.units, crate::ir::LengthUnit::Mm));
     assert_eq!(output.ir.parts[0].id, "U1");
@@ -58,7 +59,34 @@ fn compiles_declarations_into_canonical_ir() {
     assert_eq!(output.ir.parts[0].rotation, 0.0);
     assert_eq!(output.ir.component_definitions.len(), 1);
     assert_eq!(output.ir.parts[0].component, output.ir.parts[1].component);
-    assert_eq!(output.ir.nets[0].0, "3V3");
+    assert_eq!(output.ir.nets[0].id.0, "3V3");
+    assert_eq!(output.ir.nets[0].name, "3V3");
+}
+
+#[test]
+fn canonical_ir_round_trips_through_json() {
+    let original = compile(transaction(vec![part(
+        "U1",
+        "QFN-32",
+        json!({"VDD": {"id": "power/3v3", "name": "3V3"}}),
+    )]))
+    .unwrap()
+    .ir;
+    let encoded = serde_json::to_value(&original).unwrap();
+    let decoded: crate::BoardIr = serde_json::from_value(encoded.clone()).unwrap();
+    assert_eq!(serde_json::to_value(decoded).unwrap(), encoded);
+    assert_eq!(original.nets[0].id.0, "power/3v3");
+    assert_eq!(original.nets[0].name, "3V3");
+}
+
+#[test]
+fn rejects_conflicting_names_for_one_net_id() {
+    let error = compile(transaction(vec![
+        part("U1", "TEST", json!({"1": {"id": "supply", "name": "3V3"}})),
+        part("U2", "TEST", json!({"1": {"id": "supply", "name": "VCC"}})),
+    ]))
+    .unwrap_err();
+    assert_eq!(error.diagnostic.code, "PCBIR030");
 }
 
 #[test]
@@ -66,7 +94,7 @@ fn rejects_conflicting_definitions_for_one_component_key() {
     let with_definition = |id: &str, footprint: &str| {
         json!({"type": "pcb-part", "props": {
             "id": {"id": id, "reference": id}, "footprint": footprint, "connect": {},
-            "definition": {"mpn": "SAME", "manufacturer": footprint}
+            "definition": {"key": "catalog/same", "mpn": "SAME", "manufacturer": footprint}
         }, "children": []})
     };
     let error = compile(transaction(vec![
@@ -75,6 +103,23 @@ fn rejects_conflicting_definitions_for_one_component_key() {
     ]))
     .unwrap_err();
     assert_eq!(error.diagnostic.code, "PCBIR007");
+}
+
+#[test]
+fn manufacturer_and_mpn_form_the_default_component_identity() {
+    let component = |id: &str, manufacturer: &str| {
+        json!({"type": "pcb-part", "props": {
+        "id": {"id": id, "reference": id}, "footprint": "TEST", "connect": {},
+        "definition": {"mpn": "SAME", "manufacturer": manufacturer}
+    }, "children": []})
+    };
+    let output = compile(transaction(vec![
+        component("U1", "A"),
+        component("U2", "B"),
+    ]))
+    .unwrap();
+    assert_eq!(output.ir.component_definitions.len(), 2);
+    assert_ne!(output.ir.parts[0].component, output.ir.parts[1].component);
 }
 
 #[test]

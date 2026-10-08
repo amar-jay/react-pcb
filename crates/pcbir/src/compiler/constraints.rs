@@ -1,17 +1,18 @@
 use super::{
     CompileError,
     parse::{
-        parse_pin, parse_rect, require_name, string, validate_keepout, validate_zone, value_number,
+        parse_net, parse_pin, parse_rect, require_name, string, validate_keepout, validate_zone,
+        value_number,
     },
 };
 use crate::Diagnostic;
 use crate::ir::{
-    DifferentialPairConstraint, KeepoutConstraint, LayerSet, NetId, PinRef, RegionDefinition,
-    RouteConstraint, StackupLayer, ZoneConstraint,
+    DifferentialPairConstraint, KeepoutConstraint, LayerSet, NetDefinition, NetId, PinRef,
+    RegionDefinition, RouteConstraint, StackupLayer, ZoneConstraint,
 };
 use crate::protocol::DeclarationNode;
 use serde_json::{Value, json};
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 
 #[derive(Default)]
 pub(super) struct Constraints {
@@ -20,6 +21,7 @@ pub(super) struct Constraints {
     pub zones: Vec<ZoneConstraint>,
     pub keepouts: Vec<KeepoutConstraint>,
     pub regions: BTreeMap<String, RegionDefinition>,
+    pub nets: BTreeMap<NetId, NetDefinition>,
     ids: BTreeMap<String, String>,
 }
 
@@ -33,6 +35,20 @@ fn encode(value: &str) -> String {
     format!("{hash:032x}")
 }
 impl Constraints {
+    fn net(&mut self, value: &Value) -> Result<NetId, CompileError> {
+        let definition = parse_net(value)?;
+        let id = definition.id.clone();
+        if let Some(existing) = self.nets.insert(id.clone(), definition.clone())
+            && existing != definition
+        {
+            return Err(CompileError::diagnostic(
+                Diagnostic::error("PCBIR030", "conflicting names for one net ID")
+                    .with_entity(&id.0)
+                    .with_help("Use one descriptive name for each stable net ID."),
+            ));
+        }
+        Ok(id)
+    }
     fn identity(
         &mut self,
         kind: &str,
@@ -103,7 +119,7 @@ impl Constraints {
         node: &DeclarationNode,
         scope: Option<&str>,
     ) -> Result<(), CompileError> {
-        let net = net(property(&node.props, "net")?)?;
+        let net = self.net(property(&node.props, "net")?)?;
         let from = parse_pin(property(&node.props, "from")?)?;
         let to = parse_pin(property(&node.props, "to")?)?;
         distinct(&from, &to)?;
@@ -125,8 +141,8 @@ impl Constraints {
         node: &DeclarationNode,
         scope: Option<&str>,
     ) -> Result<(), CompileError> {
-        let positive_net = net(property(&node.props, "positive")?)?;
-        let negative = net(property(&node.props, "negative")?)?;
+        let positive_net = self.net(property(&node.props, "positive")?)?;
+        let negative = self.net(property(&node.props, "negative")?)?;
         if positive_net == negative {
             return Err(CompileError::invalid("differential pair nets must differ"));
         }
@@ -173,7 +189,7 @@ impl Constraints {
         board_layers: &LayerSet,
     ) -> Result<(), CompileError> {
         validate_zone(&node.props)?;
-        let net = net(property(&node.props, "net")?)?;
+        let net = self.net(property(&node.props, "net")?)?;
         let mut layers = Vec::new();
         for value in property(&node.props, "layers")?.as_array().unwrap() {
             let id = value
@@ -237,7 +253,7 @@ impl Constraints {
                 .as_array()
                 .ok_or_else(|| CompileError::invalid("keepout exceptions must be an array"))?
             {
-                except.push(net(value)?);
+                except.push(self.net(value)?);
             }
         }
         except.sort();
@@ -248,23 +264,6 @@ impl Constraints {
             except,
         });
         Ok(())
-    }
-    pub fn nets(&self) -> BTreeSet<NetId> {
-        self.routes
-            .iter()
-            .map(|route| route.net.clone())
-            .chain(
-                self.pairs
-                    .iter()
-                    .flat_map(|pair| [pair.positive.clone(), pair.negative.clone()]),
-            )
-            .chain(self.zones.iter().map(|zone| zone.net.clone()))
-            .chain(
-                self.keepouts
-                    .iter()
-                    .flat_map(|keepout| keepout.except.iter().cloned()),
-            )
-            .collect()
     }
     pub fn endpoint_routes(&self) -> Vec<RouteConstraint> {
         self.routes
@@ -291,11 +290,6 @@ fn property<'a>(props: &'a Value, key: &str) -> Result<&'a Value, CompileError> 
     props
         .get(key)
         .ok_or_else(|| CompileError::invalid(format!("{key} is required")))
-}
-fn net(value: &Value) -> Result<NetId, CompileError> {
-    let id = string(value, "id")?;
-    require_name(&id, "net ID", "PCBIR019")?;
-    Ok(NetId(id))
 }
 fn positive(props: &Value, key: &str) -> Result<Option<f64>, CompileError> {
     let value = props.get(key).map(value_number).transpose()?;
