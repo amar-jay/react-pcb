@@ -12,19 +12,20 @@ import {
   compile,
   copperLayer,
   defineLayerSet,
-  defineFootprint,
   defineStackup,
   dielectricLayer,
   mechanicalLayer,
   pad,
   pasteLayer,
   rect,
+  renderFootprintDeclarations,
   silkscreenLayer,
   solderMaskLayer,
   useNet,
   usePart,
   type PartProps,
 } from '@react-pcb/core';
+import {Positioned0402} from './footprints/0402.tsx';
 import {STM32G0B1CBT6} from './parts/STM32G0B1CBT6.ts';
 import {USB4105GFA} from './parts/USB4105GFA.ts';
 
@@ -56,19 +57,16 @@ const boardLayers = defineLayerSet({
     silkscreenLayer({side: 'front', color: 'white'}),
     silkscreenLayer({side: 'back', color: 'white'}),
     mechanicalLayer({id: 'mechanical/assembly/front', purpose: 'assembly', side: 'front'}),
+    mechanicalLayer({purpose: 'fabrication', side: 'front'}),
+    mechanicalLayer({purpose: 'fabrication', side: 'back'}),
+    mechanicalLayer({purpose: 'courtyard', side: 'front'}),
+    mechanicalLayer({purpose: 'courtyard', side: 'back'}),
   ],
 });
 
-// Illustrative two-pad geometry; verify land patterns before manufacturing.
-const capacitorFootprint = defineFootprint({
-  key: 'example:0402',
-  pads: [
-    {id: '1', at: [-0.5, 0], shape: 'rect', size: [0.5, 0.6],
-      layers: [frontCopper, frontMask, frontPaste]},
-    {id: '2', at: [0.5, 0], shape: 'rect', size: [0.5, 0.6],
-      layers: [frontCopper, frontMask, frontPaste]},
-  ],
-});
+// Reuse the illustrative JSX footprint; Rust resolves its layout during board compilation.
+// Verify the land pattern against manufacturer data before fabrication.
+const capacitorFootprint = await renderFootprintDeclarations(<Positioned0402 />);
 
 type Net = PartProps['connect'][string];
 

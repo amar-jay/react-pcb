@@ -1,4 +1,8 @@
-import {definePart} from '@react-pcb/core';
+import React from 'react';
+import {definePart, renderFootprintDeclarations} from '@react-pcb/core';
+import {LQFP48Footprint} from '../footprints/LQFP48.tsx';
+
+const footprint = await renderFootprintDeclarations(React.createElement(LQFP48Footprint));
 
 export const STM32G0B1CBT6 = definePart({
   manufacturer: 'STMicroelectronics',
@@ -20,7 +24,7 @@ export const STM32G0B1CBT6 = definePart({
     PA12: {electricalType: 'bidirectional', functions: ['GPIO', 'USB_DP']},
   },
 }, {
-  footprint: 'LQFP-48_7x7mm_P0.5mm',
+  footprint,
   pinMap: {
     'VDD/VDDA': '6',
     'VSS/VSSA': '7',

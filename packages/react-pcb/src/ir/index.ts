@@ -52,7 +52,7 @@ export type IrFootprintPad = Readonly<{
   size: readonly [number, number];
   rotation: number;
   layers: readonly (string | Readonly<{kind: 'all-copper'}> | Readonly<{role: FootprintRole}>)[];
-  drill: Readonly<{diameter: number; plated: boolean}> | null;
+  drill: Readonly<{diameter: number; slot?: readonly [number, number]; plated: boolean}> | null;
 }>;
 export type IrFootprintDefinition = Readonly<{
   key: string;

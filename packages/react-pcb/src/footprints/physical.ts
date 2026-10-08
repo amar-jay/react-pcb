@@ -3,7 +3,7 @@ import {renderFootprintDeclarations, type FootprintDeclarations} from './jsx.tsx
 import {compilerError} from '../compiler/diagnostics.ts';
 import type {FootprintDefinition} from './index.ts';
 
-export const FOOTPRINT_SCHEMA_VERSION = 1 as const;
+export const FOOTPRINT_SCHEMA_VERSION = 2 as const;
 export type PhysicalLength = `${number}${'nm' | 'um' | 'mm' | 'mil' | 'in'}`;
 export type FootprintRole = 'front-copper' | 'back-copper' | 'all-copper'
   | 'front-mask' | 'back-mask' | 'all-mask' | 'front-paste' | 'back-paste'
@@ -30,22 +30,22 @@ export type PhysicalFeature<L> = Readonly<{
   shape: PhysicalShape<L>;
   rotation: 0 | 90 | 180 | 270;
   layers: readonly FootprintRole[];
-  drill: Readonly<{diameter: L; plated: boolean}> | null;
+  drill: Readonly<{diameter: L; slot?: readonly [L, L]; plated: boolean}> | null;
   stroke: L | null;
 }>;
 export type FeatureInput = Omit<PhysicalFeature<PhysicalLength>, 'rotation' | 'layers' | 'drill' | 'stroke'> & {
   rotation?: 0 | 90 | 180 | 270;
   layers?: readonly FootprintRole[];
-  drill?: Readonly<{diameter: PhysicalLength; plated: boolean}>;
+  drill?: Readonly<{diameter: PhysicalLength; slot?: readonly [PhysicalLength, PhysicalLength]; plated: boolean}>;
   stroke?: PhysicalLength;
 };
 export type PhysicalFootprintInput = Readonly<{
-  schemaVersion: typeof FOOTPRINT_SCHEMA_VERSION;
+  schemaVersion: 1 | typeof FOOTPRINT_SCHEMA_VERSION;
   key: string;
   features: readonly FeatureInput[];
 }>;
 export type PhysicalFootprint = Readonly<{
-  schemaVersion: typeof FOOTPRINT_SCHEMA_VERSION;
+  schemaVersion: 1 | typeof FOOTPRINT_SCHEMA_VERSION;
   key: string;
   units: 'nm';
   features: readonly PhysicalFeature<number>[];

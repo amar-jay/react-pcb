@@ -48,5 +48,7 @@ pub enum CopperLayerSelector {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PadDrill {
     pub diameter: f64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub slot: Option<[f64; 2]>,
     pub plated: bool,
 }

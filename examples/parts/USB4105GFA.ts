@@ -1,4 +1,8 @@
-import {definePart} from '@react-pcb/core';
+import React from 'react';
+import {definePart, renderFootprintDeclarations} from '@react-pcb/core';
+import {USB4105Footprint} from '../footprints/USB4105.tsx';
+
+const footprint = await renderFootprintDeclarations(React.createElement(USB4105Footprint));
 
 export const USB4105GFA = definePart({
   manufacturer: 'Global Connector Technology',
@@ -35,16 +39,16 @@ export const USB4105GFA = definePart({
     Shield: {electricalType: 'passive'},
   },
 }, {
-  footprint: 'USB-C_Receptacle_GCT_USB4105',
+  footprint,
   pinMap: {
-    'GND': ['A1', 'A12', 'B1', 'B12'],
-    'VBUS': ['A4', 'A9', 'B4', 'B9'],
+    'GND': ['A1/B12', 'B1/A12'],
+    'VBUS': ['A4/B9', 'B4/A9'],
     'CC1': 'A5',
     'CC2': 'B5',
     'DPlus': ['A6', 'B6'],
     'DMinus': ['A7', 'B7'],
     'SBU1': 'A8',
     'SBU2': 'B8',
-    'Shield': 'SHELL',
+    'Shield': ['SHELL1', 'SHELL2', 'SHELL3', 'SHELL4'],
   },
 });

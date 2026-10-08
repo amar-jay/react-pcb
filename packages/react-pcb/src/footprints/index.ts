@@ -12,7 +12,7 @@ export type FootprintPad = Readonly<{
   size: readonly [number, number];
   rotation?: number;
   layers: readonly PadLayer[];
-  drill?: Readonly<{diameter: number; plated: boolean}>;
+  drill?: Readonly<{diameter: number; slot?: readonly [number, number]; plated: boolean}>;
 }>;
 export type FootprintDefinition = Readonly<{
   key: string;
@@ -46,11 +46,21 @@ export function defineFootprint(definition: FootprintDefinition): FootprintDefin
       seen.add(key);
       return bound;
     });
-    if (pad.drill) assertPositive(pad.drill.diameter, 'drill diameter');
+    if (pad.drill) {
+      assertPositive(pad.drill.diameter, 'drill diameter');
+      if (pad.drill.slot) {
+        if (pad.drill.slot.length !== 2) throw new Error('drill slot must contain two dimensions');
+        pad.drill.slot.forEach(n => assertPositive(n, 'drill slot dimension'));
+        if (pad.drill.slot[0] === pad.drill.slot[1] || Math.min(...pad.drill.slot) !== pad.drill.diameter) {
+          throw new Error('slot requires distinct dimensions and diameter equal to its minor dimension');
+        }
+        if (pad.drill.slot.some((n, axis) => n > pad.size[axis]!)) throw new Error('slot exceeds pad dimensions');
+      }
+    }
     return Object.freeze({...pad, at: Object.freeze([...pad.at]) as readonly [number, number],
       size: Object.freeze([...pad.size]) as readonly [number, number],
       layers: Object.freeze(layers),
-      ...(pad.drill ? {drill: Object.freeze({...pad.drill})} : {})});
+      ...(pad.drill ? {drill: Object.freeze({...pad.drill, ...(pad.drill.slot ? {slot: Object.freeze([...pad.drill.slot]) as readonly [number, number]} : {})})} : {})});
   });
   return Object.freeze({key: definition.key, pads: Object.freeze(pads)});
 }

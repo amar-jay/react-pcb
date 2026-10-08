@@ -28,7 +28,7 @@ export type FootprintGroupProps = Container;
 export type PadProps = Common & {
   shape?: 'rect' | 'rounded-rect' | 'circle' | 'oval';
   layers: readonly FootprintRole[];
-  drill?: Readonly<{diameter: PhysicalLength; plated: boolean}>;
+  drill?: Readonly<{diameter: PhysicalLength; slot?: readonly [PhysicalLength, PhysicalLength]; plated: boolean}>;
 };
 export type HoleProps = Common & {plated: boolean};
 export type GraphicProps = Common & {

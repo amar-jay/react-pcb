@@ -33,7 +33,7 @@ Feature `at` is its center in footprint-local coordinates. The origin is explici
 
 ## Geometry and meaning
 
-Shapes are rectangles, rounded rectangles, circles, and ovals. Features have stable local IDs and explicit purposes: pads, plated/non-plated holes, copper, mask openings, paste openings, silkscreen, courtyard, and fabrication graphics. Drills retain diameter and plating separately from copper geometry. Documentation outlines can have an explicit physical stroke width; omitted stroke means filled geometry.
+Shapes are rectangles, rounded rectangles, circles, and ovals. Features have stable local IDs and explicit purposes: pads, plated/non-plated holes, copper, mask openings, paste openings, silkscreen, courtyard, and fabrication graphics. Drills retain diameter, optional capsule slot dimensions, and plating separately from copper geometry. Documentation outlines can have an explicit physical stroke width; omitted stroke means filled geometry.
 
 IDs remain unchanged when features move or reorder. References to a feature must include its owning footprint or placed-part ID. A footprint's key is independent of its component and geometry.
 
@@ -41,7 +41,7 @@ Layer roles describe footprint-relative front/back copper, mask, paste, silkscre
 
 ## Instances and compatibility
 
-Board IR now emits `schemaVersion: 2`. Each resolved footprint optionally contains `physical`, and each part contains `physicalFeatures`. The physical footprint has its own `schemaVersion: 1` and `units: 'nm'`. These version namespaces are independent.
+Board IR now emits `schemaVersion: 2`. Each resolved footprint optionally contains `physical`, and each part contains `physicalFeatures`. The physical footprint now has its own `schemaVersion: 2` and `units: 'nm'`. Version-one round-drill physical footprints remain readable; slots require version two. These version namespaces are independent.
 
 `physical` is authoritative exact geometry. The existing `pads` collection remains a compatibility index for logical-pin bindings and old consumers. Its numeric dimensions are a millimetre bounding-envelope projection; a rounded rectangle projects as a rectangle there. Manufacturing consumers must use `physical` to preserve its radius and additional features. Board coordinates and legacy footprints keep their existing numeric-unit convention during this transition.
 
@@ -72,7 +72,7 @@ Open the generated `index.html` in a browser to toggle semantic layers independe
 - Local x points right, y points down; local clockwise quarter-turn rotation is applied about the shape center, then the shape is translated to its feature position. Rectangles and rounded rectangles retain dimensions/radii. Ovals are capsules with radius half the smaller dimension, rather than ellipses. Circles retain exact diameters. Stroke widths scale with the geometry.
 - Semantic role groups appear in lexicographic role-name order. Features within each group appear in UTF-8 byte order of their stable IDs. A feature targeting several roles emits one element per role. All-copper and all-mask remain semantic groups without inventing board layers. Groups with no features are omitted.
 - Each projected element has a collision-free XML `id` formed as `f-<hex footprint key>-<hex role>-<hex feature ID>`, using lowercase hex UTF-8 bytes. `data-feature-id` preserves the source local ID; root `data-footprint-key` identifies its owner. `data-purpose` preserves feature purpose. Semantic groups use `layer-<role>` IDs and `data-layer` attributes.
-- Drills appear once per source feature, in a final `drills` group (`data-layer="drill"`), sorted by feature ID. Their circles encode exact center and radius, source ID, `data-purpose="drill"`, and `data-plated`. Dedicated hole features emit drill elements even though they have no semantic layers. Pad drills are independent of the pad's copper/mask/paste projections.
+- Drills appear once per source feature, in a final `drills` group (`data-layer="drill"`), sorted by feature ID. Round drills encode exact center and radius; slotted drills encode capsule dimensions and the feature rotation. Both retain source ID, `data-purpose="drill"`, and `data-plated`. Dedicated hole features emit drill elements even though they have no semantic layers. Pad drills are independent of the pad's copper/mask/paste projections.
 - Mask/paste openings have explicit elements in their respective groups. Layer colors and dark drill fills are inspection styling; they do not define manufacturing meaning or subtract material from canonical shapes. Later groups can cover earlier ones in the composite preview; use the inspection page's layer toggles to see each layer independently.
 - XML text/attributes escape ampersands, angle brackets, both quotes, and attribute whitespace. Invalid XML control characters in keys/IDs fail with `PCBSVG001`. No IDs are interpolated into executable markup.
 - UTF-8 output uses LF newlines, fixed attribute order, and one final newline. Repeated compilation of the same declaration and repeated projection yield identical bytes. Projection also ignores feature and role input ordering. Canonical IR itself retains declared feature order.
@@ -100,7 +100,7 @@ const footprint = await compileFootprint(declarations); // compileFootprint(elem
 const svg = await footprintSvg(footprint);
 ```
 
-The two pad centers are exactly `[-500000, 0]` and `[500000, 0]` nm. See `examples/footprints/0402.tsx` for a fixture using a layout group. `bun run footprints:inspect` includes its resolved SVG in the inspection page. The basic board example remains unchanged until Phase six.
+The two pad centers are exactly `[-500000, 0]` and `[500000, 0]` nm. See `examples/footprints/0402.tsx` for a fixture using a layout group. `bun run footprints:inspect` includes its resolved SVG in the inspection page. `examples/basic.tsx` reuses this authored footprint for its decoupling capacitor: `renderFootprintDeclarations` snapshots the JSX, and board compilation resolves its layout, pin bindings, placement, and semantic layers.
 
 ### Layout contract
 
@@ -139,6 +139,22 @@ Unsupported declarations, props, styles, transforms, nonphysical units, percenta
 
 `renderFootprintDeclarations(element)` returns a JSON snapshot with `{protocolVersion: 1, kind: 'footprint-declarations', root: DeclarationNode}`. Host declaration types are `fp-footprint`, `fp-group`, `fp-pad`, `fp-hole`, and `fp-graphic`. Props retain physical-unit strings and styles; `sourceKey` retains frontend identity hints. The CLI `pcbir footprint` accepts this envelope or the existing explicit physical declaration. Rust's public `layout::compile_layout` accepts the same envelope. A serialized envelope can also be passed as a placed part's `footprint`; Rust resolves it before binding and placement. Compiled physical definitions continue to work with `Part` and `definePart`.
 
-The layout protocol version is separate from physical schema version 1 and board schema version 2. Neither canonical schema changes in this phase. Resolved physical IR contains shapes, coordinates, layers, and bounds; it contains no styles, JSX types, group wrappers, or source hints.
+The layout protocol version is separate from physical schema version and board schema version 2. Phase three originally used physical version one; subsequent slotted-drill support emits physical version two while this layout protocol remains unchanged. Resolved physical IR contains shapes, coordinates, layers, and bounds; it contains no styles, JSX types, group wrappers, or source hints.
 
 Layout failures use `PCBFP002`; unit and physical validation failures retain `PCBFP001`. Diagnostics identify `footprint-key/feature-ID` (or the footprint/group for container failures). Each declaration may provide `source={{file, line, column}}`; lines and columns are optional positive one-based integers. Diagnostics retain that information and `sourceKey` when available, falling back to enclosing declarations if necessary. Source metadata is optional and currently author-provided; the renderer does not infer file locations. The TypeScript diagnostic formatter prints file locations without requiring callers to parse messages.
+
+## Slotted drills and the USB4105 land pattern
+
+Physical schema version two adds optional `slot: [width, height]` to a drill. Lengths are physical-unit strings in authoring declarations and integer nanometres in canonical geometry. `diameter` must equal the smaller slot dimension; slot dimensions must differ, be positive, fit the feature envelope, and pass the existing precision limits. The capsule's axes are local to the containing feature and follow its placement rotation/reflection. `Pad` supports slots through `drill`; `Hole` remains the circular-hole convenience declaration. Documentation and manufacturer checks beyond these geometric envelope validations remain separate.
+
+```tsx
+<Pad name="SHELL1" shape="oval" layers={['all-copper', 'all-mask', 'front-paste']}
+  style={{position: 'absolute', width: '1mm', height: '2.1mm', left: '0mm', top: '0mm'}}
+  drill={{diameter: '0.6mm', slot: ['0.6mm', '1.7mm'], plated: true}} />
+```
+
+New explicit declarations, JSX compilations and migration of numeric legacy geometry emit physical schema version two. Existing compiled physical version-one definitions without slots remain accepted and can pass through migration unchanged. Version-one authoring declarations still accept circular drills and normalize to version two; a version-one declaration or canonical definition containing a slot is rejected. The board schema remains version two because the independently versioned `physical` definition is authoritative; consumers must validate that nested version. Compatibility pad drills also retain optional millimetre slot dimensions. SVG renders slots as independent capsule drill elements rather than approximating them with circles.
+
+[USB4105 source and coordinate notes](footprints/USB4105.md) document the GCT B4 land pattern, official KiCad cross-check, merged contact lands, mounting slots, and locating holes. Its authored footprint is integrated into the USB4105-GF-A component and `examples/basic.tsx`; the inspection page includes its layer-separated SVG.
+
+The MCU now uses the authored [LQFP48 land pattern](footprints/LQFP48.md), with all 48 physical pads following ST DS13560 Rev 6 Figure 44. Its logical pin definition remains explicitly partial. All footprints in `examples/basic.tsx` resolve to physical geometry; `bun run footprints:inspect` also includes the LQFP48 SVG.

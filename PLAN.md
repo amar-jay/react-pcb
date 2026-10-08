@@ -114,7 +114,7 @@ Acceptance: fixture assertions verify every pad center, size, pitch, and bounds.
 - [ ] Introduce explicit manufacturing profiles for minimum feature size, annular ring, spacing, and other supported checks.
 - [ ] Report checks that cannot yet be performed rather than implying comprehensive manufacturability approval.
 - [ ] Add mask/paste and courtyard checks once their geometry is represented.
-- [ ] Integrate a small authored footprint into `examples/basic.tsx`.
+- [x] Integrate a small authored footprint into `examples/basic.tsx`.
 - [ ] Document supported styles, units, coordinate conventions, layer roles, precision limits, and migration behavior.
 - [ ] Add regression fixtures and required checks to CI.
 

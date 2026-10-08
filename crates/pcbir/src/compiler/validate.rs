@@ -177,10 +177,17 @@ fn validate_footprint(footprint: &FootprintDefinition) -> Result<(), CompileErro
                 .any(|value| !value.is_finite() || *value <= 0.0)
             || pad.layers.is_empty()
             || pad.layers.iter().collect::<BTreeSet<_>>().len() != pad.layers.len()
-            || pad
-                .drill
-                .as_ref()
-                .is_some_and(|drill| !drill.diameter.is_finite() || drill.diameter <= 0.0)
+            || pad.drill.as_ref().is_some_and(|drill| {
+                !drill.diameter.is_finite()
+                    || drill.diameter <= 0.0
+                    || drill.slot.is_some_and(|slot| {
+                        slot.iter().any(|n| !n.is_finite() || *n <= 0.0)
+                            || slot[0] == slot[1]
+                            || slot[0].min(slot[1]) != drill.diameter
+                            || slot[0] > pad.size[0]
+                            || slot[1] > pad.size[1]
+                    })
+            })
         {
             return Err(binding_error(
                 "PCBIR025",

@@ -141,7 +141,13 @@ pub fn footprint_svg(footprint: &PhysicalFootprint) -> Result<String, CompileErr
         svg.push_str("<g id=\"drills\" data-layer=\"drill\" fill=\"#18202b\" stroke=\"none\">\n");
         for f in drills {
             let d = f.drill.as_ref().unwrap();
-            writeln!(svg, "<circle id=\"{}\" data-feature-id=\"{}\" data-purpose=\"drill\" data-plated=\"{}\" cx=\"{}\" cy=\"{}\" r=\"{}\" />", identity(&footprint.key, "drill", &f.id), escape(&f.id)?, d.plated, i128::from(f.at[0]) * 2, i128::from(f.at[1]) * 2, d.diameter).unwrap();
+            if let Some(size) = d.slot {
+                let mut drill = f.clone();
+                drill.shape = Shape::Oval { size };
+                writeln!(svg, "{} id=\"{}\" data-feature-id=\"{}\" data-purpose=\"drill\" data-plated=\"{}\" data-drill-shape=\"slot\" transform=\"translate({} {}) rotate({})\" />", geometry(&drill), identity(&footprint.key, "drill", &f.id), escape(&f.id)?, d.plated, i128::from(f.at[0]) * 2, i128::from(f.at[1]) * 2, f.rotation).unwrap();
+            } else {
+                writeln!(svg, "<circle id=\"{}\" data-feature-id=\"{}\" data-purpose=\"drill\" data-plated=\"{}\" cx=\"{}\" cy=\"{}\" r=\"{}\" />", identity(&footprint.key, "drill", &f.id), escape(&f.id)?, d.plated, i128::from(f.at[0]) * 2, i128::from(f.at[1]) * 2, d.diameter).unwrap();
+            }
         }
         svg.push_str("</g>\n");
     }
@@ -154,6 +160,26 @@ mod tests {
     use super::*;
     use crate::physical::compile_footprint;
     use serde_json::json;
+
+    #[test]
+    fn rotated_slots_render_as_capsules_and_legacy_circles_remain_readable() {
+        let footprint = compile_footprint(serde_json::from_value(json!({"schemaVersion":2,"key":"slots","features":[
+            {"id":"SH","purpose":"pad","at":["1mm","2mm"],"rotation":90,"shape":{"kind":"oval","size":["1mm","2.1mm"]},"layers":["all-copper"],"drill":{"diameter":"0.6mm","slot":["0.6mm","1.7mm"],"plated":true}}
+        ]})).unwrap()).unwrap();
+        let svg = footprint_svg(&footprint).unwrap();
+        assert!(svg.contains(
+            "data-drill-shape=\"slot\" transform=\"translate(2000000 4000000) rotate(90)\""
+        ));
+        assert!(svg.contains("<rect x=\"-600000\" y=\"-1700000\" width=\"1200000\" height=\"3400000\" rx=\"600000\" ry=\"600000\""));
+        let mut round = footprint.clone();
+        round.features[0].drill.as_mut().unwrap().slot = None;
+        round.schema_version = 1;
+        assert!(
+            footprint_svg(&round)
+                .unwrap()
+                .contains("cx=\"2000000\" cy=\"4000000\" r=\"600000\"")
+        );
+    }
 
     #[test]
     fn exact_decimal_formatting() {

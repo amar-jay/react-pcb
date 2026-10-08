@@ -5,7 +5,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::{BoardSide, CompileError, Diagnostic, LayerSet, StackupLayer, TechnicalLayer};
 
-pub const FOOTPRINT_VERSION: u32 = 1;
+pub const FOOTPRINT_VERSION: u32 = 2;
 // JSON numbers must round-trip exactly through JavaScript.
 const LIMIT: i64 = 9_007_199_254_740_991;
 
@@ -222,6 +222,9 @@ pub struct Feature {
 #[serde(deny_unknown_fields)]
 pub struct Drill {
     pub diameter: i64,
+    /// Full capsule dimensions; diameter is the slot tool width (minor dimension).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub slot: Option<[i64; 2]>,
     pub plated: bool,
 }
 
@@ -278,11 +281,12 @@ pub enum ShapeInput {
 #[serde(deny_unknown_fields)]
 pub struct DrillInput {
     pub diameter: String,
+    pub slot: Option<[String; 2]>,
     pub plated: bool,
 }
 
 pub fn compile_footprint(input: FootprintInput) -> Result<PhysicalFootprint, CompileError> {
-    if input.schema_version != FOOTPRINT_VERSION {
+    if ![1, FOOTPRINT_VERSION].contains(&input.schema_version) {
         return Err(invalid("unsupported footprint authoring version"));
     }
     let pair =
@@ -313,6 +317,7 @@ pub fn compile_footprint(input: FootprintInput) -> Result<PhysicalFootprint, Com
                     .map(|d| {
                         Ok(Drill {
                             diameter: length(&d.diameter)?,
+                            slot: d.slot.map(pair).transpose()?,
                             plated: d.plated,
                         })
                     })
@@ -321,6 +326,13 @@ pub fn compile_footprint(input: FootprintInput) -> Result<PhysicalFootprint, Com
             })
         })
         .collect::<Result<Vec<_>, CompileError>>()?;
+    if input.schema_version == 1
+        && features
+            .iter()
+            .any(|f| f.drill.as_ref().is_some_and(|d| d.slot.is_some()))
+    {
+        return Err(invalid("slots require physical footprint schema version 2"));
+    }
     let bounds = bounds(&features)?;
     let result = PhysicalFootprint {
         schema_version: FOOTPRINT_VERSION,
@@ -380,6 +392,7 @@ impl PhysicalFootprint {
                     .collect(),
                 drill: f.drill.as_ref().map(|d| crate::PadDrill {
                     diameter: d.diameter as f64 / 1_000_000.0,
+                    slot: d.slot.map(|s| s.map(|n| n as f64 / 1_000_000.0)),
                     plated: d.plated,
                 }),
             })
@@ -387,7 +400,7 @@ impl PhysicalFootprint {
     }
 
     pub fn validate(&self) -> Result<(), CompileError> {
-        if self.schema_version != FOOTPRINT_VERSION
+        if ![1, FOOTPRINT_VERSION].contains(&self.schema_version)
             || self.units != "nm"
             || self.key.trim().is_empty()
         {
@@ -468,13 +481,19 @@ impl PhysicalFootprint {
                 return Err(invalid("overlapping semantic layer roles"));
             }
             if hole
-                && (!matches!(f.shape, Shape::Circle { .. })
-                    || f.drill
-                        .as_ref()
-                        .is_some_and(|d| f.shape.size() != [d.diameter; 2]))
+                && f.drill.as_ref().is_some_and(|d| {
+                    let shape = if let Some(size) = d.slot {
+                        Shape::Oval { size }
+                    } else {
+                        Shape::Circle {
+                            diameter: d.diameter,
+                        }
+                    };
+                    f.shape != shape
+                })
             {
                 return Err(invalid(
-                    "hole shape must be a circle matching its drill diameter",
+                    "hole shape must match its circular or slotted drill geometry",
                 ));
             }
             if !hole && f.layers.is_empty() {
@@ -490,8 +509,23 @@ impl PhysicalFootprint {
             }
             if let Some(d) = &f.drill {
                 checked(i128::from(d.diameter))?;
+                let size = d.slot.unwrap_or([d.diameter; 2]);
+                for n in size {
+                    checked(i128::from(n))?;
+                }
+                if d.slot.is_some()
+                    && (self.schema_version == 1
+                        || size[0] == size[1]
+                        || size[0].min(size[1]) != d.diameter)
+                {
+                    return Err(invalid(
+                        "slots require schema version 2, distinct dimensions, and diameter equal to their minor dimension",
+                    ));
+                }
                 if d.diameter <= 0
-                    || d.diameter > f.shape.size()[0].min(f.shape.size()[1])
+                    || size.iter().any(|n| *n <= 0)
+                    || size[0] > f.shape.size()[0]
+                    || size[1] > f.shape.size()[1]
                     || (!hole && f.purpose != Purpose::Pad)
                     || (hole && d.plated != (f.purpose == Purpose::PlatedHole))
                 {
@@ -659,6 +693,7 @@ pub fn migrate_footprint(
                     .map(|d| {
                         Ok(Drill {
                             diameter: convert(d.diameter)?,
+                            slot: d.slot.map(pair).transpose()?,
                             plated: d.plated,
                         })
                     })
@@ -704,6 +739,55 @@ mod tests {
         )
         .unwrap()
     }
+    #[test]
+    fn slotted_drills_are_exact_versioned_and_checked() {
+        let input = serde_json::json!({"schemaVersion":2,"key":"slots","features":[
+            {"id":"SH","purpose":"pad","at":["0mm","0mm"],"shape":{"kind":"oval","size":["1mm","2.1mm"]},"layers":["all-copper"],"drill":{"diameter":"0.6mm","slot":["0.6mm","1.7mm"],"plated":true}}
+        ]});
+        let compiled = compile_footprint(serde_json::from_value(input.clone()).unwrap()).unwrap();
+        assert_eq!(
+            compiled.features[0].drill.as_ref().unwrap().slot,
+            Some([600_000, 1_700_000])
+        );
+        let serialized = serde_json::to_value(&compiled).unwrap();
+        let decoded: PhysicalFootprint = serde_json::from_value(serialized).unwrap();
+        assert_eq!(compiled, decoded);
+        let mut old = input.clone();
+        old["schemaVersion"] = serde_json::json!(1);
+        assert!(compile_footprint(serde_json::from_value(old).unwrap()).is_err());
+        let mut old = compiled.clone();
+        old.schema_version = 1;
+        assert!(old.validate().is_err());
+        let mut round = fixture();
+        round.schema_version = 1;
+        assert!(round.validate().is_ok());
+        for (diameter, slot) in [
+            (600_000, [600_000, 600_000]),
+            (500_000, [600_000, 1_700_000]),
+            (600_000, [600_000, 2_200_000]),
+            (600_000, [-600_000, 1_700_000]),
+            (600_000, [600_000, LIMIT + 1]),
+        ] {
+            let mut invalid = compiled.clone();
+            invalid.features[0].drill = Some(Drill {
+                diameter,
+                slot: Some(slot),
+                plated: true,
+            });
+            assert!(invalid.validate().is_err());
+        }
+        let pad = &compiled.compatibility_pads()[0];
+        assert_eq!(pad.drill.as_ref().unwrap().slot, Some([0.6, 1.7]));
+        let legacy = crate::FootprintDefinition {
+            key: "slots".into(),
+            resolved: true,
+            pads: compiled.compatibility_pads(),
+            physical: None,
+        };
+        let migrated = migrate_footprint(&legacy, crate::LengthUnit::Mm, &BTreeMap::new()).unwrap();
+        assert_eq!(migrated, compiled);
+    }
+
     #[test]
     fn exact_units_and_overflow() {
         assert_eq!(length("1in").unwrap(), length("1000mil").unwrap());

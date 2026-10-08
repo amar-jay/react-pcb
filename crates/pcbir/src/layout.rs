@@ -461,15 +461,33 @@ impl Compiler<'_> {
         let drill = if hole {
             Some(Drill {
                 diameter: box_layout.size[0],
+                slot: None,
                 plated: purpose == Purpose::PlatedHole,
             })
         } else {
             node.props
                 .get("drill")
                 .map(|v| {
-                    keys(v, &["diameter", "plated"], "drill")?;
+                    keys(v, &["diameter", "slot", "plated"], "drill")?;
                     Ok(Drill {
                         diameter: length(v, "diameter")?,
+                        slot: v
+                            .get("slot")
+                            .map(|s| {
+                                let s = s
+                                    .as_array()
+                                    .filter(|s| s.len() == 2)
+                                    .ok_or_else(|| invalid("slot requires two physical lengths"))?;
+                                Ok([
+                                    physical::length(s[0].as_str().ok_or_else(|| {
+                                        invalid("slot requires physical-unit strings")
+                                    })?)?,
+                                    physical::length(s[1].as_str().ok_or_else(|| {
+                                        invalid("slot requires physical-unit strings")
+                                    })?)?,
+                                ])
+                            })
+                            .transpose()?,
                         plated: v
                             .get("plated")
                             .and_then(Value::as_bool)

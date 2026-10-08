@@ -1,5 +1,7 @@
 import React from 'react';
 import {Positioned0402} from './0402.tsx';
+import {USB4105Footprint} from './USB4105.tsx';
+import {LQFP48Footprint} from './LQFP48.tsx';
 import {compileFootprint, definePhysicalFootprint, footprintSvg} from '@react-pcb/core';
 
 // Illustrative geometry for inspection, not verified manufacturer land patterns.
@@ -21,6 +23,19 @@ const fixtures = [
 
 const output = process.argv[2] ?? '/tmp/react-pcb-footprints';
 const previews: string[] = [];
+const lqfp = await compileFootprint(React.createElement(LQFP48Footprint), {cwd: import.meta.dir + '/../..'});
+const lqfpSvg = await footprintSvg(lqfp, {cwd: import.meta.dir + '/../..'});
+await Bun.write(`${output}/lqfp48.json`, JSON.stringify(lqfp, null, 2) + '\n');
+await Bun.write(`${output}/lqfp48.svg`, lqfpSvg);
+previews.push(`<section><h2>LQFP48 (ST DS13560 land pattern)</h2><div class="layers"></div>${lqfpSvg}</section>`);
+console.log(`${output}/lqfp48.svg`);
+const usb = await compileFootprint(React.createElement(USB4105Footprint), {cwd: import.meta.dir + '/../..'});
+const usbSvg = await footprintSvg(usb, {cwd: import.meta.dir + '/../..'});
+await Bun.write(`${output}/usb4105.json`, JSON.stringify(usb, null, 2) + '\n');
+await Bun.write(`${output}/usb4105.svg`, usbSvg);
+previews.push(`<section><h2>USB4105 (GCT B4 land pattern)</h2><div class="layers"></div>${usbSvg}</section>`);
+console.log(`${output}/usb4105.svg`);
+
 const positioned = await compileFootprint(React.createElement(Positioned0402), {cwd: import.meta.dir + '/../..'});
 await Bun.write(`${output}/positioned-0402.json`, JSON.stringify(positioned, null, 2) + '\n');
 const positionedSvg = await footprintSvg(positioned, {cwd: import.meta.dir + '/../..'});
@@ -39,7 +54,7 @@ for (const declaration of fixtures) {
 await Bun.write(`${output}/index.html`, `<!doctype html>
 <html lang="en"><meta charset="utf-8"><title>Footprint inspection</title>
 <style>body{font:16px system-ui;margin:32px;background:#f6f7f9;color:#18202b}section{margin-bottom:40px}svg{display:block;width:720px;max-width:100%;height:auto;margin-top:20px;background:white}label{display:inline-block;margin:4px 16px 4px 0}</style>
-<h1>Footprint inspection</h1><p>Illustrative geometry. Toggle semantic layers to inspect pads, openings, and drills independently.</p>
+<h1>Footprint inspection</h1><p>0402/passive/header geometry is illustrative; USB4105 and LQFP48 follow their documented manufacturer drawings. Toggle semantic layers to inspect pads, openings, and drills independently.</p>
 ${previews.join('\n')}
 <script>
 for (const section of document.querySelectorAll('section')) {
