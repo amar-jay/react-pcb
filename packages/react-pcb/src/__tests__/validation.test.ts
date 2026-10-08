@@ -1,6 +1,6 @@
 import {expect, test} from 'bun:test';
 
-import {copperLayer, dielectricLayer, solderMaskLayer} from '../layers/index.ts';
+import {copperLayer, dielectricLayer, solderMaskLayer, defineLayerSet, defineStackup, pasteLayer} from '../layers/index.ts';
 import {net, pad, part, point, rect} from '../model/index.ts';
 
 test('rejects invalid geometry before rendering', () => {
@@ -16,11 +16,18 @@ test('rejects empty connectivity identifiers', () => {
 });
 
 test('rejects non-finite and negative layer properties', () => {
-  expect(() => copperLayer({thickness: Number.NaN})).toThrow('copper thickness must be positive');
-  expect(() => dielectricLayer({
+  expect(() => copperLayer({id: 'copper/1', thickness: Number.NaN})).toThrow('copper thickness must be positive');
+  expect(() => dielectricLayer({id: 'dielectric/1',
     material: 'FR-4', thickness: 1, epsilonR: 4.2, lossTangent: Number.NaN,
   })).toThrow('dielectric lossTangent must not be negative');
-  expect(() => solderMaskLayer({side: 'front', expansion: -0.1})).toThrow(
+  expect(() => solderMaskLayer({id: 'solder-mask/front', side: 'front', expansion: -0.1})).toThrow(
     'solder mask expansion must not be negative',
   );
+});
+
+
+test('rejects duplicate layer IDs even across different kinds', () => {
+  const stackup = defineStackup([copperLayer({id: 'copper/1', thickness: 0.035})]);
+  expect(() => defineLayerSet({stackup, technical: [pasteLayer({id: 'copper/1', side: 'front'})]})).toThrow('duplicate layer ID');
+  expect(() => copperLayer({id: ' ', thickness: 0.035})).toThrow('layer ID');
 });

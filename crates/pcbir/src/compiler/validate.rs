@@ -3,25 +3,30 @@ use std::collections::{BTreeMap, BTreeSet};
 use serde_json::Value;
 
 use crate::diagnostic::Diagnostic;
-use crate::ir::{ComponentInstance, PinRef, RouteConstraint};
+use crate::ir::{FootprintDefinition, PartInstance, PinRef, RouteConstraint};
 
 use super::CompileError;
 
 pub fn validate_instances(
-    instances: &[ComponentInstance],
+    instances: &[PartInstance],
     definitions: &BTreeMap<String, Value>,
+    footprints: &BTreeMap<String, FootprintDefinition>,
 ) -> Result<(), CompileError> {
+    for footprint in footprints.values() {
+        validate_footprint(footprint)?;
+    }
     for instance in instances {
         let definition = definitions
-            .get(&instance.definition)
+            .get(&instance.component)
             .expect("every instance definition is inserted while compiling");
         let Some(pins) = definition.get("pins") else {
+            validate_binding(instance, definitions, footprints)?;
             continue;
         };
         let pins = pins.as_object().ok_or_else(|| {
             CompileError::invalid(format!(
                 "component definition {} pins must be an object",
-                instance.definition
+                instance.component
             ))
         })?;
 
@@ -32,12 +37,13 @@ pub fn validate_instances(
                         .with_entity(&instance.id)
                         .with_help(format!(
                             "Declare {pin} in component definition {}, or correct the connection name.",
-                            instance.definition
+                            instance.component
                         )),
                 ));
             }
         }
-        validate_pin_definition(&instance.definition, definition, pins)?;
+        validate_pin_definition(&instance.component, definition, pins)?;
+        validate_binding(instance, definitions, footprints)?;
         for (name, pin) in pins {
             if pin.get("required").and_then(Value::as_bool) == Some(true)
                 && !instance.connections.contains_key(name)
@@ -77,7 +83,6 @@ fn validate_pin_definition(
         ));
     }
 
-    let mut physical_pads = BTreeSet::new();
     for (name, pin) in pins {
         let pin = pin.as_object().ok_or_else(|| {
             CompileError::diagnostic(
@@ -113,55 +118,6 @@ fn validate_pin_definition(
                 .with_help("Use a supported electricalType value."),
             ));
         }
-        let pad = pin.get("pad").ok_or_else(|| {
-            CompileError::diagnostic(
-                Diagnostic::error("PCBIR011", format!("pin {name} has no physical pad"))
-                    .with_entity(definition_key)
-                    .with_help("Set pad to a pad name or a non-empty list of pad names."),
-            )
-        })?;
-        let pads: Vec<&str> = match pad {
-            Value::String(value) if !value.is_empty() => vec![value],
-            Value::Array(values) if !values.is_empty() => values
-                .iter()
-                .map(|value| {
-                    value
-                        .as_str()
-                        .filter(|value| !value.is_empty())
-                        .ok_or_else(|| {
-                            CompileError::diagnostic(
-                                Diagnostic::error(
-                                    "PCBIR011",
-                                    format!("pin {name} has an invalid pad"),
-                                )
-                                .with_entity(definition_key)
-                                .with_help(
-                                    "Set pad to a pad name or a non-empty list of pad names.",
-                                ),
-                            )
-                        })
-                })
-                .collect::<Result<_, _>>()?,
-            _ => {
-                return Err(CompileError::diagnostic(
-                    Diagnostic::error("PCBIR011", format!("pin {name} has an invalid pad"))
-                        .with_entity(definition_key)
-                        .with_help("Set pad to a pad name or a non-empty list of pad names."),
-                ));
-            }
-        };
-        for pad in pads {
-            if !physical_pads.insert(pad) {
-                return Err(CompileError::diagnostic(
-                    Diagnostic::error(
-                        "PCBIR012",
-                        format!("physical pad {pad} is declared more than once"),
-                    )
-                    .with_entity(definition_key)
-                    .with_help("Assign each physical pad to exactly one logical pin."),
-                ));
-            }
-        }
     }
     Ok(())
 }
@@ -169,12 +125,12 @@ fn validate_pin_definition(
 pub fn validate_route_endpoint(
     route: &RouteConstraint,
     endpoint: &PinRef,
-    instance: &ComponentInstance,
+    instance: &PartInstance,
     definitions: &BTreeMap<String, Value>,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     if let Some(pins) = definitions
-        .get(&instance.definition)
+        .get(&instance.component)
         .and_then(|definition| definition.get("pins"))
         .and_then(Value::as_object)
         && !pins.contains_key(&endpoint.name)
@@ -212,4 +168,115 @@ pub fn validate_route_endpoint(
             .with_help("Connect the endpoint pin before routing it."),
         ),
     }
+}
+
+fn binding_error(code: &'static str, message: impl Into<String>, entity: &str) -> CompileError {
+    CompileError::diagnostic(Diagnostic::error(code, message).with_entity(entity))
+}
+
+fn validate_footprint(footprint: &FootprintDefinition) -> Result<(), CompileError> {
+    if !footprint.resolved {
+        return Ok(());
+    }
+    if footprint.pads.is_empty() {
+        return Err(binding_error(
+            "PCBIR025",
+            "resolved footprint has no pads",
+            &footprint.key,
+        ));
+    }
+    let mut ids = BTreeSet::new();
+    for pad in &footprint.pads {
+        if pad.id.trim().is_empty() || !ids.insert(&pad.id) {
+            return Err(binding_error(
+                "PCBIR025",
+                "footprint pad IDs must be non-empty and unique",
+                &footprint.key,
+            ));
+        }
+        if pad.at.iter().any(|value| !value.is_finite())
+            || !pad.rotation.is_finite()
+            || pad
+                .size
+                .iter()
+                .any(|value| !value.is_finite() || *value <= 0.0)
+            || pad.layers.is_empty()
+            || pad.layers.iter().collect::<BTreeSet<_>>().len() != pad.layers.len()
+            || pad
+                .drill
+                .as_ref()
+                .is_some_and(|drill| !drill.diameter.is_finite() || drill.diameter <= 0.0)
+        {
+            return Err(binding_error(
+                "PCBIR025",
+                format!("invalid geometry or layers for pad {}", pad.id),
+                &footprint.key,
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn validate_binding(
+    instance: &PartInstance,
+    definitions: &BTreeMap<String, Value>,
+    footprints: &BTreeMap<String, FootprintDefinition>,
+) -> Result<(), CompileError> {
+    let footprint = &footprints[&instance.footprint];
+    let pins = definitions[&instance.component]
+        .get("pins")
+        .and_then(Value::as_object);
+    let mut mapped = BTreeSet::new();
+    for (pin, pads) in &instance.pin_map {
+        if pins.is_some_and(|pins| !pins.contains_key(pin)) {
+            return Err(binding_error(
+                "PCBIR026",
+                format!("mapping references unknown logical pin {pin}"),
+                &instance.id,
+            ));
+        }
+        for pad in pads {
+            if !mapped.insert(pad) {
+                return Err(binding_error(
+                    "PCBIR012",
+                    format!("physical pad {pad} is mapped more than once"),
+                    &instance.id,
+                ));
+            }
+            if footprint.resolved && !footprint.pads.iter().any(|physical| &physical.id == pad) {
+                return Err(binding_error(
+                    "PCBIR026",
+                    format!("mapping references unknown physical pad {pad}"),
+                    &instance.id,
+                ));
+            }
+        }
+    }
+    for pin in instance.connections.keys() {
+        if !instance.pin_map.contains_key(pin) {
+            return Err(binding_error(
+                "PCBIR026",
+                format!("connected pin {pin} has no physical pad mapping"),
+                &instance.id,
+            ));
+        }
+    }
+    if definitions[&instance.component]
+        .get("pinoutCoverage")
+        .and_then(Value::as_str)
+        == Some("complete")
+    {
+        if let Some(pins) = pins {
+            for pin in pins.keys() {
+                if !instance.pin_map.contains_key(pin) {
+                    return Err(binding_error(
+                        "PCBIR026",
+                        format!("complete pinout has no mapping for {pin}"),
+                        &instance.id,
+                    ));
+                }
+            }
+        }
+    }
+    Ok(())
 }

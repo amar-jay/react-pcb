@@ -12,6 +12,7 @@ import {
   compile,
   copperLayer,
   defineLayerSet,
+  defineFootprint,
   defineStackup,
   dielectricLayer,
   mechanicalLayer,
@@ -27,29 +28,40 @@ import {
 import {STM32G0B1CBT6} from './parts/STM32G0B1CBT6.ts';
 import {USB4105GFA} from './parts/USB4105GFA.ts';
 
-const frontCopper = copperLayer({thickness: 0.035, usage: 'signal'});
-const groundPlane = copperLayer({thickness: 0.018, usage: 'plane'});
-const powerPlane = copperLayer({thickness: 0.018, usage: 'plane'});
-const backCopper = copperLayer({thickness: 0.035, usage: 'signal'});
+const frontCopper = copperLayer({id: 'copper/1', thickness: 0.035, usage: 'signal'});
+const groundPlane = copperLayer({id: 'copper/2', thickness: 0.018, usage: 'plane'});
+const powerPlane = copperLayer({id: 'copper/3', thickness: 0.018, usage: 'plane'});
+const backCopper = copperLayer({id: 'copper/4', thickness: 0.035, usage: 'signal'});
 
 const boardLayers = defineLayerSet({
   stackup: defineStackup([
     frontCopper,
-    dielectricLayer({material: 'FR-4', thickness: 0.18, epsilonR: 4.2, lossTangent: 0.02}),
+    dielectricLayer({id: 'dielectric/1', material: 'FR-4', thickness: 0.18, epsilonR: 4.2, lossTangent: 0.02}),
     groundPlane,
-    dielectricLayer({material: 'FR-4', thickness: 1.0, epsilonR: 4.2, lossTangent: 0.02}),
+    dielectricLayer({id: 'dielectric/2', material: 'FR-4', thickness: 1.0, epsilonR: 4.2, lossTangent: 0.02}),
     powerPlane,
-    dielectricLayer({material: 'FR-4', thickness: 0.18, epsilonR: 4.2, lossTangent: 0.02}),
+    dielectricLayer({id: 'dielectric/3', material: 'FR-4', thickness: 0.18, epsilonR: 4.2, lossTangent: 0.02}),
     backCopper,
   ]),
   technical: [
-    solderMaskLayer({side: 'front', expansion: 0.05}),
-    solderMaskLayer({side: 'back', expansion: 0.05}),
-    pasteLayer({side: 'front'}),
-    pasteLayer({side: 'back'}),
-    silkscreenLayer({side: 'front', color: 'white'}),
-    silkscreenLayer({side: 'back', color: 'white'}),
-    mechanicalLayer({purpose: 'assembly', side: 'front'}),
+    solderMaskLayer({id: 'solder-mask/front', side: 'front', expansion: 0.05}),
+    solderMaskLayer({id: 'solder-mask/back', side: 'back', expansion: 0.05}),
+    pasteLayer({id: 'paste/front', side: 'front'}),
+    pasteLayer({id: 'paste/back', side: 'back'}),
+    silkscreenLayer({id: 'silkscreen/front', side: 'front', color: 'white'}),
+    silkscreenLayer({id: 'silkscreen/back', side: 'back', color: 'white'}),
+    mechanicalLayer({id: 'mechanical/assembly/front', purpose: 'assembly', side: 'front'}),
+  ],
+});
+
+// Illustrative two-pad geometry; verify land patterns before manufacturing.
+const capacitorFootprint = defineFootprint({
+  key: 'example:0402',
+  pads: [
+    {id: '1', at: [-0.5, 0], shape: 'rect', size: [0.5, 0.6],
+      layers: ['copper/1', 'solder-mask/front', 'paste/front']},
+    {id: '2', at: [0.5, 0], shape: 'rect', size: [0.5, 0.6],
+      layers: ['copper/1', 'solder-mask/front', 'paste/front']},
   ],
 });
 
@@ -86,7 +98,8 @@ function UsbController({ground, supply, vbus}: UsbControllerProps) {
       <Part
         id={decoupling}
         value="100nF"
-        footprint="0402"
+        footprint={capacitorFootprint}
+        pinMap={{1: '1', 2: '2'}}
         at={[27, 18]}
         connect={{1: supply, 2: ground}}
       />
@@ -140,7 +153,7 @@ export default function MyBoard() {
 
 try {
   const result = await compile(<MyBoard />, {cwd: import.meta.dir + '/..'});
-  // console.log(JSON.stringify(result, null, 2));
+  console.log(JSON.stringify(result, null, 2));
 } catch (error) {
   if (error instanceof PcbCompileError) {
     console.error(error.message);

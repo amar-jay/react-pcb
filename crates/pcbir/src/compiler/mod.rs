@@ -5,9 +5,10 @@ use serde::Serialize;
 use serde_json::Value;
 
 use crate::diagnostic::Diagnostic;
-use crate::ir::{BoardIr, ComponentInstance, NetId, Revision, RouteConstraint};
+use crate::ir::{BoardIr, FootprintDefinition, NetId, PartInstance, Revision, RouteConstraint};
 use crate::protocol::{DeclarationNode, DeclarationTransaction, PROTOCOL_VERSION};
 
+mod layers;
 mod parse;
 mod validate;
 
@@ -88,6 +89,7 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
     let board = parse_board(&board_node.props)?;
     let mut component_definitions = BTreeMap::new();
     let mut component_instances = Vec::new();
+    let mut footprint_definitions = BTreeMap::new();
     let mut routes = Vec::new();
     let mut nets = BTreeSet::new();
     let mut modules = BTreeSet::new();
@@ -100,6 +102,7 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
         None,
         &mut component_definitions,
         &mut component_instances,
+        &mut footprint_definitions,
         &mut routes,
         &mut nets,
         &mut modules,
@@ -110,7 +113,19 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
         return Err(error.with_diagnostics(compiler_diagnostics));
     }
 
-    if let Err(error) = validate_instances(&component_instances, &component_definitions) {
+    if let Err(error) = validate_instances(
+        &component_instances,
+        &component_definitions,
+        &footprint_definitions,
+    ) {
+        return Err(error.with_diagnostics(compiler_diagnostics));
+    }
+
+    if let Err(error) = layers::resolve_pad_layers(
+        &mut component_instances,
+        &footprint_definitions,
+        &board.layers,
+    ) {
         return Err(error.with_diagnostics(compiler_diagnostics));
     }
 
@@ -144,7 +159,8 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
             units,
             board,
             component_definitions,
-            component_instances,
+            parts: component_instances,
+            footprint_definitions,
             nets: nets.into_iter().collect(),
             route_constraints: routes,
         },
@@ -157,7 +173,8 @@ fn compile_nodes(
     nodes: &[DeclarationNode],
     parent_scope: Option<&str>,
     component_definitions: &mut BTreeMap<String, Value>,
-    component_instances: &mut Vec<ComponentInstance>,
+    component_instances: &mut Vec<PartInstance>,
+    footprint_definitions: &mut BTreeMap<String, FootprintDefinition>,
     routes: &mut Vec<RouteConstraint>,
     nets: &mut BTreeSet<NetId>,
     modules: &mut BTreeSet<String>,
@@ -222,6 +239,7 @@ fn compile_nodes(
                     Some(scope),
                     component_definitions,
                     component_instances,
+                    footprint_definitions,
                     routes,
                     nets,
                     modules,
@@ -231,7 +249,20 @@ fn compile_nodes(
                 )?;
             }
             "pcb-part" => {
-                let (instance, definition) = parse_part(&child.props)?;
+                let (instance, definition, footprint) = parse_part(&child.props)?;
+                if let Some(existing) = footprint_definitions.get(&footprint.key) {
+                    if existing != &footprint {
+                        return Err(CompileError::diagnostic(
+                            Diagnostic::error("PCBIR023", "conflicting footprint definitions")
+                                .with_entity(&footprint.key),
+                        ));
+                    }
+                } else {
+                    if !footprint.resolved {
+                        compiler_diagnostics.push(Diagnostic::warning("PCBIR024", "footprint geometry is unresolved").with_entity(&footprint.key).with_help("Provide a footprint definition with pad geometry before routing."));
+                    }
+                    footprint_definitions.insert(footprint.key.clone(), footprint);
+                }
                 if component_instances
                     .iter()
                     .any(|existing| existing.id == instance.id)
@@ -244,21 +275,21 @@ fn compile_nodes(
                             ),
                     ));
                 }
-                if let Some(existing) = component_definitions.get(&instance.definition) {
+                if let Some(existing) = component_definitions.get(&instance.component) {
                     if existing != &definition {
                         return Err(CompileError::diagnostic(
                             Diagnostic::error(
                                 "PCBIR007",
                                 "component definition conflicts with an existing definition",
                             )
-                            .with_entity(&instance.definition)
+                            .with_entity(&instance.component)
                             .with_help(
                                 "Use one definition for this MPN, or assign distinct component keys.",
                             ),
                         ));
                     }
                 } else {
-                    component_definitions.insert(instance.definition.clone(), definition);
+                    component_definitions.insert(instance.component.clone(), definition);
                 }
                 nets.extend(instance.connections.values().cloned());
                 component_instances.push(instance);

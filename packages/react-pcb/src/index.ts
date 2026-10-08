@@ -58,3 +58,6 @@ export type {
   StackupLayer,
   TechnicalLayer,
 } from './layers/index.ts';
+
+export {defineFootprint} from './footprints/index.ts';
+export type {FootprintDefinition, FootprintPad, FootprintBinding, PadLayer, PinMap} from './footprints/index.ts';

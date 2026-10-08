@@ -1,5 +1,6 @@
 import React from 'react';
 import {Part, type PartProps} from '../components/index.ts';
+import type {FootprintBinding} from '../footprints/index.ts';
 import type {Net} from '../model/index.ts';
 
 export type ElectricalType =
@@ -11,7 +12,6 @@ export type ElectricalType =
   | 'passive';
 
 export type PinDefinition = Readonly<{
-  pad: string | readonly string[];
   electricalType: ElectricalType;
   functions?: readonly string[];
   required?: boolean;
@@ -28,7 +28,6 @@ export type PartDefinition<Pins extends Record<string, PinDefinition>> = Readonl
   manufacturer: string;
   mpn: string;
   package: string;
-  footprint: string;
   datasheet: DatasheetSource;
   pinoutCoverage: 'complete' | 'partial';
   pins: Pins;
@@ -49,6 +48,7 @@ export type DefinedPartProps<Pins extends Record<string, PinDefinition>> =
 
 export function definePart<const Pins extends Record<string, PinDefinition>>(
   definition: PartDefinition<Pins>,
+  binding: FootprintBinding,
 ) {
   function DefinedPart({id, at, side, rotation, connect}: DefinedPartProps<Pins>) {
     for (const name of Object.keys(connect)) {
@@ -67,7 +67,8 @@ export function definePart<const Pins extends Record<string, PinDefinition>>(
       <Part
         id={id}
         mpn={definition.mpn}
-        footprint={definition.footprint}
+        footprint={binding.footprint}
+        pinMap={binding.pinMap}
         at={at}
         side={side}
         rotation={rotation}

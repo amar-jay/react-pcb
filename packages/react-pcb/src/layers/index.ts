@@ -1,7 +1,7 @@
 export type BoardSide = 'front' | 'back';
 export type CopperUsage = 'signal' | 'plane' | 'mixed';
 
-type Layer<Kind extends string> = Readonly<{kind: Kind}>;
+type Layer<Kind extends string> = Readonly<{kind: Kind; id: string}>;
 
 export type CopperLayer = Layer<'copper'> & Readonly<{
   thickness: number;
@@ -43,15 +43,17 @@ export type LayerSet = Readonly<{
 }>;
 
 export function copperLayer(
-  options: Readonly<{thickness: number; usage?: CopperUsage}>,
+  options: Readonly<{id: string; thickness: number; usage?: CopperUsage}>,
 ): CopperLayer {
+  assertName(options.id, 'layer ID', true);
   assertPositive(options.thickness, 'copper thickness');
-  return Object.freeze({kind: 'copper', thickness: options.thickness, usage: options.usage ?? 'signal'});
+  return Object.freeze({kind: 'copper', id: options.id, thickness: options.thickness, usage: options.usage ?? 'signal'});
 }
 
 export function dielectricLayer(
-  options: Readonly<{material: string; thickness: number; epsilonR: number; lossTangent?: number}>,
+  options: Readonly<{id: string; material: string; thickness: number; epsilonR: number; lossTangent?: number}>,
 ): DielectricLayer {
+  assertName(options.id, 'layer ID', true);
   assertPositive(options.thickness, 'dielectric thickness');
   assertPositive(options.epsilonR, 'dielectric epsilonR');
   if (options.lossTangent !== undefined) {
@@ -60,23 +62,27 @@ export function dielectricLayer(
   return Object.freeze({kind: 'dielectric', ...options});
 }
 
-export function solderMaskLayer(options: Readonly<{side: BoardSide; expansion?: number}>): SolderMaskLayer {
+export function solderMaskLayer(options: Readonly<{id: string; side: BoardSide; expansion?: number}>): SolderMaskLayer {
   if (options.expansion !== undefined) assertNonNegative(options.expansion, 'solder mask expansion');
-  return Object.freeze({kind: 'solder-mask', side: options.side, expansion: options.expansion});
+  assertName(options.id, 'layer ID', true);
+  return Object.freeze({kind: 'solder-mask', id: options.id, side: options.side, expansion: options.expansion});
 }
 
-export function pasteLayer(options: Readonly<{side: BoardSide}>): PasteLayer {
-  return Object.freeze({kind: 'paste', side: options.side});
+export function pasteLayer(options: Readonly<{id: string; side: BoardSide}>): PasteLayer {
+  assertName(options.id, 'layer ID', true);
+  return Object.freeze({kind: 'paste', id: options.id, side: options.side});
 }
 
-export function silkscreenLayer(options: Readonly<{side: BoardSide; color?: string}>): SilkscreenLayer {
-  return Object.freeze({kind: 'silkscreen', side: options.side, color: options.color});
+export function silkscreenLayer(options: Readonly<{id: string; side: BoardSide; color?: string}>): SilkscreenLayer {
+  assertName(options.id, 'layer ID', true);
+  return Object.freeze({kind: 'silkscreen', id: options.id, side: options.side, color: options.color});
 }
 
 export function mechanicalLayer(
-  options: Readonly<{purpose: MechanicalLayer['purpose']; side?: BoardSide}>,
+  options: Readonly<{id: string; purpose: MechanicalLayer['purpose']; side?: BoardSide}>,
 ): MechanicalLayer {
-  return Object.freeze({kind: 'mechanical', purpose: options.purpose, side: options.side});
+  assertName(options.id, 'layer ID', true);
+  return Object.freeze({kind: 'mechanical', id: options.id, purpose: options.purpose, side: options.side});
 }
 
 export function defineStackup(entries: readonly StackupLayer[]): Stackup {
@@ -93,6 +99,12 @@ export function defineStackup(entries: readonly StackupLayer[]): Stackup {
 
 export function defineLayerSet(options: Readonly<{stackup: Stackup; technical?: readonly TechnicalLayer[]}>): LayerSet {
   const technical = options.technical ?? [];
+  const ids = new Set<string>();
+  for (const layer of [...options.stackup.entries, ...technical]) {
+    assertName(layer.id, 'layer ID', true);
+    if (ids.has(layer.id)) throw new Error(`duplicate layer ID ${layer.id}`);
+    ids.add(layer.id);
+  }
   return Object.freeze({kind: 'layer-set', stackup: options.stackup, technical: Object.freeze([...technical])});
 }
-import {assertNonNegative, assertPositive} from '../validation/index.ts';
+import {assertName, assertNonNegative, assertPositive} from '../validation/index.ts';

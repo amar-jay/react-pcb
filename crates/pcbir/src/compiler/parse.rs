@@ -4,7 +4,7 @@ use serde_json::Value;
 
 use crate::Diagnostic;
 use crate::ir::{
-    Board, BoardSide, ComponentInstance, LayerSet, LengthUnit, NetId, PinRef, Rect,
+    Board, BoardSide, FootprintDefinition, LayerSet, LengthUnit, NetId, PartInstance, PinRef, Rect,
     RouteConstraint, StackupLayer,
 };
 use crate::protocol::DeclarationNode;
@@ -56,6 +56,24 @@ pub fn parse_board(props: &Value) -> Result<Board, CompileError> {
     };
     validate_rect(&outline, "board outline")?;
     validate_stackup(&layers)?;
+    let mut ids = BTreeSet::new();
+    for id in layers
+        .stackup
+        .entries
+        .iter()
+        .map(StackupLayer::id)
+        .chain(layers.technical.iter().map(crate::ir::TechnicalLayer::id))
+    {
+        require_name(id, "layer ID", "PCBIR027")?;
+        if !ids.insert(id) {
+            return Err(semantic_error(
+                "PCBIR027",
+                format!("duplicate layer ID {id}"),
+                "Give every board layer a unique ID.",
+            ));
+        }
+    }
+
     Ok(Board {
         outline,
         layers,
@@ -73,7 +91,9 @@ pub fn parse_units(props: &Value) -> Result<LengthUnit, CompileError> {
         .map(|units| units.unwrap_or(LengthUnit::Mm))
 }
 
-pub fn parse_part(props: &Value) -> Result<(ComponentInstance, Value), CompileError> {
+pub fn parse_part(
+    props: &Value,
+) -> Result<(PartInstance, Value, FootprintDefinition), CompileError> {
     let id_value = props
         .get("id")
         .ok_or_else(|| CompileError::invalid("part id is required"))?;
@@ -120,24 +140,72 @@ pub fn parse_part(props: &Value) -> Result<(ComponentInstance, Value), CompileEr
         .transpose()?
         .unwrap_or(0.0)
         .rem_euclid(360.0);
-    let footprint = string(props, "footprint")?;
-    require_name(&footprint, "footprint", "PCBIR019")?;
-    let (component, definition) = component_definition(props, &footprint)?;
+    let footprint_value = props
+        .get("footprint")
+        .ok_or_else(|| CompileError::invalid("footprint is required"))?;
+    let footprint = if let Some(key) = footprint_value.as_str() {
+        FootprintDefinition {
+            key: key.to_owned(),
+            resolved: false,
+            pads: Vec::new(),
+        }
+    } else {
+        let mut value = footprint_value.clone();
+        value
+            .as_object_mut()
+            .ok_or_else(|| CompileError::invalid("footprint must be a key or definition object"))?
+            .insert("resolved".to_owned(), Value::Bool(true));
+        serde_json::from_value(value)
+            .map_err(|error| CompileError::invalid(format!("invalid footprint: {error}")))?
+    };
+    require_name(&footprint.key, "footprint key", "PCBIR019")?;
+    let (component, mut definition) = component_definition(props)?;
+    require_name(&component, "component key", "PCBIR019")?;
+    let mut pin_map = BTreeMap::new();
+    if let Some(pins) = definition.get_mut("pins").and_then(Value::as_object_mut) {
+        for (name, pin) in pins {
+            if let Some(pad) = pin.as_object_mut().and_then(|pin| pin.remove("pad")) {
+                pin_map.insert(name.clone(), parse_pad_ids(&pad)?);
+            }
+        }
+    }
+    if let Some(mapping) = props.get("pinMap") {
+        let mapping = mapping
+            .as_object()
+            .ok_or_else(|| CompileError::invalid("pinMap must be an object"))?;
+        for (name, pads) in mapping {
+            pin_map.insert(name.clone(), parse_pad_ids(pads)?);
+        }
+    }
+    if definition.get("pins").is_none() && pin_map.is_empty() {
+        pin_map.extend(
+            connections
+                .keys()
+                .map(|name| (name.clone(), vec![name.clone()])),
+        );
+    }
+    if let Some(object) = definition.as_object_mut() {
+        object.remove("footprint");
+    }
     Ok((
-        ComponentInstance {
+        PartInstance {
             id,
             reference,
-            definition: component,
+            component,
+            footprint: footprint.key.clone(),
+            pin_map,
+            pad_layers: BTreeMap::new(),
             at,
             side,
             rotation,
             connections,
         },
         definition,
+        footprint,
     ))
 }
 
-fn component_definition(props: &Value, footprint: &str) -> Result<(String, Value), CompileError> {
+fn component_definition(props: &Value) -> Result<(String, Value), CompileError> {
     if let Some(definition) = props.get("definition") {
         let component = string(definition, "mpn")?;
         return Ok((component, definition.clone()));
@@ -147,10 +215,9 @@ fn component_definition(props: &Value, footprint: &str) -> Result<(String, Value
     let value = optional_string(props, "value");
     let component = mpn
         .clone()
-        .or_else(|| value.as_ref().map(|value| format!("{value}@{footprint}")))
-        .unwrap_or_else(|| format!("footprint:{footprint}"));
-    let mut definition =
-        serde_json::Map::from_iter([("footprint".into(), Value::String(footprint.into()))]);
+        .or_else(|| value.as_ref().map(|value| format!("value:{value}")))
+        .unwrap_or_else(|| "primitive".to_owned());
+    let mut definition = serde_json::Map::new();
     if let Some(mpn) = mpn {
         definition.insert("mpn".into(), Value::String(mpn));
     }
@@ -473,4 +540,30 @@ fn value_number(value: &Value) -> Result<f64, CompileError> {
     value
         .as_f64()
         .ok_or_else(|| CompileError::invalid("expected a number"))
+}
+
+fn parse_pad_ids(value: &Value) -> Result<Vec<String>, CompileError> {
+    let ids = match value {
+        Value::String(id) => vec![id.clone()],
+        Value::Array(ids) => ids
+            .iter()
+            .map(|id| {
+                id.as_str()
+                    .map(str::to_owned)
+                    .ok_or_else(|| CompileError::invalid("pad IDs must be strings"))
+            })
+            .collect::<Result<Vec<_>, _>>()?,
+        _ => {
+            return Err(CompileError::invalid(
+                "pad mapping must be a string or array",
+            ));
+        }
+    };
+    if ids.is_empty() || ids.iter().any(|id| id.trim().is_empty()) {
+        return Err(CompileError::diagnostic(Diagnostic::error(
+            "PCBIR011",
+            "pad mapping must contain non-empty pad IDs",
+        )));
+    }
+    Ok(ids)
 }

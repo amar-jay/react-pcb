@@ -11,8 +11,11 @@ fn transaction(children: Vec<Value>) -> DeclarationTransaction {
             "props": {
                 "outline": {"kind": "rect", "x": 0, "y": 0, "width": 10, "height": 10},
                 "layers": {"kind": "layer-set", "stackup": {"kind": "stackup", "entries": [
-                    {"kind": "copper", "thickness": 0.035, "usage": "signal"}
-                ]}, "technical": []}
+                    {"kind": "copper", "id": "copper/1", "thickness": 0.035, "usage": "signal"}
+                ]}, "technical": [
+                    {"kind": "solder-mask", "id": "solder-mask/front", "side": "front"},
+                    {"kind": "solder-mask", "id": "solder-mask/back", "side": "back"}
+                ]}
             },
             "children": children
         }]}
@@ -47,17 +50,14 @@ fn compiles_declarations_into_canonical_ir() {
     let output = compile(input).unwrap();
     assert_eq!(output.ir.revision.0, 8);
     assert!(matches!(output.ir.units, crate::ir::LengthUnit::Mm));
-    assert_eq!(output.ir.component_instances[0].id, "U1");
+    assert_eq!(output.ir.parts[0].id, "U1");
     assert!(matches!(
-        output.ir.component_instances[0].side,
+        output.ir.parts[0].side,
         crate::ir::BoardSide::Front
     ));
-    assert_eq!(output.ir.component_instances[0].rotation, 0.0);
+    assert_eq!(output.ir.parts[0].rotation, 0.0);
     assert_eq!(output.ir.component_definitions.len(), 1);
-    assert_eq!(
-        output.ir.component_instances[0].definition,
-        output.ir.component_instances[1].definition
-    );
+    assert_eq!(output.ir.parts[0].component, output.ir.parts[1].component);
     assert_eq!(output.ir.nets[0].0, "3V3");
 }
 
@@ -66,7 +66,7 @@ fn rejects_conflicting_definitions_for_one_component_key() {
     let with_definition = |id: &str, footprint: &str| {
         json!({"type": "pcb-part", "props": {
             "id": {"id": id, "reference": id}, "footprint": footprint, "connect": {},
-            "definition": {"mpn": "SAME", "footprint": footprint}
+            "definition": {"mpn": "SAME", "manufacturer": footprint}
         }, "children": []})
     };
     let error = compile(transaction(vec![
@@ -132,7 +132,7 @@ fn rejects_exact_duplicate_zones_and_keepouts() {
             "type": "pcb-zone",
             "props": {
                 "net": {"kind": "net", "id": "GND", "name": "GND"},
-                "layers": [{"kind": "copper", "thickness": 0.035, "usage": "plane"}],
+                "layers": [{"kind": "copper", "id": "copper/1", "thickness": 0.035, "usage": "plane"}],
                 "boundary": "board",
                 "clearance": 0.2
             },
@@ -168,8 +168,8 @@ fn rejects_invalid_geometry_stackups_identifiers_and_routes() {
 
     let mut invalid_stackup = transaction(vec![]);
     invalid_stackup.declarations.children[0].props["layers"]["stackup"]["entries"] = json!([
-        {"kind": "copper", "thickness": 0.035, "usage": "signal"},
-        {"kind": "copper", "thickness": 0.035, "usage": "signal"}
+        {"kind": "copper", "id": "copper/1", "thickness": 0.035, "usage": "signal"},
+        {"kind": "copper", "id": "copper/1", "thickness": 0.035, "usage": "signal"}
     ]);
     assert_eq!(
         compile(invalid_stackup).unwrap_err().diagnostic.code,
@@ -369,4 +369,247 @@ fn diagnoses_route_pin_and_net_mismatches() {
     assert_eq!(wrong_net.diagnostics[0].code, "PCBIR004");
     let unknown_pin = compile(transaction(vec![part, route("NOPE")])).unwrap();
     assert_eq!(unknown_pin.diagnostics[0].code, "PCBIR003");
+}
+
+fn physical_part(id: &str) -> Value {
+    json!({"type": "pcb-part", "props": {
+        "id": {"id": id, "reference": id},
+        "definition": {"mpn": "DUAL", "pinoutCoverage": "complete", "pins": {
+            "GND": {"electricalType": "passive"}
+        }},
+        "footprint": {"key": "DUAL-PADS", "pads": [
+            {"id": "1", "at": [-1, 0], "shape": "rect", "size": [0.6, 1], "layers": ["copper/1", "solder-mask/front"]},
+            {"id": "2", "at": [1, 0], "shape": "circle", "size": [1, 1], "layers": [{"kind": "all-copper"}], "drill": {"diameter": 0.4, "plated": true}}
+        ]},
+        "pinMap": {"GND": ["1", "2"]}, "connect": {"GND": {"id": "GND"}},
+        "at": [10, 20], "rotation": 90, "side": "back"
+    }})
+}
+
+#[test]
+fn separates_electrical_definitions_footprints_and_parts() {
+    let output = compile(transaction(vec![physical_part("J1"), physical_part("J2")])).unwrap();
+    assert_eq!(output.ir.component_definitions.len(), 1);
+    assert_eq!(output.ir.footprint_definitions.len(), 1);
+    assert_eq!(output.ir.parts.len(), 2);
+    assert_eq!(output.ir.parts[0].pin_map["GND"], vec!["1", "2"]);
+    assert_eq!(
+        output.ir.footprint_definitions["DUAL-PADS"].pads[0].at,
+        [-1.0, 0.0]
+    );
+    assert!(output.compiler_diagnostics.is_empty());
+    let json = serde_json::to_value(output.ir).unwrap();
+    assert!(json.get("componentInstances").is_none());
+    assert_eq!(json["parts"][0]["component"], "DUAL");
+    assert_eq!(json["parts"][0]["footprint"], "DUAL-PADS");
+    assert!(
+        json["componentDefinitions"]["DUAL"]
+            .get("footprint")
+            .is_none()
+    );
+}
+
+#[test]
+fn permits_one_component_with_different_footprints() {
+    let a = physical_part("J1");
+    let mut b = physical_part("J2");
+    b["props"]["footprint"]["key"] = json!("ALTERNATE");
+    b["props"]["footprint"]["pads"][0]["at"] = json!([-2, 0]);
+    let output = compile(transaction(vec![a, b])).unwrap();
+    assert_eq!(output.ir.component_definitions.len(), 1);
+    assert_eq!(output.ir.footprint_definitions.len(), 2);
+}
+
+#[test]
+fn rejects_conflicting_footprints_and_invalid_bindings() {
+    let a = physical_part("J1");
+    let mut b = physical_part("J2");
+    b["props"]["footprint"]["pads"][0]["size"] = json!([2, 1]);
+    assert_eq!(
+        compile(transaction(vec![a, b]))
+            .unwrap_err()
+            .diagnostic
+            .code,
+        "PCBIR023"
+    );
+    let mut missing = physical_part("J1");
+    missing["props"]["pinMap"]["GND"] = json!("missing");
+    assert_eq!(
+        compile(transaction(vec![missing]))
+            .unwrap_err()
+            .diagnostic
+            .code,
+        "PCBIR026"
+    );
+    let mut unmapped = physical_part("J1");
+    unmapped["props"]["pinMap"] = json!({});
+    assert_eq!(
+        compile(transaction(vec![unmapped]))
+            .unwrap_err()
+            .diagnostic
+            .code,
+        "PCBIR026"
+    );
+    let mut unknown = physical_part("J1");
+    unknown["props"]["pinMap"]["BAD"] = json!("1");
+    assert_eq!(
+        compile(transaction(vec![unknown]))
+            .unwrap_err()
+            .diagnostic
+            .code,
+        "PCBIR026"
+    );
+}
+
+#[test]
+fn rejects_invalid_physical_pad_geometry() {
+    for (field, value) in [
+        ("size", json!([0, 1])),
+        ("layers", json!([])),
+        ("id", json!("2")),
+        ("drill", json!({"diameter": -1, "plated": true})),
+    ] {
+        let mut part = physical_part("J1");
+        part["props"]["footprint"]["pads"][0][field] = value;
+        assert_eq!(
+            compile(transaction(vec![part]))
+                .unwrap_err()
+                .diagnostic
+                .code,
+            "PCBIR025"
+        );
+    }
+}
+
+#[test]
+fn marks_library_references_as_unresolved() {
+    let output = compile(transaction(vec![part(
+        "U1",
+        "LIBRARY",
+        json!({"1": {"id": "GND"}}),
+    )]))
+    .unwrap();
+    assert!(!output.ir.footprint_definitions["LIBRARY"].resolved);
+    assert_eq!(output.compiler_diagnostics[0].code, "PCBIR024");
+}
+
+#[test]
+fn primitive_component_identity_is_independent_of_footprint() {
+    let mut a = part("C1", "SMALL", json!({"1": {"id": "GND"}}));
+    let mut b = part("C2", "LARGE", json!({"1": {"id": "GND"}}));
+    a["props"]["value"] = json!("100nF");
+    b["props"]["value"] = json!("100nF");
+    let output = compile(transaction(vec![a, b])).unwrap();
+    assert_eq!(output.ir.component_definitions.len(), 1);
+    assert_eq!(output.ir.footprint_definitions.len(), 2);
+    assert_eq!(output.ir.parts[0].component, "value:100nF");
+}
+
+#[test]
+fn rejects_malformed_footprint_values_without_panicking() {
+    for value in [json!(null), json!(42), json!([])] {
+        let mut input = physical_part("J1");
+        input["props"]["footprint"] = value;
+        assert_eq!(
+            compile(transaction(vec![input]))
+                .unwrap_err()
+                .diagnostic
+                .code,
+            "PCBIR100"
+        );
+    }
+}
+
+fn four_layer_transaction(children: Vec<Value>) -> DeclarationTransaction {
+    let mut input = transaction(children);
+    input.declarations.children[0].props["layers"] = json!({
+        "kind": "layer-set", "stackup": {"kind": "stackup", "entries": [
+            {"id": "copper/1", "kind": "copper", "thickness": 0.035, "usage": "signal"},
+            {"id": "dielectric/1", "kind": "dielectric", "material": "FR-4", "thickness": 0.2, "epsilonR": 4.2},
+            {"id": "copper/2", "kind": "copper", "thickness": 0.035, "usage": "plane"},
+            {"id": "dielectric/2", "kind": "dielectric", "material": "FR-4", "thickness": 1.0, "epsilonR": 4.2},
+            {"id": "copper/3", "kind": "copper", "thickness": 0.035, "usage": "plane"},
+            {"id": "dielectric/3", "kind": "dielectric", "material": "FR-4", "thickness": 0.2, "epsilonR": 4.2},
+            {"id": "copper/4", "kind": "copper", "thickness": 0.035, "usage": "signal"}
+        ]}, "technical": [
+            {"id": "solder-mask/front", "kind": "solder-mask", "side": "front"},
+            {"id": "solder-mask/back", "kind": "solder-mask", "side": "back"},
+            {"id": "paste/front", "kind": "paste", "side": "front"},
+            {"id": "paste/back", "kind": "paste", "side": "back"}
+        ]
+    });
+    input
+}
+
+#[test]
+fn resolves_custom_layer_ids_and_mirrors_each_placed_part() {
+    let mut front = physical_part("J1");
+    front["props"]["side"] = json!("front");
+    front["props"]["footprint"]["pads"][0]["layers"] =
+        json!(["copper/1", "solder-mask/front", "paste/front"]);
+    let mut back = front.clone();
+    back["props"]["id"] = json!({"id": "J2", "reference": "J2"});
+    back["props"]["side"] = json!("back");
+    let output = compile(four_layer_transaction(vec![front, back])).unwrap();
+    assert_eq!(output.ir.footprint_definitions.len(), 1);
+    assert_eq!(
+        output.ir.parts[0].pad_layers["1"],
+        vec!["copper/1", "paste/front", "solder-mask/front"]
+    );
+    assert_eq!(
+        output.ir.parts[1].pad_layers["1"],
+        vec!["copper/4", "paste/back", "solder-mask/back"]
+    );
+    assert_eq!(
+        output.ir.parts[0].pad_layers["2"],
+        vec!["copper/1", "copper/2", "copper/3", "copper/4"]
+    );
+    assert_eq!(
+        output.ir.parts[1].pad_layers["2"],
+        vec!["copper/1", "copper/2", "copper/3", "copper/4"]
+    );
+}
+
+#[test]
+fn rejects_missing_or_unsuitable_pad_layer_references() {
+    for target in ["nonexistent", "dielectric/1"] {
+        let mut part = physical_part("J1");
+        part["props"]["footprint"]["pads"][0]["layers"] = json!([target]);
+        assert_eq!(
+            compile(four_layer_transaction(vec![part]))
+                .unwrap_err()
+                .diagnostic
+                .code,
+            "PCBIR028"
+        );
+    }
+    let mut part = physical_part("J1");
+    part["props"]["footprint"]["pads"][0]["layers"] = json!(["copper/1", {"kind": "all-copper"}]);
+    assert_eq!(
+        compile(four_layer_transaction(vec![part]))
+            .unwrap_err()
+            .diagnostic
+            .code,
+        "PCBIR028"
+    );
+}
+
+#[test]
+fn rejects_duplicate_layer_ids_across_stackup_and_technical_layers() {
+    let mut input = four_layer_transaction(vec![]);
+    input.declarations.children[0].props["layers"]["technical"][0]["id"] = json!("copper/1");
+    assert_eq!(compile(input).unwrap_err().diagnostic.code, "PCBIR027");
+    let mut input = four_layer_transaction(vec![]);
+    input.declarations.children[0].props["layers"]["stackup"]["entries"][0]["id"] = json!(" ");
+    assert_eq!(compile(input).unwrap_err().diagnostic.code, "PCBIR027");
+}
+
+#[test]
+fn rejects_missing_opposite_technical_layer_for_back_side_parts() {
+    let mut input = transaction(vec![physical_part("J1")]);
+    input.declarations.children[0].props["layers"]["technical"]
+        .as_array_mut()
+        .unwrap()
+        .pop();
+    assert_eq!(compile(input).unwrap_err().diagnostic.code, "PCBIR028");
 }
