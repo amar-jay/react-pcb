@@ -1,6 +1,6 @@
 # Physical footprint contract
 
-Phase one introduces board-independent, explicit physical geometry. Phase two adds deterministic SVG projection. Phase three adds absolute-positioned JSX authoring. Phases four and five add restricted Flexbox and explicit Grid layout.
+Phase one introduces board-independent, explicit physical geometry. Phase two adds deterministic SVG projection. Phase three adds absolute-positioned JSX authoring. Phases four and five add restricted Flexbox and explicit Grid layout. Phase six adds explicit manufacturing profiles and scoped validation reports.
 
 ## Authoring
 
@@ -51,7 +51,7 @@ Existing `defineFootprint` calls remain supported. They retain their original ge
 
 TypeScript callers can use `migrateFootprint(legacy, 'mm', {'old-top': 'front-copper'})`. The CLI exposes the same adapter as `pcbir migrate-footprint`, accepting `{footprint, units, layerRoles}`. Every old board-layer target requires a role mapping; the all-copper selector carries its meaning directly.
 
-These checks establish deterministic geometry and reference semantics. Land-pattern verification, manufacturing profiles, mask/paste offsets, general shape intersection checks and broader CSS layout are subsequent work.
+These checks establish deterministic geometry and reference semantics. Phase six adds scoped manufacturing-profile checks; see [manufacturing validation](manufacturing-validation.md). Land-pattern verification, automatic mask/paste offsets, general polygon operations and broader CSS layout remain deferred.
 
 ## SVG projection and inspection
 
@@ -100,7 +100,7 @@ const footprint = await compileFootprint(declarations); // compileFootprint(elem
 const svg = await footprintSvg(footprint);
 ```
 
-The two pad centers are exactly `[-500000, 0]` and `[500000, 0]` nm. See `examples/footprints/0402.tsx` for a fixture using a layout group. `bun run footprints:inspect` includes its resolved SVG in the inspection page. `examples/basic.tsx` reuses this authored footprint for its decoupling capacitor: `renderFootprintDeclarations` snapshots the JSX, and board compilation resolves its layout, pin bindings, placement, and semantic layers.
+The two pad centers are exactly `[-500000, 0]` and `[500000, 0]` nm. See `examples/footprints/0402.tsx` for a fixture using a layout group. `bun run footprints:inspect` includes its resolved SVG in the inspection page. `examples/basic.tsx` uses the Grid-authored `ManufacturingPassive` fixture for its decoupling capacitor: `renderFootprintDeclarations` snapshots the JSX, and board compilation resolves its layout, pin bindings, placement, and semantic layers.
 
 ### Layout contract
 
@@ -145,7 +145,7 @@ Layout failures use `PCBFP002`; unit and physical validation failures retain `PC
 
 ## Slotted drills and the USB4105 land pattern
 
-Physical schema version two adds optional `slot: [width, height]` to a drill. Lengths are physical-unit strings in authoring declarations and integer nanometres in canonical geometry. `diameter` must equal the smaller slot dimension; slot dimensions must differ, be positive, fit the feature envelope, and pass the existing precision limits. The capsule's axes are local to the containing feature and follow its placement rotation/reflection. `Pad` supports slots through `drill`; `Hole` remains the circular-hole convenience declaration. Documentation and manufacturer checks beyond these geometric envelope validations remain separate.
+Physical schema version two adds optional `slot: [width, height]` to a drill. Lengths are physical-unit strings in authoring declarations and integer nanometres in canonical geometry. `diameter` must equal the smaller slot dimension; slot dimensions must differ, be positive, fit the actual pad shape, and pass the existing precision limits. The capsule's axes are local to the containing feature and follow its placement rotation/reflection. `Pad` supports slots through `drill`; `Hole` remains the circular-hole convenience declaration. Structural containment requires no selected profile; a positive annular ring requires a manufacturing profile. Manufacturer process checks remain separate from structural validity.
 
 ```tsx
 <Pad name="SHELL1" shape="oval" layers={['all-copper', 'all-mask', 'front-paste']}
@@ -316,3 +316,31 @@ fixtures; their land patterns are illustrative. Grid styles compile away, with
 no changes to physical/board schema version two or layout protocol version one.
 Older compilers reject the new properties; existing absolute/Flexbox declarations
 retain their behavior.
+
+
+## Manufacturing profiles and example integration (Phase six)
+
+The compiler always performs structural geometry/reference validation. An optional
+explicit manufacturing profile enables the scoped checks in
+[manufacturing-validation.md](manufacturing-validation.md), with retained
+thresholds, feature IDs, evaluated counts, failures and skipped checks. Use
+`validateFootprintManufacturing` for a standalone compiled definition or
+`Board.manufacturingProfile` to enforce the same rules during board compilation.
+Profiles and reports do not alter reusable definitions or resolve manufacturing
+geometry from metadata.
+
+`examples/basic.tsx` now uses `ManufacturingPassive`, a Grid-authored two-pad
+fixture with explicit expanded mask apertures, reduced paste apertures, and a
+courtyard. The board selects documented illustrative limits and emits separate
+manufacturing reports for its three physical footprint definitions. Its USB/MCU
+nominal mask openings require zero expansion in that example profile. The
+standalone passive uses a stricter 0.05 mm expansion profile in its tests and
+inspection report. Existing `Positioned0402` and Flexbox/Grid fixtures remain
+available to exercise the earlier contracts.
+
+The optional board profile is retained in canonical board IR with nanometre
+thresholds; independently serialized reports retain their profile and scope.
+Neither optional extension changes board/physical schema version two or layout
+protocol version one. Old schema-two boards without a profile remain readable.
+Old compilers do not enforce this new policy field; a consumer must use a compiler
+with Phase six support when enforcing selected manufacturing rules.

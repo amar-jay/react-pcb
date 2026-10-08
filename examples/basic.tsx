@@ -25,7 +25,7 @@ import {
   usePart,
   type PartProps,
 } from '@react-pcb/core';
-import {Positioned0402} from './footprints/0402.tsx';
+import {ManufacturingPassive, inspectionProfile} from './footprints/manufacturing.tsx';
 import {STM32G0B1CBT6} from './parts/STM32G0B1CBT6.ts';
 import {USB4105GFA} from './parts/USB4105GFA.ts';
 
@@ -66,7 +66,7 @@ const boardLayers = defineLayerSet({
 
 // Reuse the illustrative JSX footprint; Rust resolves its layout during board compilation.
 // Verify the land pattern against manufacturer data before fabrication.
-const capacitorFootprint = await renderFootprintDeclarations(<Positioned0402 />);
+const capacitorFootprint = await renderFootprintDeclarations(<ManufacturingPassive />);
 
 type Net = PartProps['connect'][string];
 
@@ -136,6 +136,9 @@ export default function MyBoard() {
     <Board
       outline={rect(0, 0, 60, 40)}
       layers={boardLayers}
+      // Example-only limits. USB/MCU use nominal openings, so expansion is zero
+      // here; the standalone manufacturing-passive fixture exercises 0.05 mm.
+      manufacturingProfile={{...inspectionProfile, key: 'example:board-process', minMaskExpansion: '0mm'}}
       metadata={{
         title: 'USB controller',
         revision: '0.1.0',

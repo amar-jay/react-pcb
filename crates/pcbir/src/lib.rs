@@ -25,3 +25,5 @@ pub mod svg;
 pub use svg::footprint_svg;
 
 pub mod layout;
+
+pub mod manufacturing;

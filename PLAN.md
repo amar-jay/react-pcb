@@ -4,6 +4,8 @@
 
 Develop a declarative PCB footprint authoring system that uses familiar inline CSS layout abstractions to produce precise physical geometry. Engineers and AI should be able to describe pads and footprint graphics using a restricted subset of positioning, Flexbox, Grid, and physical units.
 
+Status: all six implementation phases and completion criteria are complete. The [completion audit](docs/plan-completion.md) maps each deliverable and acceptance criterion to implementation, documentation, and validation evidence. The deferred work below remains outside this plan's initial scope.
+
 Compilation must produce a tool-independent footprint IR with exact geometry and deterministic SVG output. Layout convenience must preserve geometric precision, stable identity, and the information needed for manufacturing validation.
 
 Keep `examples/basic.tsx` as the board-level illustrative example. Use small footprint fixtures to prove individual features; defer a new ESC example until the footprint model is stable.
@@ -110,13 +112,13 @@ Acceptance: fixture assertions verify every pad center, size, pitch, and bounds.
 
 ### 6. Manufacturing validation and basic-example integration
 
-- [ ] Validate duplicate feature IDs, invalid dimensions, unsupported layer combinations, drills, and incomplete physical definitions.
-- [ ] Introduce explicit manufacturing profiles for minimum feature size, annular ring, spacing, and other supported checks.
-- [ ] Report checks that cannot yet be performed rather than implying comprehensive manufacturability approval.
-- [ ] Add mask/paste and courtyard checks once their geometry is represented.
+- [x] Validate duplicate feature IDs, invalid dimensions, unsupported layer combinations, drills, and incomplete physical definitions.
+- [x] Introduce explicit manufacturing profiles for minimum feature size, annular ring, spacing, and other supported checks.
+- [x] Report checks that cannot yet be performed rather than implying comprehensive manufacturability approval.
+- [x] Add mask/paste and courtyard checks once their geometry is represented.
 - [x] Integrate a small authored footprint into `examples/basic.tsx`.
-- [ ] Document supported styles, units, coordinate conventions, layer roles, precision limits, and migration behavior.
-- [ ] Add regression fixtures and required checks to CI.
+- [x] Document supported styles, units, coordinate conventions, layer roles, precision limits, and migration behavior.
+- [x] Add regression fixtures and required checks to CI.
 
 Acceptance: the basic example compiles, the full existing suite passes, and invalid manufacturing-profile fixtures emit useful diagnostics. Illustrative dimensions remain clearly identified; manufacturing readiness requires verified land-pattern data and the applicable validation profile.
 

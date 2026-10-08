@@ -9,6 +9,8 @@ pub struct Board {
     pub outline: String,
     pub layers: LayerSet,
     pub metadata: BTreeMap<String, Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub manufacturing_profile: Option<crate::manufacturing::Profile>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

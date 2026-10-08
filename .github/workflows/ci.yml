@@ -14,6 +14,7 @@ jobs:
           bun-version-file: .bun-version
       - uses: dtolnay/rust-toolchain@stable
         with:
-          components: clippy
+          components: clippy, rustfmt
       - run: bun install --frozen-lockfile
       - run: bun run check
+      - run: bun run footprints:inspect /tmp/react-pcb-footprints

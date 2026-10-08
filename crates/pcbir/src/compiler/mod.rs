@@ -27,6 +27,7 @@ pub struct CompileOutput {
     pub ir: BoardIr,
     pub diagnostics: Vec<Diagnostic>,
     pub compiler_diagnostics: Vec<Diagnostic>,
+    pub manufacturing_reports: BTreeMap<String, crate::manufacturing::Report>,
 }
 
 #[derive(Debug, Serialize)]
@@ -202,6 +203,34 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
         return Err(CompileError::diagnostic(fatal).with_diagnostics(previous));
     }
 
+    let mut manufacturing_reports = BTreeMap::new();
+    if let Some(profile) = &board.manufacturing_profile {
+        for (key, definition) in &context.footprint_definitions {
+            if let Some(physical) = &definition.physical {
+                let report = crate::manufacturing::validate(physical, profile)?;
+                diagnostics.extend(
+                    report
+                        .checks
+                        .iter()
+                        .flat_map(|c| c.diagnostics.iter().cloned()),
+                );
+                manufacturing_reports.insert(key.clone(), report);
+            } else {
+                diagnostics.push(Diagnostic::warning("PCBMFG003", "footprint has no canonical physical geometry; manufacturing checks were skipped")
+                    .with_entity(key));
+            }
+        }
+        if let Some(index) = diagnostics
+            .iter()
+            .position(|d| matches!(d.severity, crate::Severity::Error))
+        {
+            let fatal = diagnostics.remove(index);
+            let mut previous = context.compiler_diagnostics;
+            previous.extend(diagnostics);
+            return Err(CompileError::diagnostic(fatal).with_diagnostics(previous));
+        }
+    }
+
     Ok(CompileOutput {
         ir: BoardIr {
             schema_version: SCHEMA_VERSION,
@@ -220,6 +249,7 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
         },
         diagnostics,
         compiler_diagnostics: context.compiler_diagnostics,
+        manufacturing_reports,
     })
 }
 

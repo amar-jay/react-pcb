@@ -408,143 +408,152 @@ impl PhysicalFootprint {
         }
         let mut ids = BTreeSet::new();
         for f in &self.features {
-            if f.id.trim().is_empty() || !ids.insert(&f.id) {
-                return Err(invalid("feature IDs must be non-empty and unique"));
-            }
-            for value in f.at.into_iter().chain(f.shape.size()) {
-                checked(i128::from(value))?;
-            }
-            if f.shape.size().into_iter().any(|s| s <= 0)
-                || ![0, 90, 180, 270].contains(&f.rotation)
-            {
-                return Err(invalid(format!(
-                    "invalid dimensions or rotation for {}",
-                    f.id
-                )));
-            }
-            if let Shape::RoundedRect { size, radius } = &f.shape
-                && (*radius < 0 || i128::from(*radius) * 2 > i128::from(size[0].min(size[1])))
-            {
-                return Err(invalid(
-                    "rounded rectangle radius exceeds half its smaller dimension",
-                ));
-            }
-            let mut roles = BTreeSet::new();
-            for role in &f.layers {
-                if !roles.insert(format!("{role:?}")) {
-                    return Err(invalid("duplicate feature layer role"));
+            let mut validate_feature = || -> Result<(), CompileError> {
+                if f.id.trim().is_empty() || !ids.insert(&f.id) {
+                    return Err(invalid("feature IDs must be non-empty and unique"));
                 }
-                let allowed = match f.purpose {
-                    Purpose::Pad => matches!(
-                        role,
-                        Role::FrontCopper
-                            | Role::BackCopper
-                            | Role::AllCopper
-                            | Role::FrontMask
-                            | Role::BackMask
-                            | Role::AllMask
-                            | Role::FrontPaste
-                            | Role::BackPaste
-                    ),
-                    Purpose::Copper => {
-                        matches!(role, Role::FrontCopper | Role::BackCopper | Role::AllCopper)
-                    }
-                    Purpose::MaskOpening => {
-                        matches!(role, Role::FrontMask | Role::BackMask | Role::AllMask)
-                    }
-                    Purpose::PasteOpening => matches!(role, Role::FrontPaste | Role::BackPaste),
-                    Purpose::Silkscreen => {
-                        matches!(role, Role::FrontSilkscreen | Role::BackSilkscreen)
-                    }
-                    Purpose::Courtyard => {
-                        matches!(role, Role::FrontCourtyard | Role::BackCourtyard)
-                    }
-                    Purpose::Fabrication => {
-                        matches!(role, Role::FrontFabrication | Role::BackFabrication)
-                    }
-                    Purpose::PlatedHole | Purpose::NonPlatedHole => false,
-                };
-                if !allowed {
-                    return Err(invalid("feature purpose is incompatible with layer role"));
+                for value in f.at.into_iter().chain(f.shape.size()) {
+                    checked(i128::from(value))?;
                 }
-            }
-            let hole = matches!(f.purpose, Purpose::PlatedHole | Purpose::NonPlatedHole);
-            if (f.layers.contains(&Role::AllCopper)
-                && f.layers
-                    .iter()
-                    .any(|r| matches!(r, Role::FrontCopper | Role::BackCopper)))
-                || (f.layers.contains(&Role::AllMask)
-                    && f.layers
-                        .iter()
-                        .any(|r| matches!(r, Role::FrontMask | Role::BackMask)))
-            {
-                return Err(invalid("overlapping semantic layer roles"));
-            }
-            if hole
-                && f.drill.as_ref().is_some_and(|d| {
-                    let shape = if let Some(size) = d.slot {
-                        Shape::Oval { size }
-                    } else {
-                        Shape::Circle {
-                            diameter: d.diameter,
-                        }
-                    };
-                    f.shape != shape
-                })
-            {
-                return Err(invalid(
-                    "hole shape must match its circular or slotted drill geometry",
-                ));
-            }
-            if !hole && f.layers.is_empty() {
-                return Err(invalid("feature requires semantic layers"));
-            }
-            if f.purpose == Purpose::Pad
-                && !f
-                    .layers
-                    .iter()
-                    .any(|r| matches!(r, Role::FrontCopper | Role::BackCopper | Role::AllCopper))
-            {
-                return Err(invalid("pad requires copper"));
-            }
-            if let Some(d) = &f.drill {
-                checked(i128::from(d.diameter))?;
-                let size = d.slot.unwrap_or([d.diameter; 2]);
-                for n in size {
-                    checked(i128::from(n))?;
+                if f.shape.size().into_iter().any(|s| s <= 0)
+                    || ![0, 90, 180, 270].contains(&f.rotation)
+                {
+                    return Err(invalid(format!(
+                        "invalid dimensions or rotation for {}",
+                        f.id
+                    )));
                 }
-                if d.slot.is_some()
-                    && (self.schema_version == 1
-                        || size[0] == size[1]
-                        || size[0].min(size[1]) != d.diameter)
+                if let Shape::RoundedRect { size, radius } = &f.shape
+                    && (*radius < 0 || i128::from(*radius) * 2 > i128::from(size[0].min(size[1])))
                 {
                     return Err(invalid(
-                        "slots require schema version 2, distinct dimensions, and diameter equal to their minor dimension",
+                        "rounded rectangle radius exceeds half its smaller dimension",
                     ));
                 }
-                if d.diameter <= 0
-                    || size.iter().any(|n| *n <= 0)
-                    || size[0] > f.shape.size()[0]
-                    || size[1] > f.shape.size()[1]
-                    || (!hole && f.purpose != Purpose::Pad)
-                    || (hole && d.plated != (f.purpose == Purpose::PlatedHole))
-                {
-                    return Err(invalid("invalid drill geometry or plating"));
+                let mut roles = BTreeSet::new();
+                for role in &f.layers {
+                    if !roles.insert(format!("{role:?}")) {
+                        return Err(invalid("duplicate feature layer role"));
+                    }
+                    let allowed = match f.purpose {
+                        Purpose::Pad => matches!(
+                            role,
+                            Role::FrontCopper
+                                | Role::BackCopper
+                                | Role::AllCopper
+                                | Role::FrontMask
+                                | Role::BackMask
+                                | Role::AllMask
+                                | Role::FrontPaste
+                                | Role::BackPaste
+                        ),
+                        Purpose::Copper => {
+                            matches!(role, Role::FrontCopper | Role::BackCopper | Role::AllCopper)
+                        }
+                        Purpose::MaskOpening => {
+                            matches!(role, Role::FrontMask | Role::BackMask | Role::AllMask)
+                        }
+                        Purpose::PasteOpening => matches!(role, Role::FrontPaste | Role::BackPaste),
+                        Purpose::Silkscreen => {
+                            matches!(role, Role::FrontSilkscreen | Role::BackSilkscreen)
+                        }
+                        Purpose::Courtyard => {
+                            matches!(role, Role::FrontCourtyard | Role::BackCourtyard)
+                        }
+                        Purpose::Fabrication => {
+                            matches!(role, Role::FrontFabrication | Role::BackFabrication)
+                        }
+                        Purpose::PlatedHole | Purpose::NonPlatedHole => false,
+                    };
+                    if !allowed {
+                        return Err(invalid("feature purpose is incompatible with layer role"));
+                    }
                 }
-            } else if hole {
-                return Err(invalid("hole requires drill geometry"));
-            }
-            if let Some(stroke) = f.stroke
-                && (stroke <= 0
-                    || !matches!(
-                        f.purpose,
-                        Purpose::Silkscreen | Purpose::Courtyard | Purpose::Fabrication
-                    ))
-            {
-                return Err(invalid(
-                    "stroke is only supported for documentation graphics",
-                ));
-            }
+                let hole = matches!(f.purpose, Purpose::PlatedHole | Purpose::NonPlatedHole);
+                if (f.layers.contains(&Role::AllCopper)
+                    && f.layers
+                        .iter()
+                        .any(|r| matches!(r, Role::FrontCopper | Role::BackCopper)))
+                    || (f.layers.contains(&Role::AllMask)
+                        && f.layers
+                            .iter()
+                            .any(|r| matches!(r, Role::FrontMask | Role::BackMask)))
+                {
+                    return Err(invalid("overlapping semantic layer roles"));
+                }
+                if hole
+                    && f.drill.as_ref().is_some_and(|d| {
+                        let shape = if let Some(size) = d.slot {
+                            Shape::Oval { size }
+                        } else {
+                            Shape::Circle {
+                                diameter: d.diameter,
+                            }
+                        };
+                        f.shape != shape
+                    })
+                {
+                    return Err(invalid(
+                        "hole shape must match its circular or slotted drill geometry",
+                    ));
+                }
+                if !hole && f.layers.is_empty() {
+                    return Err(invalid("feature requires semantic layers"));
+                }
+                if f.purpose == Purpose::Pad
+                    && !f.layers.iter().any(|r| {
+                        matches!(r, Role::FrontCopper | Role::BackCopper | Role::AllCopper)
+                    })
+                {
+                    return Err(invalid("pad requires copper"));
+                }
+                if let Some(d) = &f.drill {
+                    checked(i128::from(d.diameter))?;
+                    let size = d.slot.unwrap_or([d.diameter; 2]);
+                    for n in size {
+                        checked(i128::from(n))?;
+                    }
+                    if d.slot.is_some()
+                        && (self.schema_version == 1
+                            || size[0] == size[1]
+                            || size[0].min(size[1]) != d.diameter)
+                    {
+                        return Err(invalid(
+                            "slots require schema version 2, distinct dimensions, and diameter equal to their minor dimension",
+                        ));
+                    }
+                    if d.diameter <= 0
+                        || size.iter().any(|n| *n <= 0)
+                        || size[0] > f.shape.size()[0]
+                        || size[1] > f.shape.size()[1]
+                        || (!hole && f.purpose != Purpose::Pad)
+                        || (hole && d.plated != (f.purpose == Purpose::PlatedHole))
+                    {
+                        return Err(invalid("invalid drill geometry or plating"));
+                    }
+                    if f.purpose == Purpose::Pad && !crate::manufacturing::drill_fits(f, 0) {
+                        return Err(invalid("drill geometry extends outside the pad shape"));
+                    }
+                } else if hole {
+                    return Err(invalid("hole requires drill geometry"));
+                }
+                if let Some(stroke) = f.stroke
+                    && (stroke <= 0
+                        || !matches!(
+                            f.purpose,
+                            Purpose::Silkscreen | Purpose::Courtyard | Purpose::Fabrication
+                        ))
+                {
+                    return Err(invalid(
+                        "stroke is only supported for documentation graphics",
+                    ));
+                }
+                Ok(())
+            };
+            validate_feature().map_err(|mut error| {
+                error.diagnostic.entity = Some(format!("{}/{}", self.key, f.id));
+                error
+            })?;
         }
         if self.bounds != bounds(&self.features)? {
             return Err(invalid("footprint bounds do not match geometry"));

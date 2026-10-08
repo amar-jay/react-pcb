@@ -86,3 +86,6 @@ export type {FootprintDefinition, FootprintPad, FootprintBinding, PadLayer, PinM
 
 export {Footprint, FootprintGroup, Pad, Hole, Graphic, renderFootprintDeclarations} from './footprints/jsx.tsx';
 export type {FootprintProps, FootprintGroupProps, PadProps, HoleProps, GraphicProps, FootprintStyle, FootprintTransform, FootprintSource, FootprintDeclarations} from './footprints/jsx.tsx';
+
+export {validateFootprintManufacturing} from './footprints/manufacturing.ts';
+export type {ManufacturingProfileInput, ManufacturingProfile, ManufacturingCheck, ManufacturingReport} from './footprints/manufacturing.ts';

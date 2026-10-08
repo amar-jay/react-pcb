@@ -5,16 +5,35 @@ fn main() {
     let command = std::env::args().nth(1);
     if !matches!(
         command.as_deref(),
-        Some("compile" | "footprint" | "migrate-footprint" | "footprint-svg")
+        Some(
+            "compile" | "footprint" | "migrate-footprint" | "footprint-svg" | "validate-footprint"
+        )
     ) {
         eprintln!(
-            "usage: pcbir compile|footprint|migrate-footprint|footprint-svg < declarations.json"
+            "usage: pcbir compile|footprint|migrate-footprint|footprint-svg|validate-footprint < declarations.json"
         );
         std::process::exit(2);
     }
     let mut input = String::new();
     if let Err(error) = io::stdin().read_to_string(&mut input) {
         fail(format!("failed to read declarations: {error}"));
+    }
+    if command.as_deref() == Some("validate-footprint") {
+        let input: pcbir::manufacturing::ValidationInput = serde_json::from_str(&input)
+            .unwrap_or_else(|e| {
+                fail_compile(CompileError::diagnostic(pcbir::Diagnostic::error(
+                    "PCBMFG001",
+                    format!("invalid manufacturing input: {e}"),
+                )))
+            });
+        let profile = input.profile.compile().unwrap_or_else(|e| fail_compile(e));
+        let report = pcbir::manufacturing::validate(&input.footprint, &profile)
+            .unwrap_or_else(|e| fail_compile(e));
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&report).expect("report is serializable")
+        );
+        return;
     }
     if command.as_deref() == Some("footprint-svg") {
         let footprint = serde_json::from_str(&input)

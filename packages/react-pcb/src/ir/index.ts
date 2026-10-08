@@ -1,3 +1,4 @@
+import type {ManufacturingProfile} from '../footprints/manufacturing.ts';
 import type {BoardSide, CopperUsage} from '../layers/index.ts';
 import type {DatasheetSource, ElectricalType} from '../parts/index.tsx';
 import type {FootprintRole, PhysicalFootprint, PlacedPhysicalFeature} from '../footprints/physical.ts';
@@ -120,6 +121,7 @@ export type BoardIr = Readonly<{
     outline: string;
     layers: IrLayerSet;
     metadata: Readonly<Record<string, unknown>>;
+    manufacturingProfile?: ManufacturingProfile;
   }>;
   componentDefinitions: Readonly<Record<string, IrComponentDefinition>>;
   footprintDefinitions: Readonly<Record<string, IrFootprintDefinition>>;

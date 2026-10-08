@@ -80,6 +80,38 @@ fn canonical_ir_round_trips_through_json() {
 }
 
 #[test]
+fn selected_manufacturing_policy_round_trips_without_losing_optional_limits() {
+    let mut input = transaction(vec![part("U1", "UNRESOLVED", json!({"1":{"id":"GND"}}))]);
+    input.declarations.children[0].props["manufacturingProfile"] = json!({
+        "schemaVersion": 1, "key": "process:exact",
+        "minCopperFeature": "0.1mm", "minCopperSpacing": "1mil",
+        "minDrillDiameter": "0.3mm", "minAnnularRing": "150um",
+        "minMaskExpansion": "0nm", "minMaskWeb": "1nm"
+    });
+    let output = compile(input.clone()).unwrap();
+    let profile = output.ir.board.manufacturing_profile.as_ref().unwrap();
+    assert_eq!(profile.min_copper_spacing, 25_400);
+    assert_eq!(profile.min_annular_ring, 150_000);
+    assert_eq!(profile.min_mask_expansion, Some(0));
+    assert_eq!(profile.min_mask_web, Some(1));
+    assert_eq!(profile.min_paste_feature, None);
+    let encoded = serde_json::to_value(output.ir).unwrap();
+    let decoded: crate::BoardIr = serde_json::from_value(encoded.clone()).unwrap();
+    decoded
+        .board
+        .manufacturing_profile
+        .as_ref()
+        .unwrap()
+        .validate()
+        .unwrap();
+    assert_eq!(serde_json::to_value(decoded).unwrap(), encoded);
+    assert!(output.manufacturing_reports.is_empty());
+    assert!(output.diagnostics.iter().any(|d| d.code == "PCBMFG003"));
+    input.declarations.children[0].props["manufacturingProfile"]["unknown"] = json!("1nm");
+    assert_eq!(compile(input).unwrap_err().diagnostic.code, "PCBMFG001");
+}
+
+#[test]
 fn schema_one_documents_retain_identity_and_legacy_geometry() {
     let original = compile(transaction(vec![part(
         "U1",

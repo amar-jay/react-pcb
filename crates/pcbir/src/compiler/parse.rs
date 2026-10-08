@@ -84,6 +84,19 @@ pub fn parse_board(props: &Value) -> Result<(Board, RegionDefinition), CompileEr
             outline: region.id.clone(),
             layers,
             metadata,
+            manufacturing_profile: props
+                .get("manufacturingProfile")
+                .map(|value| {
+                    let input: crate::manufacturing::ProfileInput =
+                        serde_json::from_value(value.clone()).map_err(|e| {
+                            CompileError::diagnostic(Diagnostic::error(
+                                "PCBMFG001",
+                                format!("invalid manufacturing profile: {e}"),
+                            ))
+                        })?;
+                    input.compile()
+                })
+                .transpose()?,
         },
         region,
     ))

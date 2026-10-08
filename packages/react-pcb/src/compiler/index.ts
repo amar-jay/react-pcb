@@ -1,3 +1,4 @@
+import type {ManufacturingReport} from '../footprints/manufacturing.ts';
 import type {ReactNode} from 'react';
 import {createDeclarationTransaction} from '../protocol/index.ts';
 import {renderDeclarations} from '../renderer/index.ts';
@@ -17,6 +18,7 @@ export type CompileOptions = {
 
 export type CompileResult = {
   ir: BoardIr;
+  manufacturingReports: Readonly<Record<string, ManufacturingReport>>;
   diagnostics: CompilerDiagnostic[];
 };
 
