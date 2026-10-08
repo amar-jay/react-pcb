@@ -89,3 +89,6 @@ export type {FootprintProps, FootprintGroupProps, PadProps, HoleProps, GraphicPr
 
 export {validateFootprintManufacturing} from './footprints/manufacturing.ts';
 export type {ManufacturingProfileInput, ManufacturingProfile, ManufacturingCheck, ManufacturingReport} from './footprints/manufacturing.ts';
+
+export {boardSvg, boardHtml, buildBoardPreview, exportBoardPreview, startBoardPreview} from './preview/index.ts';
+export type {BoardProjection, PreviewBuildOptions, PreviewBuild, PreviewServerOptions} from './preview/index.ts';

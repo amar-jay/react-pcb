@@ -6,17 +6,32 @@ fn main() {
     if !matches!(
         command.as_deref(),
         Some(
-            "compile" | "footprint" | "migrate-footprint" | "footprint-svg" | "validate-footprint"
+            "compile"
+                | "footprint"
+                | "migrate-footprint"
+                | "footprint-svg"
+                | "validate-footprint"
+                | "board-svg"
         )
     ) {
         eprintln!(
-            "usage: pcbir compile|footprint|migrate-footprint|footprint-svg|validate-footprint < declarations.json"
+            "usage: pcbir compile|footprint|migrate-footprint|footprint-svg|validate-footprint|board-svg < input.json"
         );
         std::process::exit(2);
     }
     let mut input = String::new();
     if let Err(error) = io::stdin().read_to_string(&mut input) {
         fail(format!("failed to read declarations: {error}"));
+    }
+    if command.as_deref() == Some("board-svg") {
+        let ir =
+            serde_json::from_str(&input).unwrap_or_else(|e| fail(format!("invalid board IR: {e}")));
+        let projection = pcbir::board_svg(&ir).unwrap_or_else(|e| fail_compile(e));
+        println!(
+            "{}",
+            serde_json::to_string(&projection).expect("projection is serializable")
+        );
+        return;
     }
     if command.as_deref() == Some("validate-footprint") {
         let input: pcbir::manufacturing::ValidationInput = serde_json::from_str(&input)

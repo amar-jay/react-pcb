@@ -85,7 +85,7 @@ async function runPhysical(input: unknown, operation: string, options: {cwd?: st
   const process = Bun.spawn([...(options.command ?? ['cargo', 'run', '--quiet', '-p', 'pcbir', '--', operation])], {
     cwd: options.cwd, stdin: new Blob([JSON.stringify(input)]), stdout: 'pipe', stderr: 'pipe',
   });
-  const [stdout, stderr, code] = await Promise.all([process.stdout.text(), process.stderr.text(), process.exited]);
+  const [stdout, stderr, code] = await Promise.all([new Response(process.stdout).text(), new Response(process.stderr).text(), process.exited]);
   if (code !== 0) throw compilerError(stderr, code);
   return JSON.parse(stdout) as PhysicalFootprint;
 }
@@ -95,7 +95,7 @@ export async function footprintSvg(input: PhysicalFootprint, options: {cwd?: str
   const process = Bun.spawn([...(options.command ?? ['cargo', 'run', '--quiet', '-p', 'pcbir', '--', 'footprint-svg'])], {
     cwd: options.cwd, stdin: new Blob([JSON.stringify(input)]), stdout: 'pipe', stderr: 'pipe',
   });
-  const [stdout, stderr, code] = await Promise.all([process.stdout.text(), process.stderr.text(), process.exited]);
+  const [stdout, stderr, code] = await Promise.all([new Response(process.stdout).text(), new Response(process.stderr).text(), process.exited]);
   if (code !== 0) throw compilerError(stderr, code);
   return stdout;
 }

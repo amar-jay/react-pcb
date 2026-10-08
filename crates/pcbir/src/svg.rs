@@ -8,7 +8,7 @@ fn invalid(message: &str) -> CompileError {
     CompileError::diagnostic(Diagnostic::error("PCBSVG001", message))
 }
 
-fn escape(value: &str) -> Result<String, CompileError> {
+pub(crate) fn escape(value: &str) -> Result<String, CompileError> {
     if value.chars().any(|c| {
         !matches!(c, '\t' | '\n' | '\r') && (c < '\u{20}' || c == '\u{fffe}' || c == '\u{ffff}')
     }) {
@@ -26,7 +26,7 @@ fn escape(value: &str) -> Result<String, CompileError> {
 }
 
 // Hex-encoded UTF-8 components cannot collide with separators or inject markup.
-fn identity(key: &str, layer: &str, feature: &str) -> String {
+pub(crate) fn identity(key: &str, layer: &str, feature: &str) -> String {
     let hex = |s: &str| {
         s.as_bytes()
             .iter()
@@ -36,7 +36,7 @@ fn identity(key: &str, layer: &str, feature: &str) -> String {
     format!("f-{}-{}-{}", hex(key), hex(layer), hex(feature))
 }
 
-fn mm(doubled_nm: i128) -> String {
+pub(crate) fn mm(doubled_nm: i128) -> String {
     let sign = if doubled_nm < 0 { "-" } else { "" };
     let n = doubled_nm.abs();
     let whole = n / 2_000_000;
@@ -48,17 +48,28 @@ fn mm(doubled_nm: i128) -> String {
     format!("{sign}{whole}.{}", fraction.trim_end_matches('0'))
 }
 
-fn geometry(feature: &Feature) -> String {
+pub(crate) fn geometry(feature: &Feature) -> String {
+    geometry_with(feature, |n| n.to_string())
+}
+
+pub(crate) fn geometry_mm(feature: &Feature) -> String {
+    geometry_with(feature, mm)
+}
+
+fn geometry_with(feature: &Feature, number: fn(i128) -> String) -> String {
     let [w, h] = feature.shape.size().map(i128::from);
     match &feature.shape {
-        Shape::Circle { diameter } => format!("<circle cx=\"0\" cy=\"0\" r=\"{diameter}\""),
+        Shape::Circle { diameter } => format!(
+            "<circle cx=\"0\" cy=\"0\" r=\"{}\"",
+            number(i128::from(*diameter))
+        ),
         shape => {
             let mut s = format!(
                 "<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\"",
-                -w,
-                -h,
-                w * 2,
-                h * 2
+                number(-w),
+                number(-h),
+                number(w * 2),
+                number(h * 2)
             );
             let radius = match shape {
                 Shape::RoundedRect { radius, .. } => i128::from(*radius) * 2,
@@ -66,7 +77,7 @@ fn geometry(feature: &Feature) -> String {
                 _ => 0,
             };
             if radius > 0 {
-                write!(s, " rx=\"{radius}\" ry=\"{radius}\"").unwrap();
+                write!(s, " rx=\"{}\" ry=\"{}\"", number(radius), number(radius)).unwrap();
             }
             s
         }

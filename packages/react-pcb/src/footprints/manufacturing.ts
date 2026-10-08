@@ -50,7 +50,7 @@ export async function validateFootprintManufacturing(footprint: PhysicalFootprin
   const process = Bun.spawn([...(options.command ?? ['cargo', 'run', '--quiet', '-p', 'pcbir', '--', 'validate-footprint'])], {
     cwd: options.cwd, stdin: new Blob([JSON.stringify({footprint, profile})]), stdout: 'pipe', stderr: 'pipe',
   });
-  const [stdout, stderr, code] = await Promise.all([process.stdout.text(), process.stderr.text(), process.exited]);
+  const [stdout, stderr, code] = await Promise.all([new Response(process.stdout).text(), new Response(process.stderr).text(), process.exited]);
   if (code !== 0) throw compilerError(stderr, code);
   return JSON.parse(stdout) as ManufacturingReport;
 }

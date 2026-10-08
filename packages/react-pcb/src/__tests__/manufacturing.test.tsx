@@ -174,7 +174,7 @@ test('board profile enforces checked rules, preserves its normalized policy and 
 
 test('basic example is a required end-to-end check with physical geometry and explicit manufacturing reports', async () => {
   const process = Bun.spawn(['bun', 'run', 'examples/basic.tsx'], {cwd: options.cwd, stdout: 'pipe', stderr: 'pipe'});
-  const [stdout, stderr, code] = await Promise.all([process.stdout.text(), process.stderr.text(), process.exited]);
+  const [stdout, stderr, code] = await Promise.all([new Response(process.stdout).text(), new Response(process.stderr).text(), process.exited]);
   expect(code, stderr || stdout).toBe(0);
   const result = JSON.parse(stdout) as Awaited<ReturnType<typeof compile>>;
   expect(result.ir.schemaVersion).toBe(2);

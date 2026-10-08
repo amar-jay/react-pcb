@@ -1,0 +1,7731 @@
+{
+  "ir": {
+    "schemaVersion": 2,
+    "revision": 1,
+    "units": "mm",
+    "board": {
+      "id": "board/1",
+      "outline": "region/board-outline",
+      "layers": {
+        "kind": "layer-set",
+        "stackup": {
+          "kind": "stackup",
+          "entries": [
+            {
+              "kind": "copper",
+              "id": "copper/1",
+              "thickness": 0.035,
+              "usage": "signal"
+            },
+            {
+              "kind": "dielectric",
+              "id": "dielectric/1",
+              "material": "FR-4",
+              "thickness": 0.18,
+              "epsilonR": 4.2,
+              "lossTangent": 0.02
+            },
+            {
+              "kind": "copper",
+              "id": "copper/2",
+              "thickness": 0.018,
+              "usage": "plane"
+            },
+            {
+              "kind": "dielectric",
+              "id": "dielectric/2",
+              "material": "FR-4",
+              "thickness": 1,
+              "epsilonR": 4.2,
+              "lossTangent": 0.02
+            },
+            {
+              "kind": "copper",
+              "id": "copper/3",
+              "thickness": 0.018,
+              "usage": "plane"
+            },
+            {
+              "kind": "dielectric",
+              "id": "dielectric/3",
+              "material": "FR-4",
+              "thickness": 0.18,
+              "epsilonR": 4.2,
+              "lossTangent": 0.02
+            },
+            {
+              "kind": "copper",
+              "id": "copper/4",
+              "thickness": 0.035,
+              "usage": "signal"
+            }
+          ]
+        },
+        "technical": [
+          {
+            "kind": "solder-mask",
+            "id": "solder-mask/front",
+            "side": "front",
+            "expansion": 0.05
+          },
+          {
+            "kind": "solder-mask",
+            "id": "solder-mask/back",
+            "side": "back",
+            "expansion": 0.05
+          },
+          {
+            "kind": "paste",
+            "id": "paste/front",
+            "side": "front"
+          },
+          {
+            "kind": "paste",
+            "id": "paste/back",
+            "side": "back"
+          },
+          {
+            "kind": "silkscreen",
+            "id": "silkscreen/front",
+            "side": "front",
+            "color": "white"
+          },
+          {
+            "kind": "silkscreen",
+            "id": "silkscreen/back",
+            "side": "back",
+            "color": "white"
+          },
+          {
+            "kind": "mechanical",
+            "id": "mechanical/assembly/front",
+            "purpose": "assembly",
+            "side": "front"
+          },
+          {
+            "kind": "mechanical",
+            "id": "mechanical/fabrication/front",
+            "purpose": "fabrication",
+            "side": "front"
+          },
+          {
+            "kind": "mechanical",
+            "id": "mechanical/fabrication/back",
+            "purpose": "fabrication",
+            "side": "back"
+          },
+          {
+            "kind": "mechanical",
+            "id": "mechanical/courtyard/front",
+            "purpose": "courtyard",
+            "side": "front"
+          },
+          {
+            "kind": "mechanical",
+            "id": "mechanical/courtyard/back",
+            "purpose": "courtyard",
+            "side": "back"
+          }
+        ]
+      },
+      "metadata": {
+        "description": "Four-layer USB controller board",
+        "revision": "0.1.0",
+        "title": "USB controller"
+      },
+      "manufacturingProfile": {
+        "schemaVersion": 1,
+        "key": "example:board-process",
+        "units": "nm",
+        "minCopperFeature": 150000,
+        "minCopperSpacing": 150000,
+        "minDrillDiameter": 300000,
+        "minAnnularRing": 150000,
+        "minMaskExpansion": 0,
+        "minMaskWeb": 100000,
+        "minPasteFeature": 100000,
+        "minCourtyardClearance": 200000
+      }
+    },
+    "componentDefinitions": {
+      "part:[\"Global Connector Technology\",\"USB4105-GF-A\"]": {
+        "manufacturer": "Global Connector Technology",
+        "mpn": "USB4105-GF-A",
+        "package": "USB Type-C receptacle, 16 contacts, top-mount",
+        "datasheet": {
+          "url": "https://gct.co/files/drawings/usb4105.pdf",
+          "document": "USB4105 product drawing",
+          "revision": "B4",
+          "page": 1
+        },
+        "pinoutCoverage": "complete",
+        "pins": {
+          "CC1": {
+            "electricalType": "passive",
+            "required": true
+          },
+          "CC2": {
+            "electricalType": "passive",
+            "required": true
+          },
+          "DMinus": {
+            "electricalType": "passive",
+            "functions": [
+              "USB_D-"
+            ]
+          },
+          "DPlus": {
+            "electricalType": "passive",
+            "functions": [
+              "USB_D+"
+            ]
+          },
+          "GND": {
+            "electricalType": "passive",
+            "required": true
+          },
+          "SBU1": {
+            "electricalType": "passive"
+          },
+          "SBU2": {
+            "electricalType": "passive"
+          },
+          "Shield": {
+            "electricalType": "passive"
+          },
+          "VBUS": {
+            "electricalType": "passive",
+            "required": true
+          }
+        }
+      },
+      "part:[\"STMicroelectronics\",\"STM32G0B1CBT6\"]": {
+        "manufacturer": "STMicroelectronics",
+        "mpn": "STM32G0B1CBT6",
+        "package": "LQFP48 7x7 mm",
+        "datasheet": {
+          "url": "https://www.st.com/resource/en/datasheet/stm32g0b1cb.pdf",
+          "document": "DS13560",
+          "revision": "6",
+          "page": 38
+        },
+        "pinoutCoverage": "partial",
+        "pins": {
+          "PA11": {
+            "electricalType": "bidirectional",
+            "functions": [
+              "GPIO",
+              "USB_DM"
+            ]
+          },
+          "PA12": {
+            "electricalType": "bidirectional",
+            "functions": [
+              "GPIO",
+              "USB_DP"
+            ]
+          },
+          "VDD/VDDA": {
+            "electricalType": "power-input",
+            "required": true
+          },
+          "VSS/VSSA": {
+            "electricalType": "power-input",
+            "required": true
+          }
+        }
+      },
+      "value:100nF": {
+        "value": "100nF"
+      }
+    },
+    "footprintDefinitions": {
+      "LQFP-48_7x7mm_P0.5mm": {
+        "key": "LQFP-48_7x7mm_P0.5mm",
+        "resolved": true,
+        "pads": [
+          {
+            "id": "1",
+            "at": [
+              -4.25,
+              -2.75
+            ],
+            "shape": "rect",
+            "size": [
+              1.2,
+              0.3
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "2",
+            "at": [
+              -4.25,
+              -2.25
+            ],
+            "shape": "rect",
+            "size": [
+              1.2,
+              0.3
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "3",
+            "at": [
+              -4.25,
+              -1.75
+            ],
+            "shape": "rect",
+            "size": [
+              1.2,
+              0.3
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "4",
+            "at": [
+              -4.25,
+              -1.25
+            ],
+            "shape": "rect",
+            "size": [
+              1.2,
+              0.3
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "5",
+            "at": [
+              -4.25,
+              -0.75
+            ],
+            "shape": "rect",
+            "size": [
+              1.2,
+              0.3
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "6",
+            "at": [
+              -4.25,
+              -0.25
+            ],
+            "shape": "rect",
+            "size": [
+              1.2,
+              0.3
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "7",
+            "at": [
+              -4.25,
+              0.25
+            ],
+            "shape": "rect",
+            "size": [
+              1.2,
+              0.3
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "8",
+            "at": [
+              -4.25,
+              0.75
+            ],
+            "shape": "rect",
+            "size": [
+              1.2,
+              0.3
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "9",
+            "at": [
+              -4.25,
+              1.25
+            ],
+            "shape": "rect",
+            "size": [
+              1.2,
+              0.3
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "10",
+            "at": [
+              -4.25,
+              1.75
+            ],
+            "shape": "rect",
+            "size": [
+              1.2,
+              0.3
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "11",
+            "at": [
+              -4.25,
+              2.25
+            ],
+            "shape": "rect",
+            "size": [
+              1.2,
+              0.3
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "12",
+            "at": [
+              -4.25,
+              2.75
+            ],
+            "shape": "rect",
+            "size": [
+              1.2,
+              0.3
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "13",
+            "at": [
+              -2.75,
+              4.25
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.2
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "14",
+            "at": [
+              -2.25,
+              4.25
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.2
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "15",
+            "at": [
+              -1.75,
+              4.25
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.2
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "16",
+            "at": [
+              -1.25,
+              4.25
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.2
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "17",
+            "at": [
+              -0.75,
+              4.25
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.2
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "18",
+            "at": [
+              -0.25,
+              4.25
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.2
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "19",
+            "at": [
+              0.25,
+              4.25
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.2
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "20",
+            "at": [
+              0.75,
+              4.25
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.2
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "21",
+            "at": [
+              1.25,
+              4.25
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.2
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "22",
+            "at": [
+              1.75,
+              4.25
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.2
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "23",
+            "at": [
+              2.25,
+              4.25
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.2
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "24",
+            "at": [
+              2.75,
+              4.25
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.2
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "25",
+            "at": [
+              4.25,
+              2.75
+            ],
+            "shape": "rect",
+            "size": [
+              1.2,
+              0.3
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "26",
+            "at": [
+              4.25,
+              2.25
+            ],
+            "shape": "rect",
+            "size": [
+              1.2,
+              0.3
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "27",
+            "at": [
+              4.25,
+              1.75
+            ],
+            "shape": "rect",
+            "size": [
+              1.2,
+              0.3
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "28",
+            "at": [
+              4.25,
+              1.25
+            ],
+            "shape": "rect",
+            "size": [
+              1.2,
+              0.3
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "29",
+            "at": [
+              4.25,
+              0.75
+            ],
+            "shape": "rect",
+            "size": [
+              1.2,
+              0.3
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "30",
+            "at": [
+              4.25,
+              0.25
+            ],
+            "shape": "rect",
+            "size": [
+              1.2,
+              0.3
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "31",
+            "at": [
+              4.25,
+              -0.25
+            ],
+            "shape": "rect",
+            "size": [
+              1.2,
+              0.3
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "32",
+            "at": [
+              4.25,
+              -0.75
+            ],
+            "shape": "rect",
+            "size": [
+              1.2,
+              0.3
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "33",
+            "at": [
+              4.25,
+              -1.25
+            ],
+            "shape": "rect",
+            "size": [
+              1.2,
+              0.3
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "34",
+            "at": [
+              4.25,
+              -1.75
+            ],
+            "shape": "rect",
+            "size": [
+              1.2,
+              0.3
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "35",
+            "at": [
+              4.25,
+              -2.25
+            ],
+            "shape": "rect",
+            "size": [
+              1.2,
+              0.3
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "36",
+            "at": [
+              4.25,
+              -2.75
+            ],
+            "shape": "rect",
+            "size": [
+              1.2,
+              0.3
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "37",
+            "at": [
+              2.75,
+              -4.25
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.2
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "38",
+            "at": [
+              2.25,
+              -4.25
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.2
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "39",
+            "at": [
+              1.75,
+              -4.25
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.2
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "40",
+            "at": [
+              1.25,
+              -4.25
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.2
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "41",
+            "at": [
+              0.75,
+              -4.25
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.2
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "42",
+            "at": [
+              0.25,
+              -4.25
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.2
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "43",
+            "at": [
+              -0.25,
+              -4.25
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.2
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "44",
+            "at": [
+              -0.75,
+              -4.25
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.2
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "45",
+            "at": [
+              -1.25,
+              -4.25
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.2
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "46",
+            "at": [
+              -1.75,
+              -4.25
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.2
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "47",
+            "at": [
+              -2.25,
+              -4.25
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.2
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "48",
+            "at": [
+              -2.75,
+              -4.25
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.2
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          }
+        ],
+        "physical": {
+          "schemaVersion": 2,
+          "key": "LQFP-48_7x7mm_P0.5mm",
+          "units": "nm",
+          "features": [
+            {
+              "id": "1",
+              "purpose": "pad",
+              "at": [
+                -4250000,
+                -2750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "2",
+              "purpose": "pad",
+              "at": [
+                -4250000,
+                -2250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "3",
+              "purpose": "pad",
+              "at": [
+                -4250000,
+                -1750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "4",
+              "purpose": "pad",
+              "at": [
+                -4250000,
+                -1250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "5",
+              "purpose": "pad",
+              "at": [
+                -4250000,
+                -750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "6",
+              "purpose": "pad",
+              "at": [
+                -4250000,
+                -250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "7",
+              "purpose": "pad",
+              "at": [
+                -4250000,
+                250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "8",
+              "purpose": "pad",
+              "at": [
+                -4250000,
+                750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "9",
+              "purpose": "pad",
+              "at": [
+                -4250000,
+                1250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "10",
+              "purpose": "pad",
+              "at": [
+                -4250000,
+                1750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "11",
+              "purpose": "pad",
+              "at": [
+                -4250000,
+                2250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "12",
+              "purpose": "pad",
+              "at": [
+                -4250000,
+                2750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "13",
+              "purpose": "pad",
+              "at": [
+                -2750000,
+                4250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "14",
+              "purpose": "pad",
+              "at": [
+                -2250000,
+                4250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "15",
+              "purpose": "pad",
+              "at": [
+                -1750000,
+                4250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "16",
+              "purpose": "pad",
+              "at": [
+                -1250000,
+                4250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "17",
+              "purpose": "pad",
+              "at": [
+                -750000,
+                4250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "18",
+              "purpose": "pad",
+              "at": [
+                -250000,
+                4250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "19",
+              "purpose": "pad",
+              "at": [
+                250000,
+                4250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "20",
+              "purpose": "pad",
+              "at": [
+                750000,
+                4250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "21",
+              "purpose": "pad",
+              "at": [
+                1250000,
+                4250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "22",
+              "purpose": "pad",
+              "at": [
+                1750000,
+                4250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "23",
+              "purpose": "pad",
+              "at": [
+                2250000,
+                4250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "24",
+              "purpose": "pad",
+              "at": [
+                2750000,
+                4250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "25",
+              "purpose": "pad",
+              "at": [
+                4250000,
+                2750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "26",
+              "purpose": "pad",
+              "at": [
+                4250000,
+                2250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "27",
+              "purpose": "pad",
+              "at": [
+                4250000,
+                1750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "28",
+              "purpose": "pad",
+              "at": [
+                4250000,
+                1250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "29",
+              "purpose": "pad",
+              "at": [
+                4250000,
+                750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "30",
+              "purpose": "pad",
+              "at": [
+                4250000,
+                250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "31",
+              "purpose": "pad",
+              "at": [
+                4250000,
+                -250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "32",
+              "purpose": "pad",
+              "at": [
+                4250000,
+                -750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "33",
+              "purpose": "pad",
+              "at": [
+                4250000,
+                -1250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "34",
+              "purpose": "pad",
+              "at": [
+                4250000,
+                -1750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "35",
+              "purpose": "pad",
+              "at": [
+                4250000,
+                -2250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "36",
+              "purpose": "pad",
+              "at": [
+                4250000,
+                -2750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "37",
+              "purpose": "pad",
+              "at": [
+                2750000,
+                -4250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "38",
+              "purpose": "pad",
+              "at": [
+                2250000,
+                -4250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "39",
+              "purpose": "pad",
+              "at": [
+                1750000,
+                -4250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "40",
+              "purpose": "pad",
+              "at": [
+                1250000,
+                -4250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "41",
+              "purpose": "pad",
+              "at": [
+                750000,
+                -4250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "42",
+              "purpose": "pad",
+              "at": [
+                250000,
+                -4250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "43",
+              "purpose": "pad",
+              "at": [
+                -250000,
+                -4250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "44",
+              "purpose": "pad",
+              "at": [
+                -750000,
+                -4250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "45",
+              "purpose": "pad",
+              "at": [
+                -1250000,
+                -4250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "46",
+              "purpose": "pad",
+              "at": [
+                -1750000,
+                -4250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "47",
+              "purpose": "pad",
+              "at": [
+                -2250000,
+                -4250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "48",
+              "purpose": "pad",
+              "at": [
+                -2750000,
+                -4250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "body",
+              "purpose": "fabrication",
+              "at": [
+                0,
+                0
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  7000000,
+                  7000000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-fabrication"
+              ],
+              "drill": null,
+              "stroke": 100000
+            },
+            {
+              "id": "pin-1-fabrication",
+              "purpose": "fabrication",
+              "at": [
+                -2900000,
+                -2900000
+              ],
+              "shape": {
+                "kind": "circle",
+                "diameter": 400000
+              },
+              "rotation": 0,
+              "layers": [
+                "front-fabrication"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "courtyard",
+              "purpose": "courtyard",
+              "at": [
+                0,
+                0
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  10200000,
+                  10200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-courtyard"
+              ],
+              "drill": null,
+              "stroke": 50000
+            },
+            {
+              "id": "silk--1--1-horizontal",
+              "purpose": "silkscreen",
+              "at": [
+                -3385000,
+                -3610000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  570000,
+                  120000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-silkscreen"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "silk--1--1-vertical",
+              "purpose": "silkscreen",
+              "at": [
+                -3610000,
+                -3385000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  120000,
+                  570000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-silkscreen"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "silk--1-1-horizontal",
+              "purpose": "silkscreen",
+              "at": [
+                -3385000,
+                3610000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  570000,
+                  120000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-silkscreen"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "silk--1-1-vertical",
+              "purpose": "silkscreen",
+              "at": [
+                -3610000,
+                3385000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  120000,
+                  570000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-silkscreen"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "silk-1--1-horizontal",
+              "purpose": "silkscreen",
+              "at": [
+                3385000,
+                -3610000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  570000,
+                  120000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-silkscreen"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "silk-1--1-vertical",
+              "purpose": "silkscreen",
+              "at": [
+                3610000,
+                -3385000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  120000,
+                  570000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-silkscreen"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "silk-1-1-horizontal",
+              "purpose": "silkscreen",
+              "at": [
+                3385000,
+                3610000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  570000,
+                  120000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-silkscreen"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "silk-1-1-vertical",
+              "purpose": "silkscreen",
+              "at": [
+                3610000,
+                3385000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  120000,
+                  570000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-silkscreen"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "pin-1-silkscreen",
+              "purpose": "silkscreen",
+              "at": [
+                -4250000,
+                -3450000
+              ],
+              "shape": {
+                "kind": "circle",
+                "diameter": 350000
+              },
+              "rotation": 0,
+              "layers": [
+                "front-silkscreen"
+              ],
+              "drill": null,
+              "stroke": null
+            }
+          ],
+          "bounds": {
+            "min2": [
+              -10250000,
+              -10250000
+            ],
+            "max2": [
+              10250000,
+              10250000
+            ]
+          }
+        }
+      },
+      "USB-C_Receptacle_GCT_USB4105": {
+        "key": "USB-C_Receptacle_GCT_USB4105",
+        "resolved": true,
+        "pads": [
+          {
+            "id": "A1/B12",
+            "at": [
+              -3.2,
+              -3.68
+            ],
+            "shape": "rect",
+            "size": [
+              0.6,
+              1.15
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "A4/B9",
+            "at": [
+              -2.4,
+              -3.68
+            ],
+            "shape": "rect",
+            "size": [
+              0.6,
+              1.15
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "B8",
+            "at": [
+              -1.75,
+              -3.68
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.15
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "A5",
+            "at": [
+              -1.25,
+              -3.68
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.15
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "B7",
+            "at": [
+              -0.75,
+              -3.68
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.15
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "A6",
+            "at": [
+              -0.25,
+              -3.68
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.15
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "A7",
+            "at": [
+              0.25,
+              -3.68
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.15
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "B6",
+            "at": [
+              0.75,
+              -3.68
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.15
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "A8",
+            "at": [
+              1.25,
+              -3.68
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.15
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "B5",
+            "at": [
+              1.75,
+              -3.68
+            ],
+            "shape": "rect",
+            "size": [
+              0.3,
+              1.15
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "B4/A9",
+            "at": [
+              2.4,
+              -3.68
+            ],
+            "shape": "rect",
+            "size": [
+              0.6,
+              1.15
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "B1/A12",
+            "at": [
+              3.2,
+              -3.68
+            ],
+            "shape": "rect",
+            "size": [
+              0.6,
+              1.15
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              },
+              {
+                "role": "front-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "SHELL1",
+            "at": [
+              -4.32,
+              -3.105
+            ],
+            "shape": "oval",
+            "size": [
+              1,
+              2.1
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "all-copper"
+              },
+              {
+                "role": "all-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": {
+              "diameter": 0.6,
+              "slot": [
+                0.6,
+                1.7
+              ],
+              "plated": true
+            }
+          },
+          {
+            "id": "SHELL2",
+            "at": [
+              4.32,
+              -3.105
+            ],
+            "shape": "oval",
+            "size": [
+              1,
+              2.1
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "all-copper"
+              },
+              {
+                "role": "all-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": {
+              "diameter": 0.6,
+              "slot": [
+                0.6,
+                1.7
+              ],
+              "plated": true
+            }
+          },
+          {
+            "id": "SHELL3",
+            "at": [
+              -4.32,
+              1.075
+            ],
+            "shape": "oval",
+            "size": [
+              1,
+              1.8
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "all-copper"
+              },
+              {
+                "role": "all-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": {
+              "diameter": 0.6,
+              "slot": [
+                0.6,
+                1.4
+              ],
+              "plated": true
+            }
+          },
+          {
+            "id": "SHELL4",
+            "at": [
+              4.32,
+              1.075
+            ],
+            "shape": "oval",
+            "size": [
+              1,
+              1.8
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "all-copper"
+              },
+              {
+                "role": "all-mask"
+              },
+              {
+                "role": "front-paste"
+              }
+            ],
+            "drill": {
+              "diameter": 0.6,
+              "slot": [
+                0.6,
+                1.4
+              ],
+              "plated": true
+            }
+          }
+        ],
+        "physical": {
+          "schemaVersion": 2,
+          "key": "USB-C_Receptacle_GCT_USB4105",
+          "units": "nm",
+          "features": [
+            {
+              "id": "A1/B12",
+              "purpose": "pad",
+              "at": [
+                -3200000,
+                -3680000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  600000,
+                  1150000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "A4/B9",
+              "purpose": "pad",
+              "at": [
+                -2400000,
+                -3680000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  600000,
+                  1150000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "B8",
+              "purpose": "pad",
+              "at": [
+                -1750000,
+                -3680000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1150000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "A5",
+              "purpose": "pad",
+              "at": [
+                -1250000,
+                -3680000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1150000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "B7",
+              "purpose": "pad",
+              "at": [
+                -750000,
+                -3680000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1150000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "A6",
+              "purpose": "pad",
+              "at": [
+                -250000,
+                -3680000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1150000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "A7",
+              "purpose": "pad",
+              "at": [
+                250000,
+                -3680000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1150000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "B6",
+              "purpose": "pad",
+              "at": [
+                750000,
+                -3680000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1150000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "A8",
+              "purpose": "pad",
+              "at": [
+                1250000,
+                -3680000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1150000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "B5",
+              "purpose": "pad",
+              "at": [
+                1750000,
+                -3680000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1150000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "B4/A9",
+              "purpose": "pad",
+              "at": [
+                2400000,
+                -3680000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  600000,
+                  1150000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "B1/A12",
+              "purpose": "pad",
+              "at": [
+                3200000,
+                -3680000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  600000,
+                  1150000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "SHELL1",
+              "purpose": "pad",
+              "at": [
+                -4320000,
+                -3105000
+              ],
+              "shape": {
+                "kind": "oval",
+                "size": [
+                  1000000,
+                  2100000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "all-copper",
+                "all-mask",
+                "front-paste"
+              ],
+              "drill": {
+                "diameter": 600000,
+                "slot": [
+                  600000,
+                  1700000
+                ],
+                "plated": true
+              },
+              "stroke": null
+            },
+            {
+              "id": "SHELL2",
+              "purpose": "pad",
+              "at": [
+                4320000,
+                -3105000
+              ],
+              "shape": {
+                "kind": "oval",
+                "size": [
+                  1000000,
+                  2100000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "all-copper",
+                "all-mask",
+                "front-paste"
+              ],
+              "drill": {
+                "diameter": 600000,
+                "slot": [
+                  600000,
+                  1700000
+                ],
+                "plated": true
+              },
+              "stroke": null
+            },
+            {
+              "id": "SHELL3",
+              "purpose": "pad",
+              "at": [
+                -4320000,
+                1075000
+              ],
+              "shape": {
+                "kind": "oval",
+                "size": [
+                  1000000,
+                  1800000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "all-copper",
+                "all-mask",
+                "front-paste"
+              ],
+              "drill": {
+                "diameter": 600000,
+                "slot": [
+                  600000,
+                  1400000
+                ],
+                "plated": true
+              },
+              "stroke": null
+            },
+            {
+              "id": "SHELL4",
+              "purpose": "pad",
+              "at": [
+                4320000,
+                1075000
+              ],
+              "shape": {
+                "kind": "oval",
+                "size": [
+                  1000000,
+                  1800000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "all-copper",
+                "all-mask",
+                "front-paste"
+              ],
+              "drill": {
+                "diameter": 600000,
+                "slot": [
+                  600000,
+                  1400000
+                ],
+                "plated": true
+              },
+              "stroke": null
+            },
+            {
+              "id": "locating-left",
+              "purpose": "non-plated-hole",
+              "at": [
+                -2890000,
+                -2605000
+              ],
+              "shape": {
+                "kind": "circle",
+                "diameter": 650000
+              },
+              "rotation": 0,
+              "layers": [],
+              "drill": {
+                "diameter": 650000,
+                "plated": false
+              },
+              "stroke": null
+            },
+            {
+              "id": "locating-right",
+              "purpose": "non-plated-hole",
+              "at": [
+                2890000,
+                -2605000
+              ],
+              "shape": {
+                "kind": "circle",
+                "diameter": 650000
+              },
+              "rotation": 0,
+              "layers": [],
+              "drill": {
+                "diameter": 650000,
+                "plated": false
+              },
+              "stroke": null
+            },
+            {
+              "id": "body",
+              "purpose": "fabrication",
+              "at": [
+                0,
+                0
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  8940000,
+                  7350000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-fabrication"
+              ],
+              "drill": null,
+              "stroke": 100000
+            },
+            {
+              "id": "courtyard",
+              "purpose": "courtyard",
+              "at": [
+                0,
+                -290000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  10640000,
+                  8940000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-courtyard"
+              ],
+              "drill": null,
+              "stroke": 50000
+            },
+            {
+              "id": "silkscreen-left",
+              "purpose": "silkscreen",
+              "at": [
+                -4670000,
+                -950000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  120000,
+                  1700000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-silkscreen"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "silkscreen-right",
+              "purpose": "silkscreen",
+              "at": [
+                4670000,
+                -950000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  120000,
+                  1700000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-silkscreen"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "pcb-edge-reference",
+              "purpose": "fabrication",
+              "at": [
+                0,
+                3675000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  10000000,
+                  100000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-fabrication"
+              ],
+              "drill": null,
+              "stroke": null
+            }
+          ],
+          "bounds": {
+            "min2": [
+              -10690000,
+              -9570000
+            ],
+            "max2": [
+              10690000,
+              8410000
+            ]
+          }
+        }
+      },
+      "example:manufacturing-passive": {
+        "key": "example:manufacturing-passive",
+        "resolved": true,
+        "pads": [
+          {
+            "id": "1",
+            "at": [
+              -0.5,
+              0
+            ],
+            "shape": "rect",
+            "size": [
+              0.6,
+              0.7
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              }
+            ],
+            "drill": null
+          },
+          {
+            "id": "2",
+            "at": [
+              0.5,
+              0
+            ],
+            "shape": "rect",
+            "size": [
+              0.6,
+              0.7
+            ],
+            "rotation": 0,
+            "layers": [
+              {
+                "role": "front-copper"
+              }
+            ],
+            "drill": null
+          }
+        ],
+        "physical": {
+          "schemaVersion": 2,
+          "key": "example:manufacturing-passive",
+          "units": "nm",
+          "features": [
+            {
+              "id": "1",
+              "purpose": "pad",
+              "at": [
+                -500000,
+                0
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  600000,
+                  700000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "2",
+              "purpose": "pad",
+              "at": [
+                500000,
+                0
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  600000,
+                  700000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "mask-1",
+              "purpose": "mask-opening",
+              "at": [
+                -500000,
+                0
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  700000,
+                  800000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-mask"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "paste-1",
+              "purpose": "paste-opening",
+              "at": [
+                -500000,
+                0
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  500000,
+                  600000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "mask-2",
+              "purpose": "mask-opening",
+              "at": [
+                500000,
+                0
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  700000,
+                  800000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-mask"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "paste-2",
+              "purpose": "paste-opening",
+              "at": [
+                500000,
+                0
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  500000,
+                  600000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            {
+              "id": "courtyard",
+              "purpose": "courtyard",
+              "at": [
+                0,
+                0
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  2000000,
+                  1100000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-courtyard"
+              ],
+              "drill": null,
+              "stroke": 50000
+            }
+          ],
+          "bounds": {
+            "min2": [
+              -2050000,
+              -1150000
+            ],
+            "max2": [
+              2050000,
+              1150000
+            ]
+          }
+        }
+      }
+    },
+    "parts": [
+      {
+        "id": "usb-controller/U1",
+        "reference": "U1",
+        "component": "part:[\"STMicroelectronics\",\"STM32G0B1CBT6\"]",
+        "footprint": "LQFP-48_7x7mm_P0.5mm",
+        "pinMap": {
+          "PA11": [
+            "33"
+          ],
+          "PA12": [
+            "34"
+          ],
+          "VDD/VDDA": [
+            "6"
+          ],
+          "VSS/VSSA": [
+            "7"
+          ]
+        },
+        "padLayers": {
+          "1": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "2": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "3": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "4": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "5": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "6": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "7": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "8": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "9": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "10": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "11": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "12": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "13": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "14": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "15": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "16": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "17": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "18": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "19": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "20": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "21": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "22": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "23": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "24": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "25": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "26": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "27": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "28": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "29": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "30": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "31": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "32": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "33": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "34": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "35": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "36": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "37": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "38": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "39": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "40": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "41": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "42": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "43": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "44": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "45": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "46": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "47": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "48": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ]
+        },
+        "physicalFeatures": {
+          "1": {
+            "geometry": {
+              "id": "1",
+              "purpose": "pad",
+              "at": [
+                25750000,
+                17250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "2": {
+            "geometry": {
+              "id": "2",
+              "purpose": "pad",
+              "at": [
+                25750000,
+                17750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "3": {
+            "geometry": {
+              "id": "3",
+              "purpose": "pad",
+              "at": [
+                25750000,
+                18250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "4": {
+            "geometry": {
+              "id": "4",
+              "purpose": "pad",
+              "at": [
+                25750000,
+                18750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "5": {
+            "geometry": {
+              "id": "5",
+              "purpose": "pad",
+              "at": [
+                25750000,
+                19250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "6": {
+            "geometry": {
+              "id": "6",
+              "purpose": "pad",
+              "at": [
+                25750000,
+                19750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "7": {
+            "geometry": {
+              "id": "7",
+              "purpose": "pad",
+              "at": [
+                25750000,
+                20250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "8": {
+            "geometry": {
+              "id": "8",
+              "purpose": "pad",
+              "at": [
+                25750000,
+                20750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "9": {
+            "geometry": {
+              "id": "9",
+              "purpose": "pad",
+              "at": [
+                25750000,
+                21250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "10": {
+            "geometry": {
+              "id": "10",
+              "purpose": "pad",
+              "at": [
+                25750000,
+                21750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "11": {
+            "geometry": {
+              "id": "11",
+              "purpose": "pad",
+              "at": [
+                25750000,
+                22250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "12": {
+            "geometry": {
+              "id": "12",
+              "purpose": "pad",
+              "at": [
+                25750000,
+                22750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "13": {
+            "geometry": {
+              "id": "13",
+              "purpose": "pad",
+              "at": [
+                27250000,
+                24250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "14": {
+            "geometry": {
+              "id": "14",
+              "purpose": "pad",
+              "at": [
+                27750000,
+                24250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "15": {
+            "geometry": {
+              "id": "15",
+              "purpose": "pad",
+              "at": [
+                28250000,
+                24250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "16": {
+            "geometry": {
+              "id": "16",
+              "purpose": "pad",
+              "at": [
+                28750000,
+                24250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "17": {
+            "geometry": {
+              "id": "17",
+              "purpose": "pad",
+              "at": [
+                29250000,
+                24250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "18": {
+            "geometry": {
+              "id": "18",
+              "purpose": "pad",
+              "at": [
+                29750000,
+                24250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "19": {
+            "geometry": {
+              "id": "19",
+              "purpose": "pad",
+              "at": [
+                30250000,
+                24250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "20": {
+            "geometry": {
+              "id": "20",
+              "purpose": "pad",
+              "at": [
+                30750000,
+                24250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "21": {
+            "geometry": {
+              "id": "21",
+              "purpose": "pad",
+              "at": [
+                31250000,
+                24250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "22": {
+            "geometry": {
+              "id": "22",
+              "purpose": "pad",
+              "at": [
+                31750000,
+                24250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "23": {
+            "geometry": {
+              "id": "23",
+              "purpose": "pad",
+              "at": [
+                32250000,
+                24250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "24": {
+            "geometry": {
+              "id": "24",
+              "purpose": "pad",
+              "at": [
+                32750000,
+                24250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "25": {
+            "geometry": {
+              "id": "25",
+              "purpose": "pad",
+              "at": [
+                34250000,
+                22750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "26": {
+            "geometry": {
+              "id": "26",
+              "purpose": "pad",
+              "at": [
+                34250000,
+                22250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "27": {
+            "geometry": {
+              "id": "27",
+              "purpose": "pad",
+              "at": [
+                34250000,
+                21750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "28": {
+            "geometry": {
+              "id": "28",
+              "purpose": "pad",
+              "at": [
+                34250000,
+                21250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "29": {
+            "geometry": {
+              "id": "29",
+              "purpose": "pad",
+              "at": [
+                34250000,
+                20750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "30": {
+            "geometry": {
+              "id": "30",
+              "purpose": "pad",
+              "at": [
+                34250000,
+                20250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "31": {
+            "geometry": {
+              "id": "31",
+              "purpose": "pad",
+              "at": [
+                34250000,
+                19750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "32": {
+            "geometry": {
+              "id": "32",
+              "purpose": "pad",
+              "at": [
+                34250000,
+                19250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "33": {
+            "geometry": {
+              "id": "33",
+              "purpose": "pad",
+              "at": [
+                34250000,
+                18750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "34": {
+            "geometry": {
+              "id": "34",
+              "purpose": "pad",
+              "at": [
+                34250000,
+                18250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "35": {
+            "geometry": {
+              "id": "35",
+              "purpose": "pad",
+              "at": [
+                34250000,
+                17750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "36": {
+            "geometry": {
+              "id": "36",
+              "purpose": "pad",
+              "at": [
+                34250000,
+                17250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  1200000,
+                  300000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "37": {
+            "geometry": {
+              "id": "37",
+              "purpose": "pad",
+              "at": [
+                32750000,
+                15750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "38": {
+            "geometry": {
+              "id": "38",
+              "purpose": "pad",
+              "at": [
+                32250000,
+                15750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "39": {
+            "geometry": {
+              "id": "39",
+              "purpose": "pad",
+              "at": [
+                31750000,
+                15750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "40": {
+            "geometry": {
+              "id": "40",
+              "purpose": "pad",
+              "at": [
+                31250000,
+                15750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "41": {
+            "geometry": {
+              "id": "41",
+              "purpose": "pad",
+              "at": [
+                30750000,
+                15750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "42": {
+            "geometry": {
+              "id": "42",
+              "purpose": "pad",
+              "at": [
+                30250000,
+                15750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "43": {
+            "geometry": {
+              "id": "43",
+              "purpose": "pad",
+              "at": [
+                29750000,
+                15750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "44": {
+            "geometry": {
+              "id": "44",
+              "purpose": "pad",
+              "at": [
+                29250000,
+                15750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "45": {
+            "geometry": {
+              "id": "45",
+              "purpose": "pad",
+              "at": [
+                28750000,
+                15750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "46": {
+            "geometry": {
+              "id": "46",
+              "purpose": "pad",
+              "at": [
+                28250000,
+                15750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "47": {
+            "geometry": {
+              "id": "47",
+              "purpose": "pad",
+              "at": [
+                27750000,
+                15750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "48": {
+            "geometry": {
+              "id": "48",
+              "purpose": "pad",
+              "at": [
+                27250000,
+                15750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "body": {
+            "geometry": {
+              "id": "body",
+              "purpose": "fabrication",
+              "at": [
+                30000000,
+                20000000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  7000000,
+                  7000000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-fabrication"
+              ],
+              "drill": null,
+              "stroke": 100000
+            },
+            "layers": [
+              "mechanical/fabrication/front"
+            ]
+          },
+          "courtyard": {
+            "geometry": {
+              "id": "courtyard",
+              "purpose": "courtyard",
+              "at": [
+                30000000,
+                20000000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  10200000,
+                  10200000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-courtyard"
+              ],
+              "drill": null,
+              "stroke": 50000
+            },
+            "layers": [
+              "mechanical/courtyard/front"
+            ]
+          },
+          "pin-1-fabrication": {
+            "geometry": {
+              "id": "pin-1-fabrication",
+              "purpose": "fabrication",
+              "at": [
+                27100000,
+                17100000
+              ],
+              "shape": {
+                "kind": "circle",
+                "diameter": 400000
+              },
+              "rotation": 0,
+              "layers": [
+                "front-fabrication"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "mechanical/fabrication/front"
+            ]
+          },
+          "pin-1-silkscreen": {
+            "geometry": {
+              "id": "pin-1-silkscreen",
+              "purpose": "silkscreen",
+              "at": [
+                25750000,
+                16550000
+              ],
+              "shape": {
+                "kind": "circle",
+                "diameter": 350000
+              },
+              "rotation": 0,
+              "layers": [
+                "front-silkscreen"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "silkscreen/front"
+            ]
+          },
+          "silk--1--1-horizontal": {
+            "geometry": {
+              "id": "silk--1--1-horizontal",
+              "purpose": "silkscreen",
+              "at": [
+                26615000,
+                16390000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  570000,
+                  120000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-silkscreen"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "silkscreen/front"
+            ]
+          },
+          "silk--1--1-vertical": {
+            "geometry": {
+              "id": "silk--1--1-vertical",
+              "purpose": "silkscreen",
+              "at": [
+                26390000,
+                16615000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  120000,
+                  570000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-silkscreen"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "silkscreen/front"
+            ]
+          },
+          "silk--1-1-horizontal": {
+            "geometry": {
+              "id": "silk--1-1-horizontal",
+              "purpose": "silkscreen",
+              "at": [
+                26615000,
+                23610000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  570000,
+                  120000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-silkscreen"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "silkscreen/front"
+            ]
+          },
+          "silk--1-1-vertical": {
+            "geometry": {
+              "id": "silk--1-1-vertical",
+              "purpose": "silkscreen",
+              "at": [
+                26390000,
+                23385000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  120000,
+                  570000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-silkscreen"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "silkscreen/front"
+            ]
+          },
+          "silk-1--1-horizontal": {
+            "geometry": {
+              "id": "silk-1--1-horizontal",
+              "purpose": "silkscreen",
+              "at": [
+                33385000,
+                16390000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  570000,
+                  120000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-silkscreen"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "silkscreen/front"
+            ]
+          },
+          "silk-1--1-vertical": {
+            "geometry": {
+              "id": "silk-1--1-vertical",
+              "purpose": "silkscreen",
+              "at": [
+                33610000,
+                16615000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  120000,
+                  570000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-silkscreen"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "silkscreen/front"
+            ]
+          },
+          "silk-1-1-horizontal": {
+            "geometry": {
+              "id": "silk-1-1-horizontal",
+              "purpose": "silkscreen",
+              "at": [
+                33385000,
+                23610000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  570000,
+                  120000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-silkscreen"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "silkscreen/front"
+            ]
+          },
+          "silk-1-1-vertical": {
+            "geometry": {
+              "id": "silk-1-1-vertical",
+              "purpose": "silkscreen",
+              "at": [
+                33610000,
+                23385000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  120000,
+                  570000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-silkscreen"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "silkscreen/front"
+            ]
+          }
+        },
+        "at": [
+          30,
+          20
+        ],
+        "side": "front",
+        "rotation": 0,
+        "connections": {
+          "PA11": "usb-controller/USB_D-",
+          "PA12": "usb-controller/USB_D+",
+          "VDD/VDDA": "3V3",
+          "VSS/VSSA": "GND"
+        }
+      },
+      {
+        "id": "usb-controller/J1",
+        "reference": "J1",
+        "component": "part:[\"Global Connector Technology\",\"USB4105-GF-A\"]",
+        "footprint": "USB-C_Receptacle_GCT_USB4105",
+        "pinMap": {
+          "CC1": [
+            "A5"
+          ],
+          "CC2": [
+            "B5"
+          ],
+          "DMinus": [
+            "A7",
+            "B7"
+          ],
+          "DPlus": [
+            "A6",
+            "B6"
+          ],
+          "GND": [
+            "A1/B12",
+            "B1/A12"
+          ],
+          "SBU1": [
+            "A8"
+          ],
+          "SBU2": [
+            "B8"
+          ],
+          "Shield": [
+            "SHELL1",
+            "SHELL2",
+            "SHELL3",
+            "SHELL4"
+          ],
+          "VBUS": [
+            "A4/B9",
+            "B4/A9"
+          ]
+        },
+        "padLayers": {
+          "A1/B12": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "A4/B9": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "A5": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "A6": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "A7": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "A8": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "B1/A12": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "B4/A9": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "B5": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "B6": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "B7": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "B8": [
+            "copper/1",
+            "paste/front",
+            "solder-mask/front"
+          ],
+          "SHELL1": [
+            "copper/1",
+            "copper/2",
+            "copper/3",
+            "copper/4",
+            "paste/front",
+            "solder-mask/back",
+            "solder-mask/front"
+          ],
+          "SHELL2": [
+            "copper/1",
+            "copper/2",
+            "copper/3",
+            "copper/4",
+            "paste/front",
+            "solder-mask/back",
+            "solder-mask/front"
+          ],
+          "SHELL3": [
+            "copper/1",
+            "copper/2",
+            "copper/3",
+            "copper/4",
+            "paste/front",
+            "solder-mask/back",
+            "solder-mask/front"
+          ],
+          "SHELL4": [
+            "copper/1",
+            "copper/2",
+            "copper/3",
+            "copper/4",
+            "paste/front",
+            "solder-mask/back",
+            "solder-mask/front"
+          ]
+        },
+        "physicalFeatures": {
+          "A1/B12": {
+            "geometry": {
+              "id": "A1/B12",
+              "purpose": "pad",
+              "at": [
+                1320000,
+                23200000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  600000,
+                  1150000
+                ]
+              },
+              "rotation": 270,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "A4/B9": {
+            "geometry": {
+              "id": "A4/B9",
+              "purpose": "pad",
+              "at": [
+                1320000,
+                22400000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  600000,
+                  1150000
+                ]
+              },
+              "rotation": 270,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "A5": {
+            "geometry": {
+              "id": "A5",
+              "purpose": "pad",
+              "at": [
+                1320000,
+                21250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1150000
+                ]
+              },
+              "rotation": 270,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "A6": {
+            "geometry": {
+              "id": "A6",
+              "purpose": "pad",
+              "at": [
+                1320000,
+                20250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1150000
+                ]
+              },
+              "rotation": 270,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "A7": {
+            "geometry": {
+              "id": "A7",
+              "purpose": "pad",
+              "at": [
+                1320000,
+                19750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1150000
+                ]
+              },
+              "rotation": 270,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "A8": {
+            "geometry": {
+              "id": "A8",
+              "purpose": "pad",
+              "at": [
+                1320000,
+                18750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1150000
+                ]
+              },
+              "rotation": 270,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "B1/A12": {
+            "geometry": {
+              "id": "B1/A12",
+              "purpose": "pad",
+              "at": [
+                1320000,
+                16800000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  600000,
+                  1150000
+                ]
+              },
+              "rotation": 270,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "B4/A9": {
+            "geometry": {
+              "id": "B4/A9",
+              "purpose": "pad",
+              "at": [
+                1320000,
+                17600000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  600000,
+                  1150000
+                ]
+              },
+              "rotation": 270,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "B5": {
+            "geometry": {
+              "id": "B5",
+              "purpose": "pad",
+              "at": [
+                1320000,
+                18250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1150000
+                ]
+              },
+              "rotation": 270,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "B6": {
+            "geometry": {
+              "id": "B6",
+              "purpose": "pad",
+              "at": [
+                1320000,
+                19250000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1150000
+                ]
+              },
+              "rotation": 270,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "B7": {
+            "geometry": {
+              "id": "B7",
+              "purpose": "pad",
+              "at": [
+                1320000,
+                20750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1150000
+                ]
+              },
+              "rotation": 270,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "B8": {
+            "geometry": {
+              "id": "B8",
+              "purpose": "pad",
+              "at": [
+                1320000,
+                21750000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  300000,
+                  1150000
+                ]
+              },
+              "rotation": 270,
+              "layers": [
+                "front-copper",
+                "front-mask",
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "paste/front",
+              "solder-mask/front"
+            ]
+          },
+          "SHELL1": {
+            "geometry": {
+              "id": "SHELL1",
+              "purpose": "pad",
+              "at": [
+                1895000,
+                24320000
+              ],
+              "shape": {
+                "kind": "oval",
+                "size": [
+                  1000000,
+                  2100000
+                ]
+              },
+              "rotation": 270,
+              "layers": [
+                "all-copper",
+                "all-mask",
+                "front-paste"
+              ],
+              "drill": {
+                "diameter": 600000,
+                "slot": [
+                  600000,
+                  1700000
+                ],
+                "plated": true
+              },
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "copper/2",
+              "copper/3",
+              "copper/4",
+              "paste/front",
+              "solder-mask/back",
+              "solder-mask/front"
+            ]
+          },
+          "SHELL2": {
+            "geometry": {
+              "id": "SHELL2",
+              "purpose": "pad",
+              "at": [
+                1895000,
+                15680000
+              ],
+              "shape": {
+                "kind": "oval",
+                "size": [
+                  1000000,
+                  2100000
+                ]
+              },
+              "rotation": 270,
+              "layers": [
+                "all-copper",
+                "all-mask",
+                "front-paste"
+              ],
+              "drill": {
+                "diameter": 600000,
+                "slot": [
+                  600000,
+                  1700000
+                ],
+                "plated": true
+              },
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "copper/2",
+              "copper/3",
+              "copper/4",
+              "paste/front",
+              "solder-mask/back",
+              "solder-mask/front"
+            ]
+          },
+          "SHELL3": {
+            "geometry": {
+              "id": "SHELL3",
+              "purpose": "pad",
+              "at": [
+                6075000,
+                24320000
+              ],
+              "shape": {
+                "kind": "oval",
+                "size": [
+                  1000000,
+                  1800000
+                ]
+              },
+              "rotation": 270,
+              "layers": [
+                "all-copper",
+                "all-mask",
+                "front-paste"
+              ],
+              "drill": {
+                "diameter": 600000,
+                "slot": [
+                  600000,
+                  1400000
+                ],
+                "plated": true
+              },
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "copper/2",
+              "copper/3",
+              "copper/4",
+              "paste/front",
+              "solder-mask/back",
+              "solder-mask/front"
+            ]
+          },
+          "SHELL4": {
+            "geometry": {
+              "id": "SHELL4",
+              "purpose": "pad",
+              "at": [
+                6075000,
+                15680000
+              ],
+              "shape": {
+                "kind": "oval",
+                "size": [
+                  1000000,
+                  1800000
+                ]
+              },
+              "rotation": 270,
+              "layers": [
+                "all-copper",
+                "all-mask",
+                "front-paste"
+              ],
+              "drill": {
+                "diameter": 600000,
+                "slot": [
+                  600000,
+                  1400000
+                ],
+                "plated": true
+              },
+              "stroke": null
+            },
+            "layers": [
+              "copper/1",
+              "copper/2",
+              "copper/3",
+              "copper/4",
+              "paste/front",
+              "solder-mask/back",
+              "solder-mask/front"
+            ]
+          },
+          "body": {
+            "geometry": {
+              "id": "body",
+              "purpose": "fabrication",
+              "at": [
+                5000000,
+                20000000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  8940000,
+                  7350000
+                ]
+              },
+              "rotation": 270,
+              "layers": [
+                "front-fabrication"
+              ],
+              "drill": null,
+              "stroke": 100000
+            },
+            "layers": [
+              "mechanical/fabrication/front"
+            ]
+          },
+          "courtyard": {
+            "geometry": {
+              "id": "courtyard",
+              "purpose": "courtyard",
+              "at": [
+                4710000,
+                20000000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  10640000,
+                  8940000
+                ]
+              },
+              "rotation": 270,
+              "layers": [
+                "front-courtyard"
+              ],
+              "drill": null,
+              "stroke": 50000
+            },
+            "layers": [
+              "mechanical/courtyard/front"
+            ]
+          },
+          "locating-left": {
+            "geometry": {
+              "id": "locating-left",
+              "purpose": "non-plated-hole",
+              "at": [
+                2395000,
+                22890000
+              ],
+              "shape": {
+                "kind": "circle",
+                "diameter": 650000
+              },
+              "rotation": 270,
+              "layers": [],
+              "drill": {
+                "diameter": 650000,
+                "plated": false
+              },
+              "stroke": null
+            },
+            "layers": []
+          },
+          "locating-right": {
+            "geometry": {
+              "id": "locating-right",
+              "purpose": "non-plated-hole",
+              "at": [
+                2395000,
+                17110000
+              ],
+              "shape": {
+                "kind": "circle",
+                "diameter": 650000
+              },
+              "rotation": 270,
+              "layers": [],
+              "drill": {
+                "diameter": 650000,
+                "plated": false
+              },
+              "stroke": null
+            },
+            "layers": []
+          },
+          "pcb-edge-reference": {
+            "geometry": {
+              "id": "pcb-edge-reference",
+              "purpose": "fabrication",
+              "at": [
+                8675000,
+                20000000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  10000000,
+                  100000
+                ]
+              },
+              "rotation": 270,
+              "layers": [
+                "front-fabrication"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "mechanical/fabrication/front"
+            ]
+          },
+          "silkscreen-left": {
+            "geometry": {
+              "id": "silkscreen-left",
+              "purpose": "silkscreen",
+              "at": [
+                4050000,
+                24670000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  120000,
+                  1700000
+                ]
+              },
+              "rotation": 270,
+              "layers": [
+                "front-silkscreen"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "silkscreen/front"
+            ]
+          },
+          "silkscreen-right": {
+            "geometry": {
+              "id": "silkscreen-right",
+              "purpose": "silkscreen",
+              "at": [
+                4050000,
+                15330000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  120000,
+                  1700000
+                ]
+              },
+              "rotation": 270,
+              "layers": [
+                "front-silkscreen"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "silkscreen/front"
+            ]
+          }
+        },
+        "at": [
+          5,
+          20
+        ],
+        "side": "front",
+        "rotation": 270,
+        "connections": {
+          "CC1": "usb-controller/CC1",
+          "CC2": "usb-controller/CC2",
+          "DMinus": "usb-controller/USB_D-",
+          "DPlus": "usb-controller/USB_D+",
+          "GND": "GND",
+          "VBUS": "VBUS"
+        }
+      },
+      {
+        "id": "usb-controller/C1",
+        "reference": "C1",
+        "component": "value:100nF",
+        "footprint": "example:manufacturing-passive",
+        "pinMap": {
+          "1": [
+            "1"
+          ],
+          "2": [
+            "2"
+          ]
+        },
+        "padLayers": {
+          "1": [
+            "copper/1"
+          ],
+          "2": [
+            "copper/1"
+          ]
+        },
+        "physicalFeatures": {
+          "1": {
+            "geometry": {
+              "id": "1",
+              "purpose": "pad",
+              "at": [
+                26500000,
+                18000000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  600000,
+                  700000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1"
+            ]
+          },
+          "2": {
+            "geometry": {
+              "id": "2",
+              "purpose": "pad",
+              "at": [
+                27500000,
+                18000000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  600000,
+                  700000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-copper"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "copper/1"
+            ]
+          },
+          "courtyard": {
+            "geometry": {
+              "id": "courtyard",
+              "purpose": "courtyard",
+              "at": [
+                27000000,
+                18000000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  2000000,
+                  1100000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-courtyard"
+              ],
+              "drill": null,
+              "stroke": 50000
+            },
+            "layers": [
+              "mechanical/courtyard/front"
+            ]
+          },
+          "mask-1": {
+            "geometry": {
+              "id": "mask-1",
+              "purpose": "mask-opening",
+              "at": [
+                26500000,
+                18000000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  700000,
+                  800000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-mask"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "solder-mask/front"
+            ]
+          },
+          "mask-2": {
+            "geometry": {
+              "id": "mask-2",
+              "purpose": "mask-opening",
+              "at": [
+                27500000,
+                18000000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  700000,
+                  800000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-mask"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "solder-mask/front"
+            ]
+          },
+          "paste-1": {
+            "geometry": {
+              "id": "paste-1",
+              "purpose": "paste-opening",
+              "at": [
+                26500000,
+                18000000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  500000,
+                  600000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "paste/front"
+            ]
+          },
+          "paste-2": {
+            "geometry": {
+              "id": "paste-2",
+              "purpose": "paste-opening",
+              "at": [
+                27500000,
+                18000000
+              ],
+              "shape": {
+                "kind": "rect",
+                "size": [
+                  500000,
+                  600000
+                ]
+              },
+              "rotation": 0,
+              "layers": [
+                "front-paste"
+              ],
+              "drill": null,
+              "stroke": null
+            },
+            "layers": [
+              "paste/front"
+            ]
+          }
+        },
+        "at": [
+          27,
+          18
+        ],
+        "side": "front",
+        "rotation": 0,
+        "connections": {
+          "1": "3V3",
+          "2": "GND"
+        }
+      }
+    ],
+    "nets": [
+      {
+        "id": "3V3",
+        "name": "3V3"
+      },
+      {
+        "id": "GND",
+        "name": "GND"
+      },
+      {
+        "id": "VBUS",
+        "name": "VBUS"
+      },
+      {
+        "id": "usb-controller/CC1",
+        "name": "CC1"
+      },
+      {
+        "id": "usb-controller/CC2",
+        "name": "CC2"
+      },
+      {
+        "id": "usb-controller/USB_D+",
+        "name": "USB_D+"
+      },
+      {
+        "id": "usb-controller/USB_D-",
+        "name": "USB_D-"
+      }
+    ],
+    "routeConstraints": [
+      {
+        "id": "route/7fd24ae42b0d4ae08ab03e0398642904",
+        "net": "3V3",
+        "from": {
+          "part": "usb-controller/C1",
+          "name": "1"
+        },
+        "to": {
+          "part": "usb-controller/U1",
+          "name": "VDD/VDDA"
+        },
+        "width": null,
+        "through": [
+          "region/bd56b9c7d9007dd6170e68e01d4b0520"
+        ]
+      }
+    ],
+    "differentialPairs": [
+      {
+        "id": "differential-pair/5579170c193c4aaf0c2f06b1ad0357fe",
+        "positive": "usb-controller/USB_D+",
+        "negative": "usb-controller/USB_D-",
+        "from": [
+          {
+            "part": "usb-controller/J1",
+            "name": "DPlus"
+          },
+          {
+            "part": "usb-controller/J1",
+            "name": "DMinus"
+          }
+        ],
+        "to": [
+          {
+            "part": "usb-controller/U1",
+            "name": "PA12"
+          },
+          {
+            "part": "usb-controller/U1",
+            "name": "PA11"
+          }
+        ],
+        "width": 0.18,
+        "gap": 0.15,
+        "targetImpedance": 90,
+        "through": [
+          "region/8ef156c2ffba97c36e43c62a4c23a74d",
+          "region/a804afaf43140d2ff5cbcec16fcf1361"
+        ]
+      }
+    ],
+    "zones": [
+      {
+        "id": "zone/f9a97ca9db30a02710c760625d12148f",
+        "net": "GND",
+        "layers": [
+          "copper/2"
+        ],
+        "boundary": "region/board-outline",
+        "clearance": 0.2
+      }
+    ],
+    "keepouts": [
+      {
+        "id": "keepout/65596b72ea1ea15a8f128a68ce57274f",
+        "region": "region/keepout/65596b72ea1ea15a8f128a68ce57274f/boundary",
+        "disallow": [
+          "copper",
+          "vias"
+        ],
+        "except": []
+      }
+    ],
+    "regions": {
+      "region/8ef156c2ffba97c36e43c62a4c23a74d": {
+        "id": "region/8ef156c2ffba97c36e43c62a4c23a74d",
+        "geometry": {
+          "x": 8,
+          "y": 16,
+          "width": 20,
+          "height": 8
+        }
+      },
+      "region/a804afaf43140d2ff5cbcec16fcf1361": {
+        "id": "region/a804afaf43140d2ff5cbcec16fcf1361",
+        "geometry": {
+          "x": 24,
+          "y": 17,
+          "width": 4,
+          "height": 6
+        }
+      },
+      "region/bd56b9c7d9007dd6170e68e01d4b0520": {
+        "id": "region/bd56b9c7d9007dd6170e68e01d4b0520",
+        "geometry": {
+          "x": 27,
+          "y": 17,
+          "width": 3,
+          "height": 3
+        }
+      },
+      "region/board-outline": {
+        "id": "region/board-outline",
+        "geometry": {
+          "x": 0,
+          "y": 0,
+          "width": 60,
+          "height": 40
+        }
+      },
+      "region/keepout/65596b72ea1ea15a8f128a68ce57274f/boundary": {
+        "id": "region/keepout/65596b72ea1ea15a8f128a68ce57274f/boundary",
+        "geometry": {
+          "x": 0,
+          "y": 14,
+          "width": 8,
+          "height": 12
+        }
+      }
+    }
+  },
+  "diagnostics": [
+    {
+      "code": "PCBMFG003",
+      "severity": "warning",
+      "message": "manufacturer land-pattern provenance and tolerances are not verified by geometry checks",
+      "entity": "LQFP-48_7x7mm_P0.5mm"
+    },
+    {
+      "code": "PCBMFG003",
+      "severity": "warning",
+      "message": "board-level spacing, net-aware exceptions, board edges, inter-part courtyards, and single-copper-layer role aliases are not checked",
+      "entity": "LQFP-48_7x7mm_P0.5mm"
+    },
+    {
+      "code": "PCBMFG003",
+      "severity": "warning",
+      "message": "mask/paste process suitability, paste area ratios, NPTH copper isolation, plating tolerances, and 3D package bodies are not checked",
+      "entity": "LQFP-48_7x7mm_P0.5mm"
+    },
+    {
+      "code": "PCBMFG003",
+      "severity": "warning",
+      "message": "board mask expansion metadata is not applied; explicit physical openings remain authoritative",
+      "entity": "LQFP-48_7x7mm_P0.5mm"
+    },
+    {
+      "code": "PCBMFG003",
+      "severity": "warning",
+      "message": "spacing treats distinct copper features as separate regardless of logical pin/net binding",
+      "entity": "LQFP-48_7x7mm_P0.5mm"
+    },
+    {
+      "code": "PCBMFG003",
+      "severity": "warning",
+      "message": "missing courtyard for this side; package-envelope clearance cannot be checked",
+      "entity": "USB-C_Receptacle_GCT_USB4105"
+    },
+    {
+      "code": "PCBMFG003",
+      "severity": "warning",
+      "message": "manufacturer land-pattern provenance and tolerances are not verified by geometry checks",
+      "entity": "USB-C_Receptacle_GCT_USB4105"
+    },
+    {
+      "code": "PCBMFG003",
+      "severity": "warning",
+      "message": "board-level spacing, net-aware exceptions, board edges, inter-part courtyards, and single-copper-layer role aliases are not checked",
+      "entity": "USB-C_Receptacle_GCT_USB4105"
+    },
+    {
+      "code": "PCBMFG003",
+      "severity": "warning",
+      "message": "mask/paste process suitability, paste area ratios, NPTH copper isolation, plating tolerances, and 3D package bodies are not checked",
+      "entity": "USB-C_Receptacle_GCT_USB4105"
+    },
+    {
+      "code": "PCBMFG003",
+      "severity": "warning",
+      "message": "board mask expansion metadata is not applied; explicit physical openings remain authoritative",
+      "entity": "USB-C_Receptacle_GCT_USB4105"
+    },
+    {
+      "code": "PCBMFG003",
+      "severity": "warning",
+      "message": "spacing treats distinct copper features as separate regardless of logical pin/net binding",
+      "entity": "USB-C_Receptacle_GCT_USB4105"
+    },
+    {
+      "code": "PCBMFG003",
+      "severity": "warning",
+      "message": "manufacturer land-pattern provenance and tolerances are not verified by geometry checks",
+      "entity": "example:manufacturing-passive"
+    },
+    {
+      "code": "PCBMFG003",
+      "severity": "warning",
+      "message": "board-level spacing, net-aware exceptions, board edges, inter-part courtyards, and single-copper-layer role aliases are not checked",
+      "entity": "example:manufacturing-passive"
+    },
+    {
+      "code": "PCBMFG003",
+      "severity": "warning",
+      "message": "mask/paste process suitability, paste area ratios, NPTH copper isolation, plating tolerances, and 3D package bodies are not checked",
+      "entity": "example:manufacturing-passive"
+    },
+    {
+      "code": "PCBMFG003",
+      "severity": "warning",
+      "message": "board mask expansion metadata is not applied; explicit physical openings remain authoritative",
+      "entity": "example:manufacturing-passive"
+    },
+    {
+      "code": "PCBMFG003",
+      "severity": "warning",
+      "message": "spacing treats distinct copper features as separate regardless of logical pin/net binding",
+      "entity": "example:manufacturing-passive"
+    }
+  ],
+  "manufacturingReports": {
+    "LQFP-48_7x7mm_P0.5mm": {
+      "footprint": "LQFP-48_7x7mm_P0.5mm",
+      "profile": {
+        "schemaVersion": 1,
+        "key": "example:board-process",
+        "units": "nm",
+        "minCopperFeature": 150000,
+        "minCopperSpacing": 150000,
+        "minDrillDiameter": 300000,
+        "minAnnularRing": 150000,
+        "minMaskExpansion": 0,
+        "minMaskWeb": 100000,
+        "minPasteFeature": 100000,
+        "minCourtyardClearance": 200000
+      },
+      "conformsToCheckedRules": true,
+      "complete": false,
+      "checks": [
+        {
+          "id": "copper-feature",
+          "status": "passed",
+          "evaluated": 48,
+          "skipped": 0,
+          "diagnostics": []
+        },
+        {
+          "id": "drill-diameter",
+          "status": "not-applicable",
+          "evaluated": 0,
+          "skipped": 0,
+          "diagnostics": []
+        },
+        {
+          "id": "annular-ring",
+          "status": "not-applicable",
+          "evaluated": 0,
+          "skipped": 0,
+          "diagnostics": []
+        },
+        {
+          "id": "copper-spacing",
+          "status": "passed",
+          "evaluated": 1128,
+          "skipped": 0,
+          "diagnostics": []
+        },
+        {
+          "id": "mask-expansion",
+          "status": "passed",
+          "evaluated": 48,
+          "skipped": 0,
+          "diagnostics": []
+        },
+        {
+          "id": "mask-web",
+          "status": "passed",
+          "evaluated": 1128,
+          "skipped": 0,
+          "diagnostics": []
+        },
+        {
+          "id": "paste-containment",
+          "status": "passed",
+          "evaluated": 48,
+          "skipped": 0,
+          "diagnostics": []
+        },
+        {
+          "id": "paste-feature",
+          "status": "passed",
+          "evaluated": 48,
+          "skipped": 0,
+          "diagnostics": []
+        },
+        {
+          "id": "courtyard-clearance",
+          "status": "passed",
+          "evaluated": 50,
+          "skipped": 0,
+          "diagnostics": []
+        },
+        {
+          "id": "unverified",
+          "status": "skipped",
+          "evaluated": 0,
+          "skipped": 5,
+          "diagnostics": [
+            {
+              "code": "PCBMFG003",
+              "severity": "warning",
+              "message": "manufacturer land-pattern provenance and tolerances are not verified by geometry checks",
+              "entity": "LQFP-48_7x7mm_P0.5mm"
+            },
+            {
+              "code": "PCBMFG003",
+              "severity": "warning",
+              "message": "board-level spacing, net-aware exceptions, board edges, inter-part courtyards, and single-copper-layer role aliases are not checked",
+              "entity": "LQFP-48_7x7mm_P0.5mm"
+            },
+            {
+              "code": "PCBMFG003",
+              "severity": "warning",
+              "message": "mask/paste process suitability, paste area ratios, NPTH copper isolation, plating tolerances, and 3D package bodies are not checked",
+              "entity": "LQFP-48_7x7mm_P0.5mm"
+            },
+            {
+              "code": "PCBMFG003",
+              "severity": "warning",
+              "message": "board mask expansion metadata is not applied; explicit physical openings remain authoritative",
+              "entity": "LQFP-48_7x7mm_P0.5mm"
+            },
+            {
+              "code": "PCBMFG003",
+              "severity": "warning",
+              "message": "spacing treats distinct copper features as separate regardless of logical pin/net binding",
+              "entity": "LQFP-48_7x7mm_P0.5mm"
+            }
+          ]
+        }
+      ]
+    },
+    "USB-C_Receptacle_GCT_USB4105": {
+      "footprint": "USB-C_Receptacle_GCT_USB4105",
+      "profile": {
+        "schemaVersion": 1,
+        "key": "example:board-process",
+        "units": "nm",
+        "minCopperFeature": 150000,
+        "minCopperSpacing": 150000,
+        "minDrillDiameter": 300000,
+        "minAnnularRing": 150000,
+        "minMaskExpansion": 0,
+        "minMaskWeb": 100000,
+        "minPasteFeature": 100000,
+        "minCourtyardClearance": 200000
+      },
+      "conformsToCheckedRules": true,
+      "complete": false,
+      "checks": [
+        {
+          "id": "copper-feature",
+          "status": "passed",
+          "evaluated": 16,
+          "skipped": 0,
+          "diagnostics": []
+        },
+        {
+          "id": "drill-diameter",
+          "status": "passed",
+          "evaluated": 6,
+          "skipped": 0,
+          "diagnostics": []
+        },
+        {
+          "id": "annular-ring",
+          "status": "passed",
+          "evaluated": 4,
+          "skipped": 0,
+          "diagnostics": []
+        },
+        {
+          "id": "copper-spacing",
+          "status": "passed",
+          "evaluated": 120,
+          "skipped": 0,
+          "diagnostics": []
+        },
+        {
+          "id": "mask-expansion",
+          "status": "passed",
+          "evaluated": 20,
+          "skipped": 0,
+          "diagnostics": []
+        },
+        {
+          "id": "mask-web",
+          "status": "passed",
+          "evaluated": 126,
+          "skipped": 0,
+          "diagnostics": []
+        },
+        {
+          "id": "paste-containment",
+          "status": "passed",
+          "evaluated": 16,
+          "skipped": 0,
+          "diagnostics": []
+        },
+        {
+          "id": "paste-feature",
+          "status": "passed",
+          "evaluated": 16,
+          "skipped": 0,
+          "diagnostics": []
+        },
+        {
+          "id": "courtyard-clearance",
+          "status": "partial",
+          "evaluated": 20,
+          "skipped": 1,
+          "diagnostics": [
+            {
+              "code": "PCBMFG003",
+              "severity": "warning",
+              "message": "missing courtyard for this side; package-envelope clearance cannot be checked",
+              "entity": "USB-C_Receptacle_GCT_USB4105"
+            }
+          ]
+        },
+        {
+          "id": "unverified",
+          "status": "skipped",
+          "evaluated": 0,
+          "skipped": 5,
+          "diagnostics": [
+            {
+              "code": "PCBMFG003",
+              "severity": "warning",
+              "message": "manufacturer land-pattern provenance and tolerances are not verified by geometry checks",
+              "entity": "USB-C_Receptacle_GCT_USB4105"
+            },
+            {
+              "code": "PCBMFG003",
+              "severity": "warning",
+              "message": "board-level spacing, net-aware exceptions, board edges, inter-part courtyards, and single-copper-layer role aliases are not checked",
+              "entity": "USB-C_Receptacle_GCT_USB4105"
+            },
+            {
+              "code": "PCBMFG003",
+              "severity": "warning",
+              "message": "mask/paste process suitability, paste area ratios, NPTH copper isolation, plating tolerances, and 3D package bodies are not checked",
+              "entity": "USB-C_Receptacle_GCT_USB4105"
+            },
+            {
+              "code": "PCBMFG003",
+              "severity": "warning",
+              "message": "board mask expansion metadata is not applied; explicit physical openings remain authoritative",
+              "entity": "USB-C_Receptacle_GCT_USB4105"
+            },
+            {
+              "code": "PCBMFG003",
+              "severity": "warning",
+              "message": "spacing treats distinct copper features as separate regardless of logical pin/net binding",
+              "entity": "USB-C_Receptacle_GCT_USB4105"
+            }
+          ]
+        }
+      ]
+    },
+    "example:manufacturing-passive": {
+      "footprint": "example:manufacturing-passive",
+      "profile": {
+        "schemaVersion": 1,
+        "key": "example:board-process",
+        "units": "nm",
+        "minCopperFeature": 150000,
+        "minCopperSpacing": 150000,
+        "minDrillDiameter": 300000,
+        "minAnnularRing": 150000,
+        "minMaskExpansion": 0,
+        "minMaskWeb": 100000,
+        "minPasteFeature": 100000,
+        "minCourtyardClearance": 200000
+      },
+      "conformsToCheckedRules": true,
+      "complete": false,
+      "checks": [
+        {
+          "id": "copper-feature",
+          "status": "passed",
+          "evaluated": 2,
+          "skipped": 0,
+          "diagnostics": []
+        },
+        {
+          "id": "drill-diameter",
+          "status": "not-applicable",
+          "evaluated": 0,
+          "skipped": 0,
+          "diagnostics": []
+        },
+        {
+          "id": "annular-ring",
+          "status": "not-applicable",
+          "evaluated": 0,
+          "skipped": 0,
+          "diagnostics": []
+        },
+        {
+          "id": "copper-spacing",
+          "status": "passed",
+          "evaluated": 1,
+          "skipped": 0,
+          "diagnostics": []
+        },
+        {
+          "id": "mask-expansion",
+          "status": "passed",
+          "evaluated": 2,
+          "skipped": 0,
+          "diagnostics": []
+        },
+        {
+          "id": "mask-web",
+          "status": "passed",
+          "evaluated": 1,
+          "skipped": 0,
+          "diagnostics": []
+        },
+        {
+          "id": "paste-containment",
+          "status": "passed",
+          "evaluated": 2,
+          "skipped": 0,
+          "diagnostics": []
+        },
+        {
+          "id": "paste-feature",
+          "status": "passed",
+          "evaluated": 2,
+          "skipped": 0,
+          "diagnostics": []
+        },
+        {
+          "id": "courtyard-clearance",
+          "status": "passed",
+          "evaluated": 2,
+          "skipped": 0,
+          "diagnostics": []
+        },
+        {
+          "id": "unverified",
+          "status": "skipped",
+          "evaluated": 0,
+          "skipped": 5,
+          "diagnostics": [
+            {
+              "code": "PCBMFG003",
+              "severity": "warning",
+              "message": "manufacturer land-pattern provenance and tolerances are not verified by geometry checks",
+              "entity": "example:manufacturing-passive"
+            },
+            {
+              "code": "PCBMFG003",
+              "severity": "warning",
+              "message": "board-level spacing, net-aware exceptions, board edges, inter-part courtyards, and single-copper-layer role aliases are not checked",
+              "entity": "example:manufacturing-passive"
+            },
+            {
+              "code": "PCBMFG003",
+              "severity": "warning",
+              "message": "mask/paste process suitability, paste area ratios, NPTH copper isolation, plating tolerances, and 3D package bodies are not checked",
+              "entity": "example:manufacturing-passive"
+            },
+            {
+              "code": "PCBMFG003",
+              "severity": "warning",
+              "message": "board mask expansion metadata is not applied; explicit physical openings remain authoritative",
+              "entity": "example:manufacturing-passive"
+            },
+            {
+              "code": "PCBMFG003",
+              "severity": "warning",
+              "message": "spacing treats distinct copper features as separate regardless of logical pin/net binding",
+              "entity": "example:manufacturing-passive"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

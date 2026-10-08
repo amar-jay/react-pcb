@@ -9,6 +9,8 @@
   "scripts": {
     "example": "bun run examples/basic.tsx",
     "footprints:inspect": "bun run examples/footprints/inspect.ts",
+    "board:build": "bun run packages/react-pcb/src/preview/cli.ts build",
+    "board:dev": "bun run packages/react-pcb/src/preview/cli.ts dev",
     "test": "bun test",
     "typecheck": "bunx tsc --noEmit",
     "rust:check": "cargo check --workspace --all-targets",
@@ -18,6 +20,7 @@
     "rust:fmt": "cargo fmt --all -- --check"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.15",
     "@types/bun": "^1.4.2",
     "@types/react": "^19.2.2",
     "react": "^19.3.0",

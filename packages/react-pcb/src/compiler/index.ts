@@ -37,8 +37,8 @@ export async function compile(
     stderr: 'pipe',
   });
   const [stdout, stderr, exitCode] = await Promise.all([
-    process.stdout.text(),
-    process.stderr.text(),
+    new Response(process.stdout).text(),
+    new Response(process.stderr).text(),
     process.exited,
   ]);
   if (exitCode !== 0) throw compilerError(stderr, exitCode);

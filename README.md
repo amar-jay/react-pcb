@@ -1,6 +1,6 @@
 The proposal is a declarative, constraint-driven PCB design framework in which engineers describe the electrical and physical intent of a board (components, nets, placement, stackup, differential pairs, impedance targets, keepouts, copper zones, routing corridors, clearances, and other constraints) using a composable JSX/TypeScript API, rather than manually drawing the final PCB geometry. Components and nets are first-class objects, while constructs such as DifferentialPair, RouteThrough, and Keepout specify requirements that a placement-and-routing engine must satisfy. The underlying compiler would resolve these constraints into concrete component positions, traces, vias, copper geometry, and ultimately manufacturing outputs such as Gerbers, effectively treating PCB design more like physical synthesis: the engineer specifies what the board must satisfy, and the system determines how to realize it.
 
-The [declarative footprint plan](PLAN.md) is implemented through all six phases.
+Declarative footprint authoring is implemented through all six planned phases.
 Footprints support exact physical units, absolute positioning, fixed Flexbox and
 Grid layouts, deterministic SVG inspection, and explicit manufacturing profiles.
 See the [physical/layout contract](docs/physical-footprints.md),
@@ -19,6 +19,19 @@ The basic example compiles three physical footprint definitions and returns scop
 manufacturing reports. The inspection command writes standalone JSON/SVG fixtures,
 selected manufacturing reports, and an `index.html` with semantic layer toggles.
 Illustrative dimensions and limits do not establish fabrication approval.
+
+To view board JSX in a browser or export one offline HTML file:
+
+```sh
+bun run board:dev examples/basic.tsx
+bun run board:build examples/basic.tsx --out dist/index.html
+```
+
+The board viewer includes layer toggles, zoom/pan, part inspection, net highlighting,
+and compiler/manufacturing diagnostics. Dev mode reloads imported footprint changes
+and shows compile errors while keeping the last valid board. See the
+[board preview guide](docs/board-preview.md) for entry exports, watch options and
+the programmatic API.
 
 **Illustrative JSX API**
 

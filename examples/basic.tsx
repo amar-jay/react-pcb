@@ -157,7 +157,7 @@ export default function MyBoard() {
   );
 }
 
-try {
+if (import.meta.main) try {
   const result = await compile(<MyBoard />, {cwd: import.meta.dir + '/..'});
   console.log(JSON.stringify(result, null, 2));
 } catch (error) {

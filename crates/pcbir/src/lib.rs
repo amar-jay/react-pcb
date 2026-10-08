@@ -23,6 +23,8 @@ pub use ir::{DifferentialPairConstraint, KeepoutConstraint, RegionDefinition, Zo
 
 pub mod svg;
 pub use svg::footprint_svg;
+pub mod board_svg;
+pub use board_svg::{BoardProjection, board_svg};
 
 pub mod layout;
 
