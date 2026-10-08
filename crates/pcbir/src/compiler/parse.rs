@@ -5,13 +5,13 @@ use serde_json::Value;
 use crate::Diagnostic;
 use crate::ir::{
     Board, BoardSide, FootprintDefinition, LayerSet, LengthUnit, NetId, PartInstance, PinRef, Rect,
-    RouteConstraint, StackupLayer,
+    RegionDefinition, StackupLayer,
 };
 use crate::protocol::DeclarationNode;
 
 use super::CompileError;
 
-pub fn parse_board(props: &Value) -> Result<Board, CompileError> {
+pub fn parse_board(props: &Value) -> Result<(Board, RegionDefinition), CompileError> {
     let outline = props
         .get("outline")
         .ok_or_else(|| CompileError::invalid("board outline is required"))?;
@@ -74,11 +74,19 @@ pub fn parse_board(props: &Value) -> Result<Board, CompileError> {
         }
     }
 
-    Ok(Board {
-        outline,
-        layers,
-        metadata,
-    })
+    let region = RegionDefinition {
+        id: "region/board-outline".to_owned(),
+        geometry: outline,
+    };
+    Ok((
+        Board {
+            id: "board/1".to_owned(),
+            outline: region.id.clone(),
+            layers,
+            metadata,
+        },
+        region,
+    ))
 }
 
 pub fn parse_units(props: &Value) -> Result<LengthUnit, CompileError> {
@@ -174,6 +182,7 @@ pub fn parse_part(
             .as_object()
             .ok_or_else(|| CompileError::invalid("pinMap must be an object"))?;
         for (name, pads) in mapping {
+            require_name(name, "logical pin ID", "PCBIR019")?;
             pin_map.insert(name.clone(), parse_pad_ids(pads)?);
         }
     }
@@ -227,68 +236,6 @@ fn component_definition(props: &Value) -> Result<(String, Value), CompileError> 
     Ok((component, Value::Object(definition)))
 }
 
-pub fn parse_route(node: &DeclarationNode) -> Result<RouteConstraint, CompileError> {
-    let props = &node.props;
-    let through = node
-        .children
-        .iter()
-        .filter(|child| child.node_type == "pcb-route-through")
-        .map(|child| {
-            let region = child
-                .props
-                .get("region")
-                .ok_or_else(|| CompileError::invalid("route region is required"))?;
-            let region = Rect {
-                x: number(region, "x")?,
-                y: number(region, "y")?,
-                width: number(region, "width")?,
-                height: number(region, "height")?,
-            };
-            validate_rect(&region, "route-through region")?;
-            Ok(region)
-        })
-        .collect::<Result<_, CompileError>>()?;
-    let net = string(
-        props
-            .get("net")
-            .ok_or_else(|| CompileError::invalid("route net is required"))?,
-        "id",
-    )?;
-    require_name(&net, "route net ID", "PCBIR020")?;
-    let from = parse_pin(
-        props
-            .get("from")
-            .ok_or_else(|| CompileError::invalid("route start is required"))?,
-    )?;
-    let to = parse_pin(
-        props
-            .get("to")
-            .ok_or_else(|| CompileError::invalid("route end is required"))?,
-    )?;
-    if from.part == to.part && from.name == to.name {
-        return Err(semantic_error(
-            "PCBIR020",
-            "route endpoints must be different",
-            "Choose two distinct connected pins.",
-        ));
-    }
-    let width = props.get("width").map(value_number).transpose()?;
-    if width.is_some_and(|width| width <= 0.0) {
-        return Err(semantic_error(
-            "PCBIR020",
-            "route width must be positive",
-            "Use a width greater than zero.",
-        ));
-    }
-    Ok(RouteConstraint {
-        net: NetId(net),
-        from,
-        to,
-        width,
-        through,
-    })
-}
-
 pub fn constraint_key(node: &DeclarationNode) -> Result<String, CompileError> {
     let mut props = node.props.clone();
     match node.node_type.as_str() {
@@ -315,7 +262,7 @@ pub fn constraint_key(node: &DeclarationNode) -> Result<String, CompileError> {
     ))
 }
 
-fn validate_zone(props: &Value) -> Result<(), CompileError> {
+pub(super) fn validate_zone(props: &Value) -> Result<(), CompileError> {
     let net = props
         .get("net")
         .and_then(|net| net.get("id"))
@@ -352,7 +299,7 @@ fn validate_zone(props: &Value) -> Result<(), CompileError> {
     validate_boundary(props.get("boundary"), "zone boundary")
 }
 
-fn validate_keepout(props: &Value) -> Result<(), CompileError> {
+pub(super) fn validate_keepout(props: &Value) -> Result<(), CompileError> {
     let disallow = props.get("disallow").and_then(Value::as_array);
     if disallow.is_none_or(Vec::is_empty) {
         return Err(semantic_error(
@@ -432,7 +379,7 @@ fn validate_boundary(value: Option<&Value>, label: &str) -> Result<(), CompileEr
     validate_rect(&rect, label)
 }
 
-fn parse_pin(value: &Value) -> Result<PinRef, CompileError> {
+pub(super) fn parse_pin(value: &Value) -> Result<PinRef, CompileError> {
     let part = value
         .get("part")
         .ok_or_else(|| CompileError::invalid("pin part is required"))?;
@@ -498,7 +445,11 @@ fn validate_stackup(layers: &LayerSet) -> Result<(), CompileError> {
     Ok(())
 }
 
-fn require_name(value: &str, label: &str, code: &'static str) -> Result<(), CompileError> {
+pub(super) fn require_name(
+    value: &str,
+    label: &str,
+    code: &'static str,
+) -> Result<(), CompileError> {
     if value.trim().is_empty() {
         return Err(semantic_error(
             code,
@@ -517,7 +468,7 @@ fn semantic_error(
     CompileError::diagnostic(Diagnostic::error(code, message).with_help(help))
 }
 
-fn string(value: &Value, key: &str) -> Result<String, CompileError> {
+pub(super) fn string(value: &Value, key: &str) -> Result<String, CompileError> {
     value
         .get(key)
         .and_then(Value::as_str)
@@ -529,14 +480,14 @@ fn optional_string(value: &Value, key: &str) -> Option<String> {
     value.get(key).and_then(Value::as_str).map(str::to_owned)
 }
 
-fn number(value: &Value, key: &str) -> Result<f64, CompileError> {
+pub(super) fn number(value: &Value, key: &str) -> Result<f64, CompileError> {
     value
         .get(key)
         .ok_or_else(|| CompileError::invalid(format!("{key} is required")))
         .and_then(value_number)
 }
 
-fn value_number(value: &Value) -> Result<f64, CompileError> {
+pub(super) fn value_number(value: &Value) -> Result<f64, CompileError> {
     value
         .as_f64()
         .ok_or_else(|| CompileError::invalid("expected a number"))
@@ -566,4 +517,18 @@ fn parse_pad_ids(value: &Value) -> Result<Vec<String>, CompileError> {
         )));
     }
     Ok(ids)
+}
+
+pub(super) fn parse_rect(value: &Value) -> Result<Rect, CompileError> {
+    if value.get("kind").and_then(Value::as_str) != Some("rect") {
+        return Err(CompileError::invalid("region must be rectangular"));
+    }
+    let rect = Rect {
+        x: number(value, "x")?,
+        y: number(value, "y")?,
+        width: number(value, "width")?,
+        height: number(value, "height")?,
+    };
+    validate_rect(&rect, "region")?;
+    Ok(rect)
 }

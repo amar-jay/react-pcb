@@ -4,6 +4,7 @@ use std::collections::BTreeMap;
 
 mod board;
 mod component;
+mod constraints;
 mod footprint;
 mod geometry;
 mod routing;
@@ -13,10 +14,11 @@ pub use board::{
     TechnicalLayer,
 };
 pub use component::PartInstance;
+pub use constraints::{DifferentialPairConstraint, KeepoutConstraint, ZoneConstraint};
 pub use footprint::{
     CopperLayerSelector, FootprintDefinition, FootprintPad, PadDrill, PadLayer, PadShape,
 };
-pub use geometry::Rect;
+pub use geometry::{Rect, RegionDefinition};
 pub use routing::{NetId, PinRef, RouteConstraint};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -33,4 +35,8 @@ pub struct BoardIr {
     pub parts: Vec<PartInstance>,
     pub nets: Vec<NetId>,
     pub route_constraints: Vec<RouteConstraint>,
+    pub differential_pairs: Vec<DifferentialPairConstraint>,
+    pub zones: Vec<ZoneConstraint>,
+    pub keepouts: Vec<KeepoutConstraint>,
+    pub regions: BTreeMap<String, RegionDefinition>,
 }

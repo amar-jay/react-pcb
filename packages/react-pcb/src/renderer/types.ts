@@ -1,5 +1,6 @@
 export type DeclarationNode = {
   type: string;
+  sourceKey?: string;
   props: Record<string, unknown>;
   children: DeclarationNode[];
 };

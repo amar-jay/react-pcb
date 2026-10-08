@@ -113,8 +113,8 @@ function UsbController({ground, supply, vbus}: UsbControllerProps) {
         from={[pad(connector, 'DPlus'), pad(connector, 'DMinus')]}
         to={[pad(mcu, 'PA12'), pad(mcu, 'PA11')]}
       >
-        <RouteThrough region={rect(8, 16, 20, 8)} />
-        <RouteThrough region={rect(24, 17, 4, 6)} />
+        <RouteThrough key="connector-exit" region={rect(8, 16, 20, 8)} />
+        <RouteThrough key="mcu-entry" region={rect(24, 17, 4, 6)} />
       </DifferentialPair>
 
       <Route net={supply} from={pad(decoupling, '1')} to={pad(mcu, 'VDD/VDDA')}>

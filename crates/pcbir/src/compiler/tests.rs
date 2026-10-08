@@ -365,10 +365,10 @@ fn diagnoses_route_pin_and_net_mismatches() {
         }, "children": []})
     };
 
-    let wrong_net = compile(transaction(vec![part.clone(), route("B")])).unwrap();
-    assert_eq!(wrong_net.diagnostics[0].code, "PCBIR004");
-    let unknown_pin = compile(transaction(vec![part, route("NOPE")])).unwrap();
-    assert_eq!(unknown_pin.diagnostics[0].code, "PCBIR003");
+    let wrong_net = compile(transaction(vec![part.clone(), route("B")])).unwrap_err();
+    assert_eq!(wrong_net.diagnostic.code, "PCBIR004");
+    let unknown_pin = compile(transaction(vec![part, route("NOPE")])).unwrap_err();
+    assert_eq!(unknown_pin.diagnostic.code, "PCBIR003");
 }
 
 fn physical_part(id: &str) -> Value {
@@ -612,4 +612,181 @@ fn rejects_missing_opposite_technical_layer_for_back_side_parts() {
         .unwrap()
         .pop();
     assert_eq!(compile(input).unwrap_err().diagnostic.code, "PCBIR028");
+}
+
+fn intent_design() -> Vec<Value> {
+    vec![
+        part("U1", "TEST", json!({"P": {"id": "P"}, "N": {"id": "N"}})),
+        part("U2", "TEST", json!({"P": {"id": "P"}, "N": {"id": "N"}})),
+        json!({"type": "pcb-route", "props": {
+            "net": {"id": "P"}, "from": {"part": {"id": "U1"}, "name": "P"},
+            "to": {"part": {"id": "U2"}, "name": "P"}, "width": 0.2
+        }, "children": [{"type": "pcb-route-through", "props": {
+            "region": {"kind": "rect", "x": 1, "y": 1, "width": 2, "height": 2}
+        }}]}),
+        json!({"type": "pcb-differential-pair", "props": {
+            "positive": {"id": "P"}, "negative": {"id": "N"}, "width": 0.2, "gap": 0.15, "targetImpedance": 90,
+            "from": [{"part": {"id": "U1"}, "name": "P"}, {"part": {"id": "U1"}, "name": "N"}],
+            "to": [{"part": {"id": "U2"}, "name": "P"}, {"part": {"id": "U2"}, "name": "N"}]
+        }, "children": [{"type": "pcb-route-through", "props": {
+            "region": {"kind": "rect", "x": 3, "y": 3, "width": 2, "height": 2}
+        }}]}),
+        json!({"type": "pcb-zone", "props": {
+            "net": {"id": "N"}, "layers": [{"id": "copper/1"}], "boundary": "board", "clearance": 0.2
+        }}),
+        json!({"type": "pcb-keepout", "props": {
+            "region": {"kind": "rect", "x": 1, "y": 1, "width": 2, "height": 2}, "disallow": ["vias"], "except": [{"id": "N"}]
+        }}),
+    ]
+}
+
+#[test]
+fn assigns_ids_in_ir_and_retains_all_supported_intent() {
+    let output = compile(transaction(intent_design())).unwrap();
+    let ir = &output.ir;
+    assert_eq!(ir.board.id, "board/1");
+    assert_eq!(ir.route_constraints.len(), 1);
+    assert_eq!(ir.differential_pairs.len(), 1);
+    assert_eq!(ir.zones.len(), 1);
+    assert_eq!(ir.keepouts.len(), 1);
+    assert_eq!(ir.regions.len(), 4);
+    assert_eq!(ir.zones[0].layers, vec!["copper/1"]);
+    assert_eq!(ir.zones[0].boundary, ir.board.outline);
+    for reference in [
+        &ir.board.outline,
+        &ir.route_constraints[0].through[0],
+        &ir.differential_pairs[0].through[0],
+        &ir.keepouts[0].region,
+    ] {
+        assert_eq!(&ir.regions[reference].id, reference);
+    }
+    let ids = [
+        &ir.route_constraints[0].id,
+        &ir.differential_pairs[0].id,
+        &ir.zones[0].id,
+        &ir.keepouts[0].id,
+    ];
+    assert!(ids.iter().all(|id| !id.is_empty()));
+    assert_eq!(
+        ids.iter().collect::<std::collections::BTreeSet<_>>().len(),
+        4
+    );
+    let serialized = serde_json::to_string(ir).unwrap();
+    assert!(!serialized.contains("pcb-"));
+    assert!(!serialized.contains("sourceKey"));
+    assert!(output.diagnostics.is_empty());
+}
+
+#[test]
+fn identities_survive_reordering_insertion_and_geometry_or_rule_edits() {
+    let baseline = compile(transaction(intent_design())).unwrap().ir;
+    let mut edited = intent_design();
+    edited[2]["props"]["width"] = json!(0.4);
+    edited[2]["children"][0]["props"]["region"]["x"] = json!(5);
+    edited[3]["props"]["gap"] = json!(0.3);
+    edited[4]["props"]["clearance"] = json!(0.5);
+    edited[5]["props"]["region"]["width"] = json!(5);
+    edited[5]["props"]["disallow"] = json!(["copper", "vias"]);
+    edited.reverse();
+    edited.insert(0, part("U3", "TEST", json!({"P": {"id": "P"}})));
+    let mut other = intent_design()[2].clone();
+    other["props"]["to"]["part"]["id"] = json!("U3");
+    edited.insert(0, other);
+    let next = compile(transaction(edited)).unwrap().ir;
+    let existing_route = next
+        .route_constraints
+        .iter()
+        .find(|route| route.to.part == "U2")
+        .unwrap();
+    assert_eq!(baseline.route_constraints[0].id, existing_route.id);
+    assert_eq!(
+        baseline.route_constraints[0].through,
+        existing_route.through
+    );
+    assert_eq!(
+        baseline.differential_pairs[0].id,
+        next.differential_pairs[0].id
+    );
+    assert_eq!(baseline.zones[0].id, next.zones[0].id);
+    assert_eq!(baseline.keepouts[0].id, next.keepouts[0].id);
+    assert_eq!(baseline.keepouts[0].region, next.keepouts[0].region);
+    assert_eq!(baseline.board.outline, next.board.outline);
+    assert_eq!(next.regions[&next.keepouts[0].region].geometry.width, 5.0);
+}
+
+#[test]
+fn identity_hints_distinguish_repeated_anonymous_regions_and_survive_reordering() {
+    let mut design = intent_design();
+    let mut extra = design[2]["children"][0].clone();
+    design[2]["children"][0]["sourceKey"] = json!("entry");
+    extra["sourceKey"] = json!("exit");
+    extra["props"]["region"]["x"] = json!(8);
+    design[2]["children"].as_array_mut().unwrap().push(extra);
+    let first = compile(transaction(design.clone())).unwrap().ir;
+    design[2]["children"].as_array_mut().unwrap().reverse();
+    design[2]["children"][0]["props"]["region"]["width"] = json!(9);
+    let second = compile(transaction(design)).unwrap().ir;
+    assert_eq!(
+        first.route_constraints[0].through[0],
+        second.route_constraints[0].through[1]
+    );
+    assert_eq!(
+        first.route_constraints[0].through[1],
+        second.route_constraints[0].through[0]
+    );
+}
+
+#[test]
+fn rejects_ambiguous_identity_and_invalid_references() {
+    let mut design = intent_design();
+    let extra = design[2]["children"][0].clone();
+    design[2]["children"].as_array_mut().unwrap().push(extra);
+    assert_eq!(
+        compile(transaction(design)).unwrap_err().diagnostic.code,
+        "PCBIR029"
+    );
+    let mut design = intent_design();
+    design[2]["props"]["to"]["part"]["id"] = json!("MISSING");
+    assert_eq!(
+        compile(transaction(design)).unwrap_err().diagnostic.code,
+        "PCBIR002"
+    );
+    let mut design = intent_design();
+    design[4]["props"]["layers"] = json!([{"id": "nonexistent"}]);
+    assert_eq!(
+        compile(transaction(design)).unwrap_err().diagnostic.code,
+        "PCBIR028"
+    );
+    let mut design = intent_design();
+    design[3]["props"]["to"][1]["name"] = json!("P");
+    assert_eq!(
+        compile(transaction(design)).unwrap_err().diagnostic.code,
+        "PCBIR004"
+    );
+}
+
+#[test]
+fn identity_namespaces_allow_the_same_frontend_key_in_different_modules() {
+    let keepout = intent_design()[5].clone();
+    let module = |name: &str| json!({"type": "pcb-module", "props": {"name": name, "scope": name}, "children": [keepout]});
+    let ir = compile(transaction(vec![module("left"), module("right")]))
+        .unwrap()
+        .ir;
+    assert_eq!(ir.keepouts.len(), 2);
+    assert_ne!(ir.keepouts[0].id, ir.keepouts[1].id);
+}
+
+#[test]
+fn keyed_constraints_keep_identity_when_semantic_references_change() {
+    let mut design = intent_design();
+    design[2]["sourceKey"] = json!("supply-route");
+    let before = compile(transaction(design.clone())).unwrap().ir;
+    design[2]["props"]["net"] = json!({"id": "N"});
+    design[2]["props"]["from"]["name"] = json!("N");
+    design[2]["props"]["to"]["name"] = json!("N");
+    let after = compile(transaction(design)).unwrap().ir;
+    assert_eq!(
+        before.route_constraints[0].id,
+        after.route_constraints[0].id
+    );
 }

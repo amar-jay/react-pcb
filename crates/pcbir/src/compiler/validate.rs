@@ -84,6 +84,7 @@ fn validate_pin_definition(
     }
 
     for (name, pin) in pins {
+        super::parse::require_name(name, "logical pin ID", "PCBIR022")?;
         let pin = pin.as_object().ok_or_else(|| {
             CompileError::diagnostic(
                 Diagnostic::error("PCBIR022", format!("pin {name} must be an object"))

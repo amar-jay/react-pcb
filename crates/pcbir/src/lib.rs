@@ -15,3 +15,5 @@ pub use ir::{
     CopperLayerSelector, FootprintDefinition, FootprintPad, PadDrill, PadLayer, PadShape,
 };
 pub use protocol::{DeclarationNode, DeclarationTransaction, DeclarationTree, PROTOCOL_VERSION};
+
+pub use ir::{DifferentialPairConstraint, KeepoutConstraint, RegionDefinition, ZoneConstraint};

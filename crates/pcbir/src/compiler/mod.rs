@@ -5,14 +5,15 @@ use serde::Serialize;
 use serde_json::Value;
 
 use crate::diagnostic::Diagnostic;
-use crate::ir::{BoardIr, FootprintDefinition, NetId, PartInstance, Revision, RouteConstraint};
+use crate::ir::{BoardIr, FootprintDefinition, LayerSet, NetId, PartInstance, Revision};
 use crate::protocol::{DeclarationNode, DeclarationTransaction, PROTOCOL_VERSION};
 
+mod constraints;
 mod layers;
 mod parse;
 mod validate;
 
-use parse::{constraint_key, parse_board, parse_part, parse_route, parse_units};
+use parse::{constraint_key, parse_board, parse_part, parse_units};
 use validate::{validate_instances, validate_route_endpoint};
 
 #[cfg(test)]
@@ -86,11 +87,12 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
     }
 
     let units = parse_units(&board_node.props)?;
-    let board = parse_board(&board_node.props)?;
+    let (board, outline) = parse_board(&board_node.props)?;
     let mut component_definitions = BTreeMap::new();
     let mut component_instances = Vec::new();
     let mut footprint_definitions = BTreeMap::new();
-    let mut routes = Vec::new();
+    let mut physical = constraints::Constraints::default();
+    physical.regions.insert(outline.id.clone(), outline);
     let mut nets = BTreeSet::new();
     let mut modules = BTreeSet::new();
     let mut constraints = BTreeSet::new();
@@ -103,7 +105,8 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
         &mut component_definitions,
         &mut component_instances,
         &mut footprint_definitions,
-        &mut routes,
+        &mut physical,
+        &board.layers,
         &mut nets,
         &mut modules,
         &mut constraints,
@@ -133,7 +136,8 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
         .iter()
         .map(|instance| (instance.id.as_str(), instance))
         .collect();
-    for route in &routes {
+    nets.extend(physical.nets());
+    for route in &physical.endpoint_routes() {
         for endpoint in [&route.from, &route.to] {
             let Some(instance) = known_instances.get(endpoint.part.as_str()) else {
                 diagnostics.push(
@@ -153,6 +157,16 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
         }
     }
 
+    if let Some(index) = diagnostics
+        .iter()
+        .position(|diagnostic| matches!(diagnostic.severity, crate::Severity::Error))
+    {
+        let fatal = diagnostics.remove(index);
+        let mut previous = compiler_diagnostics;
+        previous.extend(diagnostics);
+        return Err(CompileError::diagnostic(fatal).with_diagnostics(previous));
+    }
+
     Ok(CompileOutput {
         ir: BoardIr {
             revision: Revision(transaction.base_revision.unwrap_or(0) + 1),
@@ -162,7 +176,11 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
             parts: component_instances,
             footprint_definitions,
             nets: nets.into_iter().collect(),
-            route_constraints: routes,
+            route_constraints: physical.routes,
+            differential_pairs: physical.pairs,
+            zones: physical.zones,
+            keepouts: physical.keepouts,
+            regions: physical.regions,
         },
         diagnostics,
         compiler_diagnostics,
@@ -175,7 +193,8 @@ fn compile_nodes(
     component_definitions: &mut BTreeMap<String, Value>,
     component_instances: &mut Vec<PartInstance>,
     footprint_definitions: &mut BTreeMap<String, FootprintDefinition>,
-    routes: &mut Vec<RouteConstraint>,
+    physical: &mut constraints::Constraints,
+    board_layers: &LayerSet,
     nets: &mut BTreeSet<NetId>,
     modules: &mut BTreeSet<String>,
     constraints: &mut BTreeSet<String>,
@@ -183,6 +202,15 @@ fn compile_nodes(
     compiler_diagnostics: &mut Vec<Diagnostic>,
 ) -> Result<(), CompileError> {
     for child in nodes {
+        if matches!(
+            child.node_type.as_str(),
+            "pcb-part" | "pcb-zone" | "pcb-keepout"
+        ) && !child.children.is_empty()
+        {
+            return Err(CompileError::invalid(
+                "leaf declarations must not contain children",
+            ));
+        }
         match child.node_type.as_str() {
             "pcb-module" => {
                 let scope = child
@@ -240,7 +268,8 @@ fn compile_nodes(
                     component_definitions,
                     component_instances,
                     footprint_definitions,
-                    routes,
+                    physical,
+                    board_layers,
                     nets,
                     modules,
                     constraints,
@@ -295,12 +324,15 @@ fn compile_nodes(
                 component_instances.push(instance);
             }
             "pcb-route" => {
-                let route = parse_route(child)?;
-                nets.insert(route.net.clone());
-                routes.push(route);
+                physical.route(child, parent_scope)?;
             }
             "pcb-zone" | "pcb-keepout" => {
-                let key = constraint_key(child)?;
+                let key = serde_json::to_string(&(
+                    parent_scope,
+                    &child.source_key,
+                    constraint_key(child)?,
+                ))
+                .expect("constraint identity inputs are serializable");
                 if !constraints.insert(key) {
                     let (code, message, help) = if child.node_type == "pcb-zone" {
                         (
@@ -321,21 +353,19 @@ fn compile_nodes(
                             .with_help(help),
                     ));
                 }
-                diagnostics.push(
-                    Diagnostic::warning(
-                        "PCBIR001",
-                        format!("declaration {} is not compiled yet", child.node_type),
-                    )
-                    .with_entity(&child.node_type),
-                );
+                if child.node_type == "pcb-zone" {
+                    physical.zone(child, parent_scope, board_layers)?;
+                } else {
+                    physical.keepout(child, parent_scope)?;
+                }
             }
-            other => diagnostics.push(
-                Diagnostic::warning(
-                    "PCBIR001",
-                    format!("declaration {other} is not compiled yet"),
-                )
-                .with_entity(other),
-            ),
+            "pcb-differential-pair" => physical.pair(child, parent_scope)?,
+            other => {
+                return Err(CompileError::diagnostic(
+                    Diagnostic::error("PCBIR001", format!("unsupported declaration {other}"))
+                        .with_entity(other),
+                ));
+            }
         }
     }
     Ok(())

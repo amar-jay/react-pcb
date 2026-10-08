@@ -2,12 +2,11 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeMap;
 
-use super::Rect;
-
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Board {
-    pub outline: Rect,
+    pub id: String,
+    pub outline: String,
     pub layers: LayerSet,
     pub metadata: BTreeMap<String, Value>,
 }
