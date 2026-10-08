@@ -1,6 +1,6 @@
 # Physical footprint contract
 
-Phase one introduces board-independent, explicit physical geometry. The layout engine and SVG projection are later phases.
+Phase one introduces board-independent, explicit physical geometry. Phase two adds deterministic SVG projection; layout authoring remains a later phase.
 
 ## Authoring
 
@@ -51,4 +51,30 @@ Existing `defineFootprint` calls remain supported. They retain their original ge
 
 TypeScript callers can use `migrateFootprint(legacy, 'mm', {'old-top': 'front-copper'})`. The CLI exposes the same adapter as `pcbir migrate-footprint`, accepting `{footprint, units, layerRoles}`. Every old board-layer target requires a role mapping; the all-copper selector carries its meaning directly.
 
-These checks establish deterministic geometry and reference semantics. Land-pattern verification, manufacturing profiles, mask/paste offsets, general shape intersection checks, SVG output, and CSS layout are subsequent work.
+These checks establish deterministic geometry and reference semantics. Land-pattern verification, manufacturing profiles, mask/paste offsets, general shape intersection checks and CSS layout are subsequent work.
+
+## SVG projection and inspection
+
+`footprintSvg(compiledFootprint, options?)` projects a validated canonical physical footprint to a standalone SVG string. It needs no board, component, or React tree. The CLI accepts compiled JSON:
+
+```sh
+cargo run --quiet -p pcbir -- footprint < declaration.json > footprint.json
+cargo run --quiet -p pcbir -- footprint-svg < footprint.json > footprint.svg
+bun run footprints:inspect /tmp/react-pcb-footprints
+```
+
+Open the generated `index.html` in a browser to toggle semantic layers independently, or open the individual SVG files. The checked-in inspection source generates a passive and a through-hole header, including separate mask/paste openings, plated drills, a mounting hole, and documentation strokes. Their dimensions are illustrative.
+
+### Projection contract
+
+- One SVG user unit is **half a nanometre**. The `viewBox` is `min2.x min2.y (max2.x-min2.x) (max2.y-min2.y)`, using the canonical bounds including documentation strokes. There is no added margin, origin shift, or geometric rounding.
+- Root `width` and `height` have `mm` suffixes, calculated exactly from doubled nanometres. Decimal formatting uses at most seven fractional digits, no exponent, no unnecessary trailing zeros, and no negative zero. Coordinates and sizes in the SVG are integers. Projection arithmetic uses wider integers so differences between valid bounds cannot overflow.
+- Local x points right, y points down; local clockwise quarter-turn rotation is applied about the shape center, then the shape is translated to its feature position. Rectangles and rounded rectangles retain dimensions/radii. Ovals are capsules with radius half the smaller dimension, rather than ellipses. Circles retain exact diameters. Stroke widths scale with the geometry.
+- Semantic role groups appear in lexicographic role-name order. Features within each group appear in UTF-8 byte order of their stable IDs. A feature targeting several roles emits one element per role. All-copper and all-mask remain semantic groups without inventing board layers. Groups with no features are omitted.
+- Each projected element has a collision-free XML `id` formed as `f-<hex footprint key>-<hex role>-<hex feature ID>`, using lowercase hex UTF-8 bytes. `data-feature-id` preserves the source local ID; root `data-footprint-key` identifies its owner. `data-purpose` preserves feature purpose. Semantic groups use `layer-<role>` IDs and `data-layer` attributes.
+- Drills appear once per source feature, in a final `drills` group (`data-layer="drill"`), sorted by feature ID. Their circles encode exact center and radius, source ID, `data-purpose="drill"`, and `data-plated`. Dedicated hole features emit drill elements even though they have no semantic layers. Pad drills are independent of the pad's copper/mask/paste projections.
+- Mask/paste openings have explicit elements in their respective groups. Layer colors and dark drill fills are inspection styling; they do not define manufacturing meaning or subtract material from canonical shapes. Later groups can cover earlier ones in the composite preview; use the inspection page's layer toggles to see each layer independently.
+- XML text/attributes escape ampersands, angle brackets, both quotes, and attribute whitespace. Invalid XML control characters in keys/IDs fail with `PCBSVG001`. No IDs are interpolated into executable markup.
+- UTF-8 output uses LF newlines, fixed attribute order, and one final newline. Repeated compilation of the same declaration and repeated projection yield identical bytes. Projection also ignores feature and role input ordering. Canonical IR itself retains declared feature order.
+
+SVG generation validates the supplied canonical footprint, including its stored bounds, and never mutates it. SVG is a derived inspection artifact rather than a field in physical IR; consumers must retain typed geometry for manufacturing. Neither physical nor board schema versions change in Phase two.

@@ -85,3 +85,13 @@ async function runPhysical(input: unknown, operation: string, options: {cwd?: st
   if (code !== 0) throw compilerError(stderr, code);
   return JSON.parse(stdout) as PhysicalFootprint;
 }
+
+/** Project authoritative compiled geometry to a standalone SVG inspection artifact. */
+export async function footprintSvg(input: PhysicalFootprint, options: {cwd?: string; command?: readonly string[]} = {}): Promise<string> {
+  const process = Bun.spawn([...(options.command ?? ['cargo', 'run', '--quiet', '-p', 'pcbir', '--', 'footprint-svg'])], {
+    cwd: options.cwd, stdin: new Blob([JSON.stringify(input)]), stdout: 'pipe', stderr: 'pipe',
+  });
+  const [stdout, stderr, code] = await Promise.all([process.stdout.text(), process.stderr.text(), process.exited]);
+  if (code !== 0) throw compilerError(stderr, code);
+  return stdout;
+}

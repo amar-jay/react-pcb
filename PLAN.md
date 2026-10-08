@@ -72,11 +72,11 @@ Acceptance: one shared footprint can compile without a board and be placed on tw
 
 ### 2. SVG projection and inspection
 
-- [ ] Serialize typed physical geometry to SVG with physical dimensions and a documented `viewBox` scale.
-- [ ] Group elements by semantic layer and attach stable entity IDs.
-- [ ] Specify deterministic ordering, escaping, and decimal formatting.
-- [ ] Provide a way to inspect compiled footprints independently of a board.
-- [ ] Ensure holes and layer-specific openings are represented explicitly rather than through visual paint conventions alone.
+- [x] Serialize typed physical geometry to SVG with physical dimensions and a documented `viewBox` scale.
+- [x] Group elements by semantic layer and attach stable entity IDs.
+- [x] Specify deterministic ordering, escaping, and decimal formatting.
+- [x] Provide a way to inspect compiled footprints independently of a board.
+- [x] Ensure holes and layer-specific openings are represented explicitly rather than through visual paint conventions alone.
 
 Acceptance: repeated compilation yields identical IR and SVG bytes. Fixtures verify physical bounds, primitive coordinates, and layer membership; rendered inspection confirms pad and hole placement. SVG generation does not alter geometry or become a second source of truth.
 
