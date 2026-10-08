@@ -1,3 +1,5 @@
+import type {ReactNode} from 'react';
+import {renderFootprintDeclarations, type FootprintDeclarations} from './jsx.tsx';
 import {compilerError} from '../compiler/diagnostics.ts';
 import type {FootprintDefinition} from './index.ts';
 
@@ -67,9 +69,11 @@ function freeze<T>(value: T): T {
   return value;
 }
 
-/** Compile a footprint without a component, board, React renderer, or layout engine. */
-export async function compileFootprint(input: PhysicalFootprintInput, options: {cwd?: string; command?: readonly string[]} = {}): Promise<PhysicalFootprint> {
-  return runPhysical(input, 'footprint', options);
+/** Compile explicit geometry, serialized layout intent, or JSX independently of a board. */
+export async function compileFootprint(input: PhysicalFootprintInput | FootprintDeclarations | ReactNode, options: {cwd?: string; command?: readonly string[]} = {}): Promise<PhysicalFootprint> {
+  const declaration = input !== null && typeof input === 'object' && ('schemaVersion' in input || 'protocolVersion' in input)
+    ? input : await renderFootprintDeclarations(input as ReactNode);
+  return runPhysical(declaration, 'footprint', options);
 }
 
 /** Convert old numeric coordinates only with explicit units and layer meaning. */

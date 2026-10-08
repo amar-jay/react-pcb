@@ -6,6 +6,7 @@ export type CompilerDiagnostic = {
   message: string;
   entity: string | null;
   help?: string;
+  source?: {sourceKey?: string; file?: string; line?: number; column?: number};
 };
 
 type CompilerFailure = {
@@ -28,6 +29,10 @@ export class PcbCompileError extends Error {
 export function formatDiagnostic(diagnostic: CompilerDiagnostic): string {
   const lines = [`${diagnostic.severity}[${diagnostic.code}]: ${diagnostic.message}`];
   if (diagnostic.entity) lines.push(`  --> ${diagnostic.entity}`);
+  if (diagnostic.source?.file) {
+    const {file, line, column} = diagnostic.source;
+    lines.push(`  at ${file}${line === undefined ? '' : `:${line}`}${column === undefined ? '' : `:${column}`}`);
+  }
   if (diagnostic.help) lines.push(`  help: ${diagnostic.help}`);
   return lines.join('\n');
 }

@@ -1,3 +1,4 @@
+import type {FootprintDeclarations} from './jsx.tsx';
 import type {CopperLayerInput, PasteLayerInput, SolderMaskLayerInput} from '../layers/index.ts';
 import type {PhysicalFootprint, PhysicalFootprintInput} from './physical.ts';
 import {assertFinite, assertName, assertPositive} from '../validation/index.ts';
@@ -19,7 +20,7 @@ export type FootprintDefinition = Readonly<{
 }>;
 export type PinMap = Readonly<Record<string, string | readonly string[]>>;
 export type FootprintBinding = Readonly<{
-  footprint: FootprintDefinition | PhysicalFootprint | PhysicalFootprintInput | string;
+  footprint: FootprintDefinition | PhysicalFootprint | PhysicalFootprintInput | FootprintDeclarations | string;
   pinMap: PinMap;
 }>;
 

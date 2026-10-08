@@ -83,3 +83,6 @@ export {defineFootprint} from './footprints/index.ts';
 export {definePhysicalFootprint, compileFootprint, footprintSvg, migrateFootprint, footprintLayer, FOOTPRINT_SCHEMA_VERSION} from './footprints/physical.ts';
 export type {PhysicalLength, PhysicalShape, PhysicalFeature, PhysicalFootprint, PhysicalFootprintInput, FootprintRole, FeatureInput, FeaturePurpose, PlacedPhysicalFeature} from './footprints/physical.ts';
 export type {FootprintDefinition, FootprintPad, FootprintBinding, PadLayer, PinMap} from './footprints/index.ts';
+
+export {Footprint, FootprintGroup, Pad, Hole, Graphic, renderFootprintDeclarations} from './footprints/jsx.tsx';
+export type {FootprintProps, FootprintGroupProps, PadProps, HoleProps, GraphicProps, FootprintStyle, FootprintTransform, FootprintSource, FootprintDeclarations} from './footprints/jsx.tsx';

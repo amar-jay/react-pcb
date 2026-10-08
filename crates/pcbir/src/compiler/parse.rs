@@ -170,7 +170,9 @@ pub fn parse_part(
             physical: None,
         }
     } else {
-        if footprint_value.get("schemaVersion").is_some() {
+        if footprint_value.get("schemaVersion").is_some()
+            || footprint_value.get("kind").and_then(Value::as_str) == Some("footprint-declarations")
+        {
             return parse_physical_part(props, footprint_value);
         }
         let mut value = footprint_value.clone();
@@ -234,7 +236,13 @@ fn parse_physical_part(
     ),
     CompileError,
 > {
-    let physical = if value.get("units").is_some() {
+    let physical = if value.get("kind").and_then(Value::as_str) == Some("footprint-declarations") {
+        crate::layout::compile_layout(
+            serde_json::from_value(value.clone()).map_err(|e| {
+                CompileError::invalid(format!("invalid footprint declarations: {e}"))
+            })?,
+        )?
+    } else if value.get("units").is_some() {
         let physical: crate::physical::PhysicalFootprint = serde_json::from_value(value.clone())
             .map_err(|e| CompileError::invalid(format!("invalid physical footprint: {e}")))?;
         physical.validate()?;

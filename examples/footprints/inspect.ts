@@ -1,3 +1,5 @@
+import React from 'react';
+import {Positioned0402} from './0402.tsx';
 import {compileFootprint, definePhysicalFootprint, footprintSvg} from '@react-pcb/core';
 
 // Illustrative geometry for inspection, not verified manufacturer land patterns.
@@ -19,6 +21,11 @@ const fixtures = [
 
 const output = process.argv[2] ?? '/tmp/react-pcb-footprints';
 const previews: string[] = [];
+const positioned = await compileFootprint(React.createElement(Positioned0402), {cwd: import.meta.dir + '/../..'});
+await Bun.write(`${output}/positioned-0402.json`, JSON.stringify(positioned, null, 2) + '\n');
+const positionedSvg = await footprintSvg(positioned, {cwd: import.meta.dir + '/../..'});
+await Bun.write(`${output}/positioned-0402.svg`, positionedSvg);
+previews.push(`<section><h2>positioned-0402</h2><div class="layers"></div>${positionedSvg}</section>`);
 for (const declaration of fixtures) {
   const ir = await compileFootprint(declaration, {cwd: import.meta.dir + '/../..'});
   const name = declaration.key.split(':')[1]!;

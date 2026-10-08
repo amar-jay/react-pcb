@@ -1,3 +1,4 @@
+import type {FootprintDeclarations} from '../footprints/jsx.tsx';
 import React from 'react';
 
 import type {FootprintDefinition, PinMap} from '../footprints/index.ts';
@@ -10,7 +11,7 @@ export type PartProps = {
   definition?: unknown;
   mpn?: string;
   value?: string;
-  footprint: FootprintDefinition | PhysicalFootprint | PhysicalFootprintInput | string;
+  footprint: FootprintDefinition | PhysicalFootprint | PhysicalFootprintInput | FootprintDeclarations | string;
   pinMap?: PinMap;
   at?: readonly [number, number];
   side?: BoardSide;

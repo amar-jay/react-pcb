@@ -16,6 +16,8 @@ pub struct Diagnostic {
     pub entity: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub help: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub source: Option<Box<serde_json::Value>>,
 }
 
 impl Diagnostic {
@@ -26,6 +28,7 @@ impl Diagnostic {
             message: message.into(),
             entity: None,
             help: None,
+            source: None,
         }
     }
 
@@ -36,6 +39,7 @@ impl Diagnostic {
             message: message.into(),
             entity: None,
             help: None,
+            source: None,
         }
     }
 
@@ -59,6 +63,17 @@ impl fmt::Display for Diagnostic {
         write!(formatter, "{severity}[{}]: {}", self.code, self.message)?;
         if let Some(entity) = &self.entity {
             write!(formatter, "\n  --> {entity}")?;
+        }
+        if let Some(source) = &self.source
+            && let Some(file) = source.get("file").and_then(serde_json::Value::as_str)
+        {
+            write!(formatter, "\n  at {file}")?;
+            if let Some(line) = source.get("line").and_then(serde_json::Value::as_u64) {
+                write!(formatter, ":{line}")?;
+            }
+            if let Some(column) = source.get("column").and_then(serde_json::Value::as_u64) {
+                write!(formatter, ":{column}")?;
+            }
         }
         if let Some(help) = &self.help {
             write!(formatter, "\n  help: {help}")?;

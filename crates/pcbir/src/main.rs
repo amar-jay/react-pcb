@@ -39,10 +39,24 @@ fn main() {
         return;
     }
     if command.as_deref() == Some("footprint") {
-        let definition = serde_json::from_str(&input)
+        let definition: serde_json::Value = serde_json::from_str(&input)
             .unwrap_or_else(|e| fail(format!("invalid footprint declaration: {e}")));
-        let footprint =
-            pcbir::physical::compile_footprint(definition).unwrap_or_else(|e| fail_compile(e));
+        let footprint = if definition.get("kind").is_some() {
+            let declaration = serde_json::from_value(definition).unwrap_or_else(|e| {
+                fail_compile(CompileError::invalid(format!(
+                    "invalid footprint declarations: {e}"
+                )))
+            });
+            pcbir::layout::compile_layout(declaration)
+        } else {
+            let declaration = serde_json::from_value(definition).unwrap_or_else(|e| {
+                fail_compile(CompileError::invalid(format!(
+                    "invalid footprint declaration: {e}"
+                )))
+            });
+            pcbir::physical::compile_footprint(declaration)
+        }
+        .unwrap_or_else(|e| fail_compile(e));
         println!(
             "{}",
             serde_json::to_string_pretty(&footprint).expect("footprint is serializable")

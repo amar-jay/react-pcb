@@ -31,7 +31,7 @@ pub struct CompileOutput {
 
 #[derive(Debug, Serialize)]
 pub struct CompileError {
-    pub diagnostic: Diagnostic,
+    pub diagnostic: Box<Diagnostic>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub diagnostics: Vec<Diagnostic>,
 }
@@ -39,14 +39,14 @@ pub struct CompileError {
 impl CompileError {
     pub fn invalid(message: impl Into<String>) -> Self {
         Self {
-            diagnostic: Diagnostic::error("PCBIR100", message),
+            diagnostic: Box::new(Diagnostic::error("PCBIR100", message)),
             diagnostics: Vec::new(),
         }
     }
 
     pub fn diagnostic(diagnostic: Diagnostic) -> Self {
         Self {
-            diagnostic,
+            diagnostic: Box::new(diagnostic),
             diagnostics: Vec::new(),
         }
     }

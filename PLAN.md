@@ -82,11 +82,11 @@ Acceptance: repeated compilation yields identical IR and SVG bytes. Fixtures ver
 
 ### 3. Absolute-positioned JSX authoring
 
-- [ ] Add footprint, group, pad, hole, and graphic declarations with serializable inline styles.
-- [ ] Parse physical-unit strings in Rust and normalize them to canonical lengths.
-- [ ] Resolve fixed dimensions, absolute offsets, and supported transforms.
-- [ ] Reject unsupported style values and underdetermined layouts.
-- [ ] Attach diagnostics to footprint and feature IDs, retaining frontend source information where available.
+- [x] Add footprint, group, pad, hole, and graphic declarations with serializable inline styles.
+- [x] Parse physical-unit strings in Rust and normalize them to canonical lengths.
+- [x] Resolve fixed dimensions, absolute offsets, and supported transforms.
+- [x] Reject unsupported style values and underdetermined layouts.
+- [x] Attach diagnostics to footprint and feature IDs, retaining frontend source information where available.
 
 Acceptance: an illustrative 0402 footprint produces the same canonical geometry through explicit-coordinate and positioned JSX authoring. The declaration protocol contains authoring intent; the final IR contains resolved geometry.
 

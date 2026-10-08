@@ -1,6 +1,6 @@
 # Physical footprint contract
 
-Phase one introduces board-independent, explicit physical geometry. Phase two adds deterministic SVG projection; layout authoring remains a later phase.
+Phase one introduces board-independent, explicit physical geometry. Phase two adds deterministic SVG projection. Phase three adds absolute-positioned JSX authoring; Flexbox and Grid remain later phases.
 
 ## Authoring
 
@@ -78,3 +78,67 @@ Open the generated `index.html` in a browser to toggle semantic layers independe
 - UTF-8 output uses LF newlines, fixed attribute order, and one final newline. Repeated compilation of the same declaration and repeated projection yield identical bytes. Projection also ignores feature and role input ordering. Canonical IR itself retains declared feature order.
 
 SVG generation validates the supplied canonical footprint, including its stored bounds, and never mutates it. SVG is a derived inspection artifact rather than a field in physical IR; consumers must retain typed geometry for manufacturing. Neither physical nor board schema versions change in Phase two.
+
+## Absolute-positioned JSX authoring
+
+Phase three adds `Footprint`, `FootprintGroup`, `Pad`, `Hole`, and `Graphic`. They render serializable declarations through the existing React renderer; Rust alone parses units and resolves layout. The explicit-coordinate authoring API remains supported.
+
+```tsx
+import {Footprint, Pad, compileFootprint, footprintSvg, renderFootprintDeclarations} from '@react-pcb/core';
+
+const element = <Footprint name="example:0402" style={{
+  width: '1.6mm', height: '0.7mm', left: '-0.8mm', top: '-0.35mm',
+}}>
+  <Pad name="1" layers={['front-copper', 'front-mask', 'front-paste']}
+    style={{position: 'absolute', width: '0.6mm', height: '0.7mm', left: '0mm', top: '0mm'}} />
+  <Pad name="2" layers={['front-copper', 'front-mask', 'front-paste']}
+    style={{position: 'absolute', width: '0.6mm', height: '0.7mm', right: '0mm', top: '0mm'}} />
+</Footprint>;
+
+const declarations = await renderFootprintDeclarations(element);
+const footprint = await compileFootprint(declarations); // compileFootprint(element) also works
+const svg = await footprintSvg(footprint);
+```
+
+The two pad centers are exactly `[-500000, 0]` and `[500000, 0]` nm. See `examples/footprints/0402.tsx` for a fixture using a layout group. `bun run footprints:inspect` includes its resolved SVG in the inspection page. The basic board example remains unchanged until Phase six.
+
+### Layout contract
+
+All declarations share one `FootprintStyle` model:
+
+| Property | Contract |
+| --- | --- |
+| `width`, `height` | Required positive physical-unit strings on roots, groups, and features. |
+| `position` | Required as `'absolute'` on children; optional on the root. No flow layout. |
+| `left`, `right` | Exactly one horizontal offset per child. `right` computes `parent.width - right - width`. |
+| `top`, `bottom` | Exactly one vertical offset per child. `bottom` computes `parent.height - bottom - height`. |
+| Root `left`, `top` | Optional translation of the root's top-left corner from footprint origin; default zero. Root `right`/`bottom` are rejected. |
+| `borderRadius` | Required physical length for `shape="rounded-rect"`; forbidden on other shapes and containers. Existing radius validation applies. |
+| `transform` | Typed object with optional `translate: [x, y]`, `rotate: 0 \| 90 \| 180 \| 270`, `reflectX: boolean`, `reflectY: boolean`. CSS transform strings are rejected. |
+
+Offsets position the **untransformed box's top-left corner** in the parent coordinate system. Negative offsets and geometry outside a container are permitted; containers do not clip children or contribute footprint bounds. Every container has fixed dimensions, so no sizing depends on children or paint. Width/height remain the feature's local dimensions after rotation.
+
+Transforms reflect local axes around the box center, rotate clockwise around that center, then translate in parent coordinates. Ancestor transforms apply outside descendant transforms. Root transforms operate around the root box center. Reflection changes positions/orientations but does not swap semantic layer roles: board-side placement remains responsible for layer swapping. The currently supported symmetric primitives encode reflected shape orientation as an equivalent quarter-turn rotation, chosen from the transformed local positive x axis.
+
+Lengths reuse the checked Rust parser (`nm`, `um`, `mm`, `mil`, `in`), without browser layout, floats, implicit units, or rounding. Layout uses doubled nanometres internally to preserve exact box centers during nested transforms. Resolved feature centers must be whole nanometres and fit the canonical exact integer range; half-nanometre centers are diagnosed rather than quantized. Odd feature dimensions remain supported when the composed transform produces an integer center. Bounds still preserve half-nanometre edges. Overflows and invalid canonical geometry are rejected before output.
+
+Unsupported declarations, props, styles, transforms, nonphysical units, percentages, automatic/intrinsic sizing, Flexbox, Grid, and overdetermined or missing offsets produce actionable errors. Unknown properties are never treated as cosmetic CSS. Undefined optional TypeScript props are omitted during serialization; functions, symbols, bigints, and non-finite numbers are rejected by the frontend snapshot.
+
+### Feature meaning and identity
+
+- `Footprint.name` supplies the stable library key. Containers emit no manufacturing geometry and have no canonical IR entity.
+- `Pad` defaults to a rectangular shape. Its `layers` must contain semantic pad roles including copper. Optional `drill={{diameter, plated}}` retains independent drill meaning.
+- `Hole` requires `plated`, equal width/height, and emits a circular plated/non-plated hole with matching drill diameter. It has no layer targets.
+- `Graphic` requires `purpose` and semantic `layers`. Supported purposes are copper, mask-opening, paste-opening, silkscreen, courtyard, and fabrication. `stroke` is a physical length and is limited to documentation graphics. Pads and holes use their dedicated declarations.
+- `Pad` and `Graphic` support `rect` (default), `rounded-rect`, `circle` (equal dimensions), and `oval` shapes. All existing physical validation still applies.
+- Feature `name`, when supplied, identifies a local feature within the whole footprint and becomes its stable canonical ID. It is independent of layout-group nesting; pad names such as `'1'` are convenient for pin maps. Names across pads, holes, and graphics must be unique.
+- Anonymous features receive compiler IDs `feature/<FNV-1a-128 hash>` derived from named/keyed group ancestry, declaration type, graphic purpose, and frontend `sourceKey`. Geometry, style, and array positions never enter identity. Repeated anonymous features of the same kind require distinct React keys. Duplicate or colliding IDs are rejected. Unnamed/unkeyed group wrappers do not affect identity.
+- Named/keyed groups must be unique within their group ancestry. JavaScript mapping and ordinary custom React components work through the existing renderer. React keys are identity hints and do not survive in canonical physical IR.
+
+### Protocol and diagnostics
+
+`renderFootprintDeclarations(element)` returns a JSON snapshot with `{protocolVersion: 1, kind: 'footprint-declarations', root: DeclarationNode}`. Host declaration types are `fp-footprint`, `fp-group`, `fp-pad`, `fp-hole`, and `fp-graphic`. Props retain physical-unit strings and styles; `sourceKey` retains frontend identity hints. The CLI `pcbir footprint` accepts this envelope or the existing explicit physical declaration. Rust's public `layout::compile_layout` accepts the same envelope. A serialized envelope can also be passed as a placed part's `footprint`; Rust resolves it before binding and placement. Compiled physical definitions continue to work with `Part` and `definePart`.
+
+The layout protocol version is separate from physical schema version 1 and board schema version 2. Neither canonical schema changes in this phase. Resolved physical IR contains shapes, coordinates, layers, and bounds; it contains no styles, JSX types, group wrappers, or source hints.
+
+Layout failures use `PCBFP002`; unit and physical validation failures retain `PCBFP001`. Diagnostics identify `footprint-key/feature-ID` (or the footprint/group for container failures). Each declaration may provide `source={{file, line, column}}`; lines and columns are optional positive one-based integers. Diagnostics retain that information and `sourceKey` when available, falling back to enclosing declarations if necessary. Source metadata is optional and currently author-provided; the renderer does not infer file locations. The TypeScript diagnostic formatter prints file locations without requiring callers to parse messages.
