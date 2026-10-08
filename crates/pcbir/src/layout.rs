@@ -1,4 +1,4 @@
-//! Restricted absolute layout authoring. Frontend declarations never enter IR.
+//! Restricted absolute and fixed-size Flexbox layout authoring. Frontend declarations never enter IR.
 use crate::physical::{self, Bounds, Drill, Feature, PhysicalFootprint, Purpose, Role, Shape};
 use crate::{CompileError, DeclarationNode, Diagnostic};
 use serde::Deserialize;
@@ -16,7 +16,7 @@ pub struct FootprintDeclarations {
 
 fn invalid(message: impl Into<String>) -> CompileError {
     CompileError::diagnostic(Diagnostic::error("PCBFP002", message).with_help(
-        "Use fixed physical dimensions, position: absolute, one offset per axis, and supported typed transforms. See docs/physical-footprints.md.",
+        "Use fixed physical dimensions, absolute offsets or row/column Flexbox, and supported typed transforms. See docs/physical-footprints.md.",
     ))
 }
 fn attach(mut error: CompileError, node: &DeclarationNode, entity: &str) -> CompileError {
@@ -128,13 +128,87 @@ impl Transform {
         }
     }
 }
+#[derive(Clone, Copy)]
+enum Alignment {
+    Start,
+    Center,
+    End,
+}
+impl Alignment {
+    // Doubled-nm origins retain exact half-nm alignment without rounding.
+    fn offset2(self, free: i128) -> i128 {
+        match self {
+            Self::Start => 0,
+            Self::Center => free,
+            Self::End => free * 2,
+        }
+    }
+}
+struct Flex {
+    axis: usize,
+    gap: i64,
+    justify: Alignment,
+    align: Alignment,
+}
+fn flex(style: &Value, container: bool) -> Result<Option<Flex>, CompileError> {
+    let properties = ["flexDirection", "gap", "justifyContent", "alignItems"];
+    if style.get("display").is_none() {
+        if properties.iter().any(|key| style.get(key).is_some()) {
+            return Err(invalid("flex properties require display: flex"));
+        }
+        return Ok(None);
+    }
+    if !container {
+        return Err(invalid(
+            "unsupported style property display on a physical feature; only containers support flex",
+        ));
+    }
+    if style["display"].as_str() != Some("flex") {
+        return Err(invalid("display must be flex"));
+    }
+    let axis = match style.get("flexDirection").map(Value::as_str) {
+        None | Some(Some("row")) => 0,
+        Some(Some("column")) => 1,
+        _ => return Err(invalid("flexDirection must be row or column")),
+    };
+    let gap = style
+        .get("gap")
+        .map(|_| length(style, "gap"))
+        .transpose()?
+        .unwrap_or(0);
+    if gap < 0 {
+        return Err(invalid("flex gap must not be negative"));
+    }
+    let alignment = |key: &str| -> Result<Alignment, CompileError> {
+        match style.get(key).map(Value::as_str) {
+            None | Some(Some("flex-start")) => Ok(Alignment::Start),
+            Some(Some("center")) => Ok(Alignment::Center),
+            Some(Some("flex-end")) => Ok(Alignment::End),
+            _ => Err(invalid(format!(
+                "{key} must be flex-start, center, or flex-end; distributed spacing and stretch are unsupported"
+            ))),
+        }
+    };
+    Ok(Some(Flex {
+        axis,
+        gap,
+        justify: alignment("justifyContent")?,
+        align: alignment("alignItems")?,
+    }))
+}
+
+#[derive(Clone, Copy)]
+struct ParentBox {
+    size: [i64; 2],
+    flow_origin: Option<[i128; 2]>,
+}
 struct BoxLayout {
     size: [i64; 2],
     transform: Transform,
 }
 fn layout(
     style: &Value,
-    parent: Option<[i64; 2]>,
+    parent: Option<ParentBox>,
     container: bool,
 ) -> Result<BoxLayout, CompileError> {
     keys(
@@ -149,6 +223,11 @@ fn layout(
             "bottom",
             "borderRadius",
             "transform",
+            "display",
+            "flexDirection",
+            "gap",
+            "justifyContent",
+            "alignItems",
         ],
         "style",
     )?;
@@ -156,7 +235,7 @@ fn layout(
         if position.as_str() != Some("absolute") {
             return Err(invalid("only position: absolute is supported"));
         }
-    } else if parent.is_some() {
+    } else if parent.is_some_and(|p| p.flow_origin.is_none()) {
         return Err(invalid("child style requires position: absolute"));
     }
     let size = [length(style, "width")?, length(style, "height")?];
@@ -170,14 +249,22 @@ fn layout(
             "layout containers cannot have borderRadius or manufacturing geometry",
         ));
     }
+    flex(style, container)?;
     let mut origin = [0_i128; 2];
     for (axis, near, far) in [(0, "left", "right"), (1, "top", "bottom")] {
         let n = style.get(near).map(|_| length(style, near)).transpose()?;
         let f = style.get(far).map(|_| length(style, far)).transpose()?;
+        if let Some(flow) = parent.and_then(|p| p.flow_origin) {
+            if n.is_some() || f.is_some() || style.get("position").is_some() {
+                return Err(invalid("flow children cannot use position or offsets"));
+            }
+            origin[axis] = flow[axis];
+            continue;
+        }
         origin[axis] = match (parent, n, f) {
             (Some(_), Some(n), None) => i128::from(n) * 2,
             (Some(p), None, Some(f)) => {
-                (i128::from(p[axis]) - i128::from(f) - i128::from(size[axis])) * 2
+                (i128::from(p.size[axis]) - i128::from(f) - i128::from(size[axis])) * 2
             }
             (None, n, None) => i128::from(n.unwrap_or(0)) * 2,
             (None, _, Some(_)) => {
@@ -287,27 +374,115 @@ struct Compiler<'a> {
     ids: BTreeSet<String>,
     groups: BTreeSet<String>,
 }
+fn feature_id(node: &DeclarationNode, scope: &[String], key: &str) -> Result<String, CompileError> {
+    let id = name(node)
+        .map_err(|e| attach(e, node, key))?
+        .map(str::to_owned)
+        .unwrap_or_else(|| {
+            let anchor = json!([
+                scope,
+                node.node_type,
+                node.props.get("purpose"),
+                node.source_key
+            ])
+            .to_string();
+            format!("feature/{}", hash(&anchor))
+        });
+    Ok(id)
+}
+
 impl Compiler<'_> {
-    fn walk(
+    fn children(
         &mut self,
         node: &DeclarationNode,
-        parent: [i64; 2],
+        box_layout: &BoxLayout,
         transform: Transform,
         scope: &[String],
     ) -> Result<(), CompileError> {
-        let id = name(node)
-            .map_err(|e| attach(e, node, self.key))?
-            .map(str::to_owned)
-            .unwrap_or_else(|| {
-                let anchor = json!([
-                    scope,
-                    node.node_type,
-                    node.props.get("purpose"),
-                    node.source_key
-                ])
-                .to_string();
-                format!("feature/{}", hash(&anchor))
-            });
+        let flex = flex(&node.props["style"], true)?;
+        let mut sizes = Vec::new();
+        let mut used = 0_i128;
+        let mut has_flow_child = false;
+        if let Some(flex) = &flex {
+            for child in &node.children {
+                let id = feature_id(child, scope, self.key)?;
+                let measure = || -> Result<Option<[i64; 2]>, CompileError> {
+                    let style = child
+                        .props
+                        .get("style")
+                        .ok_or_else(|| invalid("style is required"))?;
+                    if style.get("position").and_then(Value::as_str) == Some("absolute") {
+                        return Ok(None);
+                    }
+                    let size = [length(style, "width")?, length(style, "height")?];
+                    if size.iter().any(|n| *n <= 0) {
+                        return Err(invalid(
+                            "width and height must be positive physical lengths",
+                        ));
+                    }
+                    if size[1 - flex.axis] > box_layout.size[1 - flex.axis] {
+                        return Err(invalid(
+                            "fixed flex child exceeds container cross-axis size",
+                        ));
+                    }
+                    Ok(Some(size))
+                };
+                let size =
+                    measure().map_err(|e| attach(e, child, &format!("{}/{id}", self.key)))?;
+                if let Some(size) = size {
+                    if has_flow_child {
+                        used += i128::from(flex.gap);
+                    }
+                    used += i128::from(size[flex.axis]);
+                    has_flow_child = true;
+                }
+                sizes.push(size);
+            }
+            if used > i128::from(box_layout.size[flex.axis]) {
+                return Err(invalid(
+                    "fixed flex children and gaps exceed container main-axis size; children never shrink",
+                ));
+            }
+        }
+        let mut cursor2 = flex.as_ref().map_or(0, |f| {
+            f.justify
+                .offset2(i128::from(box_layout.size[f.axis]) - used)
+        });
+        for (index, child) in node.children.iter().enumerate() {
+            let flow_origin = if let Some(flex) = &flex {
+                sizes[index].map(|size| {
+                    let mut origin = [0; 2];
+                    origin[flex.axis] = cursor2;
+                    origin[1 - flex.axis] = flex.align.offset2(
+                        i128::from(box_layout.size[1 - flex.axis])
+                            - i128::from(size[1 - flex.axis]),
+                    );
+                    cursor2 += 2 * (i128::from(size[flex.axis]) + i128::from(flex.gap));
+                    origin
+                })
+            } else {
+                None
+            };
+            self.walk(
+                child,
+                ParentBox {
+                    size: box_layout.size,
+                    flow_origin,
+                },
+                transform,
+                scope,
+            )?;
+        }
+        Ok(())
+    }
+    fn walk(
+        &mut self,
+        node: &DeclarationNode,
+        parent: ParentBox,
+        transform: Transform,
+        scope: &[String],
+    ) -> Result<(), CompileError> {
+        let id = feature_id(node, scope, self.key)?;
         let entity = format!("{}/{}", self.key, id);
         self.walk_inner(node, parent, transform, scope, &id)
             .map_err(|e| attach(e, node, &entity))
@@ -315,7 +490,7 @@ impl Compiler<'_> {
     fn walk_inner(
         &mut self,
         node: &DeclarationNode,
-        parent: [i64; 2],
+        parent: ParentBox,
         transform: Transform,
         scope: &[String],
         id: &str,
@@ -358,9 +533,7 @@ impl Compiler<'_> {
                     "duplicate group identity; use distinct names or React keys",
                 ));
             }
-            for child in &node.children {
-                self.walk(child, box_layout.size, transform, &scope)?;
-            }
+            self.children(node, &box_layout, transform, &scope)?;
             return Ok(());
         }
         if !node.children.is_empty() {
@@ -560,9 +733,7 @@ pub fn compile_layout(input: FootprintDeclarations) -> Result<PhysicalFootprint,
             ids: BTreeSet::new(),
             groups: BTreeSet::new(),
         };
-        for node in &root.children {
-            compiler.walk(node, root_box.size, root_box.transform, &[])?;
-        }
+        compiler.children(root, &root_box, root_box.transform, &[])?;
         let bounds: Bounds = physical::bounds(&compiler.features)?;
         let result = PhysicalFootprint {
             schema_version: physical::FOOTPRINT_VERSION,
@@ -697,5 +868,82 @@ mod tests {
         assert_eq!(ir.features[0].id, after.features[1].id);
         assert_eq!(ir.features[1].id, after.features[0].id);
         assert_ne!(ir.features[1].at, after.features[0].at);
+    }
+    fn flex_declaration() -> Value {
+        json!({"protocolVersion":1,"kind":"footprint-declarations","root":{
+            "type":"fp-footprint","props":{"name":"flex-direct","style":{
+                "display":"flex","width":"10nm","height":"10nm",
+                "justifyContent":"center","alignItems":"center"
+            }},"children":[{"type":"fp-pad","props":{
+                "name":"P","style":{"width":"3nm","height":"3nm"},"layers":["front-copper"]
+            }}]
+        }})
+    }
+    #[test]
+    fn flex_protocol_preserves_exact_half_nm_origins_and_rejects_final_half_nm_centers() {
+        let mut v = flex_declaration();
+        let ir = compile(v.clone()).unwrap();
+        assert_eq!(ir.features[0].at, [5, 5]);
+        assert_eq!(ir.bounds.min2, [7, 7]);
+        assert_eq!(ir.bounds.max2, [13, 13]);
+        v["root"]["props"]["style"]["justifyContent"] = json!("flex-start");
+        let error = compile(v).unwrap_err();
+        assert_eq!(error.diagnostic.entity.as_deref(), Some("flex-direct/P"));
+        assert!(error.diagnostic.message.contains("half-nanometre"));
+    }
+    #[test]
+    fn flex_direct_input_rejects_unsupported_styles_and_overflow() {
+        for (property, value, message) in [
+            ("gap", json!("-1nm"), "negative"),
+            (
+                "justifyContent",
+                json!("space-between"),
+                "distributed spacing",
+            ),
+            ("flexDirection", json!("row-reverse"), "row or column"),
+            ("flexWrap", json!("wrap"), "unsupported style"),
+        ] {
+            let mut v = flex_declaration();
+            v["root"]["props"]["style"][property] = value;
+            assert!(compile(v).unwrap_err().diagnostic.message.contains(message));
+        }
+        // Each individual box is a valid exact JSON length; their sum is wider
+        // than the container. Aggregation must not wrap or shrink the children.
+        let mut v = flex_declaration();
+        v["root"]["props"]["style"]["width"] = json!("9007199254740991nm");
+        v["root"]["children"][0]["props"]["style"]["width"] = json!("9007199254740990nm");
+        let mut other = v["root"]["children"][0].clone();
+        other["props"]["name"] = json!("Q");
+        v["root"]["children"].as_array_mut().unwrap().push(other);
+        assert!(
+            compile(v)
+                .unwrap_err()
+                .diagnostic
+                .message
+                .contains("main-axis size")
+        );
+    }
+    #[test]
+    fn flex_empty_flow_and_interleaved_absolute_children_do_not_consume_gaps() {
+        let mut v = flex_declaration();
+        v["root"]["props"]["style"] = json!({
+            "display":"flex","width":"10nm","height":"10nm","gap":"2nm"
+        });
+        v["root"]["children"][0]["props"]["style"] = json!({"width":"2nm","height":"2nm"});
+        let mut other = v["root"]["children"][0].clone();
+        other["props"]["name"] = json!("Q");
+        let absolute = json!({"type":"fp-graphic","props":{
+            "name":"body","purpose":"fabrication","layers":["front-fabrication"],
+            "style":{"position":"absolute","width":"20nm","height":"20nm","left":"-10nm","top":"-10nm"}
+        }});
+        v["root"]["children"]
+            .as_array_mut()
+            .unwrap()
+            .extend([absolute.clone(), other]);
+        let ir = compile(v.clone()).unwrap();
+        assert_eq!(ir.features[0].at, [1, 1]);
+        assert_eq!(ir.features[2].at, [5, 1]);
+        v["root"]["children"] = json!([absolute]);
+        assert_eq!(compile(v).unwrap().features[0].at, [0, 0]);
     }
 }

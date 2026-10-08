@@ -12,6 +12,11 @@ export type FootprintTransform = Readonly<{
 /** Fixed boxes only. Unsupported CSS is diagnosed by Rust, never ignored. */
 export type FootprintStyle = Readonly<{
   position?: 'absolute';
+  display?: 'flex';
+  flexDirection?: 'row' | 'column';
+  gap?: PhysicalLength;
+  justifyContent?: 'flex-start' | 'center' | 'flex-end';
+  alignItems?: 'flex-start' | 'center' | 'flex-end';
   width: PhysicalLength;
   height: PhysicalLength;
   left?: PhysicalLength;

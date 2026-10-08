@@ -92,10 +92,10 @@ Acceptance: an illustrative 0402 footprint produces the same canonical geometry 
 
 ### 4. Restricted Flexbox
 
-- [ ] Implement row/column layout with fixed physical child dimensions and gaps.
-- [ ] Specify container sizing and alignment when free space is available.
-- [ ] Specify deterministic allocation and rounding for distributed spacing, if supported.
-- [ ] Prove that layout wrappers and visual body graphics do not accidentally change pad pitch.
+- [x] Implement row/column layout with fixed physical child dimensions and gaps.
+- [x] Specify container sizing and alignment when free space is available.
+- [x] Document exact centered alignment; defer distributed spacing without introducing rounding.
+- [x] Prove that layout wrappers and visual body graphics do not accidentally change pad pitch.
 
 Acceptance: a two-pad passive and an SOIC-style pad row compile to analytically verified positions and pitches. Reordering unrelated graphics does not change pad IDs. Layout results are independent of browser engines and host fonts.
 

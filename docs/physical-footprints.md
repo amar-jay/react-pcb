@@ -51,7 +51,7 @@ Existing `defineFootprint` calls remain supported. They retain their original ge
 
 TypeScript callers can use `migrateFootprint(legacy, 'mm', {'old-top': 'front-copper'})`. The CLI exposes the same adapter as `pcbir migrate-footprint`, accepting `{footprint, units, layerRoles}`. Every old board-layer target requires a role mapping; the all-copper selector carries its meaning directly.
 
-These checks establish deterministic geometry and reference semantics. Land-pattern verification, manufacturing profiles, mask/paste offsets, general shape intersection checks and CSS layout are subsequent work.
+These checks establish deterministic geometry and reference semantics. Land-pattern verification, manufacturing profiles, mask/paste offsets, general shape intersection checks and broader CSS layout are subsequent work.
 
 ## SVG projection and inspection
 
@@ -109,9 +109,9 @@ All declarations share one `FootprintStyle` model:
 | Property | Contract |
 | --- | --- |
 | `width`, `height` | Required positive physical-unit strings on roots, groups, and features. |
-| `position` | Required as `'absolute'` on children; optional on the root. No flow layout. |
-| `left`, `right` | Exactly one horizontal offset per child. `right` computes `parent.width - right - width`. |
-| `top`, `bottom` | Exactly one vertical offset per child. `bottom` computes `parent.height - bottom - height`. |
+| `position` | Required as `'absolute'` on children of absolute-layout containers; omit for flow children of flex containers. Optional on the root. |
+| `left`, `right` | Exactly one horizontal offset per absolute child. `right` computes `parent.width - right - width`. |
+| `top`, `bottom` | Exactly one vertical offset per absolute child. `bottom` computes `parent.height - bottom - height`. |
 | Root `left`, `top` | Optional translation of the root's top-left corner from footprint origin; default zero. Root `right`/`bottom` are rejected. |
 | `borderRadius` | Required physical length for `shape="rounded-rect"`; forbidden on other shapes and containers. Existing radius validation applies. |
 | `transform` | Typed object with optional `translate: [x, y]`, `rotate: 0 \| 90 \| 180 \| 270`, `reflectX: boolean`, `reflectY: boolean`. CSS transform strings are rejected. |
@@ -122,7 +122,7 @@ Transforms reflect local axes around the box center, rotate clockwise around tha
 
 Lengths reuse the checked Rust parser (`nm`, `um`, `mm`, `mil`, `in`), without browser layout, floats, implicit units, or rounding. Layout uses doubled nanometres internally to preserve exact box centers during nested transforms. Resolved feature centers must be whole nanometres and fit the canonical exact integer range; half-nanometre centers are diagnosed rather than quantized. Odd feature dimensions remain supported when the composed transform produces an integer center. Bounds still preserve half-nanometre edges. Overflows and invalid canonical geometry are rejected before output.
 
-Unsupported declarations, props, styles, transforms, nonphysical units, percentages, automatic/intrinsic sizing, Flexbox, Grid, and overdetermined or missing offsets produce actionable errors. Unknown properties are never treated as cosmetic CSS. Undefined optional TypeScript props are omitted during serialization; functions, symbols, bigints, and non-finite numbers are rejected by the frontend snapshot.
+Unsupported declarations, props, styles, transforms, nonphysical units, percentages, automatic/intrinsic sizing, unsupported Flexbox properties, Grid, and overdetermined or missing offsets produce actionable errors. Unknown properties are never treated as cosmetic CSS. Undefined optional TypeScript props are omitted during serialization; functions, symbols, bigints, and non-finite numbers are rejected by the frontend snapshot.
 
 ### Feature meaning and identity
 
@@ -158,3 +158,80 @@ New explicit declarations, JSX compilations and migration of numeric legacy geom
 [USB4105 source and coordinate notes](footprints/USB4105.md) document the GCT B4 land pattern, official KiCad cross-check, merged contact lands, mounting slots, and locating holes. Its authored footprint is integrated into the USB4105-GF-A component and `examples/basic.tsx`; the inspection page includes its layer-separated SVG.
 
 The MCU now uses the authored [LQFP48 land pattern](footprints/LQFP48.md), with all 48 physical pads following ST DS13560 Rev 6 Figure 44. Its logical pin definition remains explicitly partial. All footprints in `examples/basic.tsx` resolve to physical geometry; `bun run footprints:inspect` also includes the LQFP48 SVG.
+
+
+## Restricted Flexbox (Phase four)
+
+`Footprint` and `FootprintGroup` accept `display: 'flex'` with fixed physical
+`width` and `height`. The same `FootprintStyle` type is used throughout; Rust
+rejects container properties on pads, holes, and graphics.
+
+```tsx
+<Footprint name="example:flex-passive" style={{
+  display: 'flex', width: '1.6mm', height: '0.7mm',
+  left: '-0.8mm', top: '-0.35mm', gap: '0.4mm',
+}}>
+  <Pad name="1" layers={['front-copper']}
+    style={{width: '0.6mm', height: '0.7mm'}} />
+  <Pad name="2" layers={['front-copper']}
+    style={{width: '0.6mm', height: '0.7mm'}} />
+</Footprint>
+```
+
+This produces centers at `[-500000, 0]` and `[500000, 0]` nm, identical to
+explicit-coordinate authoring. `examples/footprints/flex.tsx` also includes a
+four-pad SOIC-style column with independently tested 1.27 mm pitch. Both fixtures
+appear in `bun run footprints:inspect`; their land dimensions are illustrative.
+
+| Property | Contract |
+| --- | --- |
+| `display` | Only `'flex'`; supported on roots and groups. Omission retains absolute child layout. |
+| `flexDirection` | `'row'` (default, +x) or `'column'` (+y). |
+| `gap` | One non-negative physical length between adjacent flow children; default zero. No leading/trailing gap. |
+| `justifyContent` | `'flex-start'` (default), `'center'`, or `'flex-end'` along the main axis. |
+| `alignItems` | `'flex-start'` (default), `'center'`, or `'flex-end'` along the cross axis. No stretching. |
+
+Flex-only properties require `display: 'flex'`. Children without `position` are
+flow items and must omit all four offsets. Children with `position: 'absolute'`
+retain the existing offset rules and consume no flow space or gaps. Absolute
+children can extend outside containers. A flow child may itself be a flex group;
+its fixed outer box participates in its parent's layout, and its contents resolve
+independently. Groups without `display` still require absolute-positioned children.
+
+Flow order is declaration order. Main-axis occupied length is the sum of child
+sizes plus `(flowChildCount - 1) * gap` for a nonempty flow. Remaining space is
+placed after, equally before/after, or before the sequence for start, center, or
+end alignment. Cross-axis alignment applies independently to each child. Empty
+flow is valid; a footprint still needs at least one physical feature. Flow boxes
+that exceed the container on either axis fail explicitly; they never shrink,
+wrap, or clip. These size checks use untransformed boxes, so subsequent transforms
+may put geometry outside the container as in absolute layout.
+
+Layout measures fixed boxes before applying each child's transforms. Ancestor
+transforms then compose using the existing reflection/rotation/translation rules.
+Paint, strokes, drills, and feature bounds do not change box sizes or pad pitch.
+A documentation graphic intended as an overlay should use absolute positioning;
+a graphic deliberately authored as a flow item consumes its fixed box size.
+
+Arithmetic stays in integer/doubled nanometres. Center alignment can produce an
+exact half-nanometre box origin; it is retained without rounding. Final physical
+feature centers must remain whole nanometres and satisfy the existing bounds and
+exact-JSON-number limits. For example, a centered 3 nm pad in a 10 nm box has a
+valid center at 5 nm, while the same pad aligned at the start has an unsupported
+half-nanometre center. Nested transforms may also determine whether centers are
+representable.
+
+Distributed spacing (`space-between`, `space-around`, `space-evenly`) is deferred;
+there is no remainder allocation or rounding policy in this phase. Wrapping,
+reverse directions, grow/shrink, `flexBasis`, `alignSelf`, `order`, margins,
+padding, stretch, intrinsic/automatic sizes, and separate row/column gaps are
+unsupported and diagnosed. No browser layout engine or new dependency is used.
+
+Feature identity remains independent of style, position, and sibling index.
+Reordering flow pads changes their positions but preserves their IDs; reordering
+absolute graphics leaves both pad positions and identities unchanged. Unnamed,
+unkeyed wrappers do not change feature identity. Flex styles and containers
+compile away; physical schema version two, board schema version two, and layout
+protocol version one remain unchanged. Existing absolute declaration envelopes
+remain valid. New flex declarations require a compiler with Phase four support;
+older compilers reject the new properties.

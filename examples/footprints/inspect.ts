@@ -1,4 +1,5 @@
 import React from 'react';
+import {Flex0402, FlexSoicRow} from './flex.tsx';
 import {Positioned0402} from './0402.tsx';
 import {USB4105Footprint} from './USB4105.tsx';
 import {LQFP48Footprint} from './LQFP48.tsx';
@@ -35,6 +36,18 @@ await Bun.write(`${output}/usb4105.json`, JSON.stringify(usb, null, 2) + '\n');
 await Bun.write(`${output}/usb4105.svg`, usbSvg);
 previews.push(`<section><h2>USB4105 (GCT B4 land pattern)</h2><div class="layers"></div>${usbSvg}</section>`);
 console.log(`${output}/usb4105.svg`);
+
+for (const [name, element] of [
+  ['flex-0402', React.createElement(Flex0402)],
+  ['flex-soic-row', React.createElement(FlexSoicRow)],
+] as const) {
+  const ir = await compileFootprint(element, {cwd: import.meta.dir + '/../..'});
+  const svg = await footprintSvg(ir, {cwd: import.meta.dir + '/../..'});
+  await Bun.write(`${output}/${name}.json`, JSON.stringify(ir, null, 2) + '\n');
+  await Bun.write(`${output}/${name}.svg`, svg);
+  previews.push(`<section><h2>${name} (illustrative)</h2><div class="layers"></div>${svg}</section>`);
+  console.log(`${output}/${name}.svg`);
+}
 
 const positioned = await compileFootprint(React.createElement(Positioned0402), {cwd: import.meta.dir + '/../..'});
 await Bun.write(`${output}/positioned-0402.json`, JSON.stringify(positioned, null, 2) + '\n');
