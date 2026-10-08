@@ -1,7 +1,8 @@
+import type {CopperLayerInput, PasteLayerInput, SolderMaskLayerInput} from '../layers/index.ts';
 import {assertFinite, assertName, assertPositive} from '../validation/index.ts';
 
-/** A concrete board layer ID, or an explicit selector for through-hole copper. */
-export type PadLayer = string | Readonly<{kind: 'all-copper'}>;
+/** A board layer object, its ID, or an explicit selector for through-hole copper. */
+export type PadLayer = string | Readonly<{kind: 'all-copper'}> | CopperLayerInput | SolderMaskLayerInput | PasteLayerInput;
 export type FootprintPad = Readonly<{
   id: string;
   at: readonly [number, number];
@@ -35,17 +36,41 @@ export function defineFootprint(definition: FootprintDefinition): FootprintDefin
     pad.size.forEach(value => assertPositive(value, 'pad size'));
     if (pad.rotation !== undefined) assertFinite(pad.rotation, 'pad rotation');
     if (!pad.layers.length) throw new Error('a pad must target at least one layer');
-    const layerKeys = pad.layers.map(layer => {
-      if (typeof layer === 'string') { assertName(layer, 'pad layer ID', true); return `id:${layer}`; }
-      if (layer.kind !== 'all-copper') throw new Error('unsupported pad layer selector');
-      return 'selector:all-copper';
+    const seen = new Set<unknown>();
+    const layers = pad.layers.map(layer => {
+      const bound = bindPadLayer(layer);
+      const key = typeof layer === 'string' ? layer : layer.kind === 'all-copper' ? layer.kind : layer;
+      if (seen.has(key)) throw new Error('pad layers must be unique');
+      seen.add(key);
+      return bound;
     });
-    if (new Set(layerKeys).size !== layerKeys.length) throw new Error('pad layers must be unique');
     if (pad.drill) assertPositive(pad.drill.diameter, 'drill diameter');
     return Object.freeze({...pad, at: Object.freeze([...pad.at]) as readonly [number, number],
       size: Object.freeze([...pad.size]) as readonly [number, number],
-      layers: Object.freeze(pad.layers.map(layer => typeof layer === 'string' ? layer : Object.freeze({...layer}))),
+      layers: Object.freeze(layers),
       ...(pad.drill ? {drill: Object.freeze({...pad.drill})} : {})});
   });
   return Object.freeze({key: definition.key, pads: Object.freeze(pads)});
+}
+
+function bindPadLayer(layer: PadLayer): PadLayer {
+  if (typeof layer === 'string') {
+    assertName(layer, 'pad layer ID', true);
+    return layer;
+  }
+  if (layer.kind === 'all-copper') return Object.freeze({kind: 'all-copper'});
+  const source = layer;
+  const {id: _id, ...rest} = source;
+  return Object.freeze({
+    ...rest,
+    get id() {
+      return source.id;
+    },
+    toJSON(): string {
+      if (source.id === undefined) {
+        throw new Error(`pad layer ${source.kind} has no ID; add it to the board layer set before compiling`);
+      }
+      return source.id;
+    },
+  });
 }

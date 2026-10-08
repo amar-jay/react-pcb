@@ -1,6 +1,6 @@
 import {expect, test} from 'bun:test';
 
-import {copperLayer, dielectricLayer, solderMaskLayer, defineLayerSet, defineStackup, pasteLayer} from '../layers/index.ts';
+import {copperLayer, dielectricLayer, mechanicalLayer, silkscreenLayer, solderMaskLayer, defineLayerSet, defineStackup, pasteLayer} from '../layers/index.ts';
 import {net, pad, part, point, rect} from '../model/index.ts';
 
 test('rejects invalid geometry before rendering', () => {
@@ -25,6 +25,32 @@ test('rejects non-finite and negative layer properties', () => {
   );
 });
 
+
+test('infers technical layer IDs from side and purpose', () => {
+  const stackup = defineStackup([copperLayer({id: 'copper/1', thickness: 0.035})]);
+  const mask = solderMaskLayer({side: 'front', expansion: 0.05});
+  const paste = pasteLayer({side: 'back'});
+  const silk = silkscreenLayer({side: 'front', color: 'white'});
+  const assembly = mechanicalLayer({purpose: 'assembly', side: 'front'});
+  const fabrication = mechanicalLayer({purpose: 'fabrication'});
+  const layers = defineLayerSet({stackup, technical: [mask, paste, silk, assembly, fabrication]});
+  expect(layers.technical.map(layer => layer.id)).toEqual([
+    'solder-mask/front',
+    'paste/back',
+    'silkscreen/front',
+    'mechanical/assembly/front',
+    'mechanical/fabrication',
+  ]);
+  expect(mask.id).toBe('solder-mask/front');
+  expect(() => defineLayerSet({
+    stackup,
+    technical: [mechanicalLayer({purpose: 'assembly'}), mechanicalLayer({purpose: 'assembly', side: 'front'})],
+  })).not.toThrow();
+  expect(() => defineLayerSet({
+    stackup,
+    technical: [solderMaskLayer({side: 'front'}), solderMaskLayer({side: 'front'})],
+  })).toThrow('duplicate layer ID solder-mask/front: inferred from its solder-mask properties');
+});
 
 test('rejects duplicate layer IDs even across different kinds', () => {
   const stackup = defineStackup([copperLayer({id: 'copper/1', thickness: 0.035})]);

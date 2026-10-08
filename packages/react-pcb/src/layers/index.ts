@@ -80,27 +80,48 @@ export function dielectricLayer(options: DielectricLayerOptions): DielectricLaye
   return {kind: 'dielectric', ...rest, ...(id === undefined ? {} : {id})};
 }
 
-export function solderMaskLayer(options: Readonly<{id: string; side: BoardSide; expansion?: number}>): SolderMaskLayer {
+export type SolderMaskLayerInput = Omit<SolderMaskLayer, 'id'> & Readonly<{id?: string}>;
+export type PasteLayerInput = Omit<PasteLayer, 'id'> & Readonly<{id?: string}>;
+export type SilkscreenLayerInput = Omit<SilkscreenLayer, 'id'> & Readonly<{id?: string}>;
+export type MechanicalLayerInput = Omit<MechanicalLayer, 'id'> & Readonly<{id?: string}>;
+export type TechnicalLayerInput = SolderMaskLayerInput | PasteLayerInput | SilkscreenLayerInput | MechanicalLayerInput;
+
+export function solderMaskLayer(options: Readonly<{id: string; side: BoardSide; expansion?: number}>): SolderMaskLayer;
+export function solderMaskLayer(options: Readonly<{id?: string; side: BoardSide; expansion?: number}>): SolderMaskLayerInput;
+export function solderMaskLayer(options: Readonly<{id?: string; side: BoardSide; expansion?: number}>): SolderMaskLayerInput {
   if (options.expansion !== undefined) assertNonNegative(options.expansion, 'solder mask expansion');
-  assertName(options.id, 'layer ID', true);
-  return Object.freeze({kind: 'solder-mask', id: options.id, side: options.side, expansion: options.expansion});
+  if (options.id !== undefined) assertName(options.id, 'layer ID', true);
+  return {kind: 'solder-mask', side: options.side, expansion: options.expansion, ...(options.id === undefined ? {} : {id: options.id})};
 }
 
-export function pasteLayer(options: Readonly<{id: string; side: BoardSide}>): PasteLayer {
-  assertName(options.id, 'layer ID', true);
-  return Object.freeze({kind: 'paste', id: options.id, side: options.side});
+export function pasteLayer(options: Readonly<{id: string; side: BoardSide}>): PasteLayer;
+export function pasteLayer(options: Readonly<{id?: string; side: BoardSide}>): PasteLayerInput;
+export function pasteLayer(options: Readonly<{id?: string; side: BoardSide}>): PasteLayerInput {
+  if (options.id !== undefined) assertName(options.id, 'layer ID', true);
+  return {kind: 'paste', side: options.side, ...(options.id === undefined ? {} : {id: options.id})};
 }
 
-export function silkscreenLayer(options: Readonly<{id: string; side: BoardSide; color?: string}>): SilkscreenLayer {
-  assertName(options.id, 'layer ID', true);
-  return Object.freeze({kind: 'silkscreen', id: options.id, side: options.side, color: options.color});
+export function silkscreenLayer(options: Readonly<{id: string; side: BoardSide; color?: string}>): SilkscreenLayer;
+export function silkscreenLayer(options: Readonly<{id?: string; side: BoardSide; color?: string}>): SilkscreenLayerInput;
+export function silkscreenLayer(options: Readonly<{id?: string; side: BoardSide; color?: string}>): SilkscreenLayerInput {
+  if (options.id !== undefined) assertName(options.id, 'layer ID', true);
+  return {kind: 'silkscreen', side: options.side, color: options.color, ...(options.id === undefined ? {} : {id: options.id})};
 }
 
+export function mechanicalLayer(options: Readonly<{id: string; purpose: MechanicalLayer['purpose']; side?: BoardSide}>): MechanicalLayer;
+export function mechanicalLayer(options: Readonly<{id?: string; purpose: MechanicalLayer['purpose']; side?: BoardSide}>): MechanicalLayerInput;
 export function mechanicalLayer(
-  options: Readonly<{id: string; purpose: MechanicalLayer['purpose']; side?: BoardSide}>,
-): MechanicalLayer {
-  assertName(options.id, 'layer ID', true);
-  return Object.freeze({kind: 'mechanical', id: options.id, purpose: options.purpose, side: options.side});
+  options: Readonly<{id?: string; purpose: MechanicalLayer['purpose']; side?: BoardSide}>,
+): MechanicalLayerInput {
+  if (options.id !== undefined) assertName(options.id, 'layer ID', true);
+  return {kind: 'mechanical', purpose: options.purpose, side: options.side, ...(options.id === undefined ? {} : {id: options.id})};
+}
+
+function inferredTechnicalId(layer: TechnicalLayerInput): string {
+  if (layer.kind === 'mechanical') {
+    return layer.side === undefined ? `mechanical/${layer.purpose}` : `mechanical/${layer.purpose}/${layer.side}`;
+  }
+  return `${layer.kind}/${layer.side}`;
 }
 
 export function defineStackup(entries: readonly StackupLayerInput[]): Stackup {
@@ -131,14 +152,30 @@ export function defineStackup(entries: readonly StackupLayerInput[]): Stackup {
   return Object.freeze({kind: 'stackup', entries: Object.freeze(layers)});
 }
 
-export function defineLayerSet(options: Readonly<{stackup: Stackup; technical?: readonly TechnicalLayer[]}>): LayerSet {
+export function defineLayerSet(options: Readonly<{stackup: Stackup; technical?: readonly TechnicalLayerInput[]}>): LayerSet {
   const technical = options.technical ?? [];
-  const ids = new Set<string>();
-  for (const layer of [...options.stackup.entries, ...technical]) {
-    assertName(layer.id, 'layer ID', true);
-    if (ids.has(layer.id)) throw new Error(`duplicate layer ID ${layer.id}`);
-    ids.add(layer.id);
+  const ids = new Set(options.stackup.entries.map(layer => layer.id));
+  const identified = technical.map(layer => {
+    const inferred = layer.id === undefined;
+    const id = layer.id ?? inferredTechnicalId(layer);
+    assertName(id, 'layer ID', true);
+    return {layer, id, inferred};
+  });
+  for (const item of identified) {
+    if (ids.has(item.id)) {
+      throw new Error(
+        item.inferred
+          ? `duplicate layer ID ${item.id}: inferred from its ${item.layer.kind} properties. Give this layer an explicit ID.`
+          : `duplicate layer ID ${item.id}`,
+      );
+    }
+    ids.add(item.id);
   }
-  return Object.freeze({kind: 'layer-set', stackup: options.stackup, technical: Object.freeze([...technical])});
+  const layers = identified.map(({layer, id}): TechnicalLayer => {
+    const target = layer as {id?: string};
+    if (target.id === undefined) target.id = id;
+    return Object.freeze(layer) as TechnicalLayer;
+  });
+  return Object.freeze({kind: 'layer-set', stackup: options.stackup, technical: Object.freeze(layers)});
 }
 import {assertName, assertNonNegative, assertPositive} from '../validation/index.ts';

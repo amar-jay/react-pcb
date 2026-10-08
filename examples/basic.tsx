@@ -31,25 +31,30 @@ import {USB4105GFA} from './parts/USB4105GFA.ts';
 const frontCopper = copperLayer({thickness: 0.035, usage: 'signal'});
 const groundPlane = copperLayer({thickness: 0.018, usage: 'plane'});
 const powerPlane = copperLayer({thickness: 0.018, usage: 'plane'});
-const backCopper = copperLayer({id: 'copper/5', thickness: 0.035, usage: 'signal'});
+const backCopper = copperLayer({thickness: 0.035, usage: 'signal'});
+
+const frontMask = solderMaskLayer({side: 'front', expansion: 0.05});
+const backMask = solderMaskLayer({side: 'back', expansion: 0.05});
+const frontPaste = pasteLayer({side: 'front'});
+const backPaste = pasteLayer({side: 'back'});
 
 const boardLayers = defineLayerSet({
   stackup: defineStackup([
     frontCopper,
-    dielectricLayer({id: 'dielectric/1', material: 'FR-4', thickness: 0.18, epsilonR: 4.2, lossTangent: 0.02}),
+    dielectricLayer({material: 'FR-4', thickness: 0.18, epsilonR: 4.2, lossTangent: 0.02}),
     groundPlane,
-    dielectricLayer({id: 'dielectric/2', material: 'FR-4', thickness: 1.0, epsilonR: 4.2, lossTangent: 0.02}),
+    dielectricLayer({material: 'FR-4', thickness: 1.0, epsilonR: 4.2, lossTangent: 0.02}),
     powerPlane,
-    dielectricLayer({id: 'dielectric/3', material: 'FR-4', thickness: 0.18, epsilonR: 4.2, lossTangent: 0.02}),
+    dielectricLayer({material: 'FR-4', thickness: 0.18, epsilonR: 4.2, lossTangent: 0.02}),
     backCopper,
   ]),
   technical: [
-    solderMaskLayer({id: 'solder-mask/front', side: 'front', expansion: 0.05}),
-    solderMaskLayer({id: 'solder-mask/back', side: 'back', expansion: 0.05}),
-    pasteLayer({id: 'paste/front', side: 'front'}),
-    pasteLayer({id: 'paste/back', side: 'back'}),
-    silkscreenLayer({id: 'silkscreen/front', side: 'front', color: 'white'}),
-    silkscreenLayer({id: 'silkscreen/back', side: 'back', color: 'white'}),
+    frontMask,
+    backMask,
+    frontPaste,
+    backPaste,
+    silkscreenLayer({side: 'front', color: 'white'}),
+    silkscreenLayer({side: 'back', color: 'white'}),
     mechanicalLayer({id: 'mechanical/assembly/front', purpose: 'assembly', side: 'front'}),
   ],
 });
@@ -59,9 +64,9 @@ const capacitorFootprint = defineFootprint({
   key: 'example:0402',
   pads: [
     {id: '1', at: [-0.5, 0], shape: 'rect', size: [0.5, 0.6],
-      layers: ['copper/1', 'solder-mask/front', 'paste/front']},
+      layers: [frontCopper, frontMask, frontPaste]},
     {id: '2', at: [0.5, 0], shape: 'rect', size: [0.5, 0.6],
-      layers: ['copper/1', 'solder-mask/front', 'paste/front']},
+      layers: [frontCopper, frontMask, frontPaste]},
   ],
 });
 

@@ -1,6 +1,6 @@
 import {expect, test} from 'bun:test';
 import React from 'react';
-import {compile, defineFootprint, definePart, part, net, Board, rect, PcbCompileError} from '../index.ts';
+import {compile, copperLayer, defineFootprint, defineLayerSet, definePart, defineStackup, part, net, Board, pasteLayer, rect, solderMaskLayer, PcbCompileError} from '../index.ts';
 import {testLayers} from './fixtures.ts';
 
 const footprint = defineFootprint({key: 'TEST-SMD', pads: [
@@ -39,6 +39,26 @@ test('rejects a binding to a nonexistent physical pad through the compiler bridg
     expect(error).toBeInstanceOf(PcbCompileError);
     expect((error as PcbCompileError).diagnostic.code).toBe('PCBIR026');
   }
+});
+
+test('accepts layer instances and serializes their assigned IDs', () => {
+  const copper = copperLayer({thickness: 0.035});
+  const mask = solderMaskLayer({side: 'front'});
+  const paste = pasteLayer({side: 'front'});
+  const defined = defineFootprint({key: 'LAYER-REFS', pads: [
+    {id: '1', at: [0, 0], shape: 'rect', size: [1, 1], layers: [copper, mask, paste, {kind: 'all-copper'}]},
+  ]});
+  defineLayerSet({
+    stackup: defineStackup([copper]),
+    technical: [mask, paste],
+  });
+  expect(JSON.parse(JSON.stringify(defined.pads[0]?.layers))).toEqual([
+    'copper/1', 'solder-mask/front', 'paste/front', {kind: 'all-copper'},
+  ]);
+  expect(defined.pads[0]?.layers[1]).toMatchObject({kind: 'solder-mask', side: 'front'});
+  expect(() => defineFootprint({key: 'DUP', pads: [
+    {id: '1', at: [0, 0], shape: 'rect', size: [1, 1], layers: [copper, copper]},
+  ]})).toThrow('pad layers must be unique');
 });
 
 test('validates and snapshots footprint geometry', () => {
