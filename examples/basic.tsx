@@ -126,9 +126,6 @@ export default function MyBoard() {
         description: 'Four-layer USB controller board',
       }}
     >
-      <Module name="usb-controllers">
-      </Module>
-
       <Module name="usb-controller">
         <UsbController ground={ground} supply={supply} vbus={vbus} />
       </Module>
@@ -142,8 +139,8 @@ export default function MyBoard() {
 }
 
 try {
-  const result = await compile(<MyBoard />, {cwd: import.meta.dir + '/..', hideWarnings: true});
-  console.log(JSON.stringify(result, null, 2));
+  const result = await compile(<MyBoard />, {cwd: import.meta.dir + '/..'});
+  // console.log(JSON.stringify(result, null, 2));
 } catch (error) {
   if (error instanceof PcbCompileError) {
     console.error(error.message);

@@ -42,27 +42,26 @@ export type LayerSet = Readonly<{
   technical: readonly TechnicalLayer[];
 }>;
 
-function positive(value: number, label: string) {
-  if (!Number.isFinite(value) || value <= 0) throw new Error(`${label} must be positive`);
-}
-
 export function copperLayer(
   options: Readonly<{thickness: number; usage?: CopperUsage}>,
 ): CopperLayer {
-  positive(options.thickness, 'copper thickness');
+  assertPositive(options.thickness, 'copper thickness');
   return Object.freeze({kind: 'copper', thickness: options.thickness, usage: options.usage ?? 'signal'});
 }
 
 export function dielectricLayer(
   options: Readonly<{material: string; thickness: number; epsilonR: number; lossTangent?: number}>,
 ): DielectricLayer {
-  positive(options.thickness, 'dielectric thickness');
-  positive(options.epsilonR, 'dielectric epsilonR');
-  if (options.lossTangent !== undefined && options.lossTangent < 0) throw new Error('dielectric lossTangent must not be negative');
+  assertPositive(options.thickness, 'dielectric thickness');
+  assertPositive(options.epsilonR, 'dielectric epsilonR');
+  if (options.lossTangent !== undefined) {
+    assertNonNegative(options.lossTangent, 'dielectric lossTangent');
+  }
   return Object.freeze({kind: 'dielectric', ...options});
 }
 
 export function solderMaskLayer(options: Readonly<{side: BoardSide; expansion?: number}>): SolderMaskLayer {
+  if (options.expansion !== undefined) assertNonNegative(options.expansion, 'solder mask expansion');
   return Object.freeze({kind: 'solder-mask', side: options.side, expansion: options.expansion});
 }
 
@@ -96,3 +95,4 @@ export function defineLayerSet(options: Readonly<{stackup: Stackup; technical?: 
   const technical = options.technical ?? [];
   return Object.freeze({kind: 'layer-set', stackup: options.stackup, technical: Object.freeze([...technical])});
 }
+import {assertNonNegative, assertPositive} from '../validation/index.ts';

@@ -126,8 +126,139 @@ fn warns_about_empty_modules() {
 }
 
 #[test]
+fn rejects_exact_duplicate_zones_and_keepouts() {
+    let zone = || {
+        json!({
+            "type": "pcb-zone",
+            "props": {
+                "net": {"kind": "net", "id": "GND", "name": "GND"},
+                "layers": [{"kind": "copper", "thickness": 0.035, "usage": "plane"}],
+                "boundary": "board",
+                "clearance": 0.2
+            },
+            "children": []
+        })
+    };
+    let keepout = || {
+        json!({
+            "type": "pcb-keepout",
+            "props": {
+                "region": {"kind": "rect", "x": 0, "y": 0, "width": 8, "height": 12},
+                "disallow": ["vias", "copper"]
+            },
+            "children": []
+        })
+    };
+
+    let zone_error = compile(transaction(vec![zone(), zone()])).unwrap_err();
+    assert_eq!(zone_error.diagnostic.code, "PCBIR015");
+
+    let keepout_error = compile(transaction(vec![keepout(), keepout()])).unwrap_err();
+    assert_eq!(keepout_error.diagnostic.code, "PCBIR016");
+}
+
+#[test]
+fn rejects_invalid_geometry_stackups_identifiers_and_routes() {
+    let mut invalid_board = transaction(vec![]);
+    invalid_board.declarations.children[0].props["outline"]["width"] = json!(0);
+    assert_eq!(
+        compile(invalid_board).unwrap_err().diagnostic.code,
+        "PCBIR017"
+    );
+
+    let mut invalid_stackup = transaction(vec![]);
+    invalid_stackup.declarations.children[0].props["layers"]["stackup"]["entries"] = json!([
+        {"kind": "copper", "thickness": 0.035, "usage": "signal"},
+        {"kind": "copper", "thickness": 0.035, "usage": "signal"}
+    ]);
+    assert_eq!(
+        compile(invalid_stackup).unwrap_err().diagnostic.code,
+        "PCBIR018"
+    );
+
+    let invalid_part = part("", "TEST", json!({}));
+    assert_eq!(
+        compile(transaction(vec![invalid_part]))
+            .unwrap_err()
+            .diagnostic
+            .code,
+        "PCBIR019"
+    );
+
+    let route = json!({"type": "pcb-route", "props": {
+        "net": {"id": "GND"},
+        "from": {"part": {"id": "U1"}, "name": "1"},
+        "to": {"part": {"id": "U1"}, "name": "1"},
+        "width": -0.1
+    }, "children": []});
+    assert_eq!(
+        compile(transaction(vec![route]))
+            .unwrap_err()
+            .diagnostic
+            .code,
+        "PCBIR020"
+    );
+}
+
+#[test]
+fn validates_constraint_properties_and_normalizes_set_order() {
+    let keepout = |disallow: Value| {
+        json!({
+            "type": "pcb-keepout",
+            "props": {
+                "region": {"kind": "rect", "x": 0, "y": 0, "width": 8, "height": 12},
+                "disallow": disallow
+            },
+            "children": []
+        })
+    };
+    let reordered = compile(transaction(vec![
+        keepout(json!(["vias", "copper"])),
+        keepout(json!(["copper", "vias"])),
+    ]))
+    .unwrap_err();
+    assert_eq!(reordered.diagnostic.code, "PCBIR016");
+
+    let empty = compile(transaction(vec![keepout(json!([]))])).unwrap_err();
+    assert_eq!(empty.diagnostic.code, "PCBIR021");
+
+    let repeated = compile(transaction(vec![keepout(json!(["vias", "vias"]))])).unwrap_err();
+    assert_eq!(repeated.diagnostic.code, "PCBIR021");
+
+    let invalid_zone = json!({
+        "type": "pcb-zone",
+        "props": {
+            "net": {"id": "GND"}, "layers": [], "boundary": "board", "clearance": -1
+        },
+        "children": []
+    });
+    assert_eq!(
+        compile(transaction(vec![invalid_zone]))
+            .unwrap_err()
+            .diagnostic
+            .code,
+        "PCBIR021"
+    );
+}
+
+#[test]
+fn rejects_forged_module_scopes() {
+    let nested = json!({
+        "type": "pcb-module",
+        "props": {"name": "parent", "scope": "parent"},
+        "children": [{
+            "type": "pcb-module",
+            "props": {"name": "child", "scope": "wrong/child"},
+            "children": []
+        }]
+    });
+    let error = compile(transaction(vec![nested])).unwrap_err();
+    assert_eq!(error.diagnostic.code, "PCBIR019");
+}
+
+#[test]
 fn rejects_unknown_and_missing_required_part_pins() {
-    let pins = json!({"VCC": {"pad": "1", "required": true}});
+    let pins = json!({"VCC": {"pad": "1", "electricalType": "passive", "required": true}});
     let unknown = defined_part("U1", json!({"BAD": {"id": "3V3"}}), pins.clone(), "partial");
     assert_eq!(
         compile(transaction(vec![unknown]))
@@ -152,7 +283,10 @@ fn validates_complete_definition_physical_pad_coverage() {
     let part = defined_part(
         "U1",
         json!({}),
-        json!({"A": {"pad": "1"}, "B": {"pad": ["1", "2"]}}),
+        json!({
+            "A": {"pad": "1", "electricalType": "passive"},
+            "B": {"pad": ["1", "2"], "electricalType": "passive"}
+        }),
         "complete",
     );
     assert_eq!(
@@ -165,11 +299,62 @@ fn validates_complete_definition_physical_pad_coverage() {
 }
 
 #[test]
+fn validates_partial_component_pin_schemas() {
+    let duplicate_pads = defined_part(
+        "U1",
+        json!({}),
+        json!({
+            "A": {"pad": "1", "electricalType": "passive"},
+            "B": {"pad": "1", "electricalType": "passive"}
+        }),
+        "partial",
+    );
+    assert_eq!(
+        compile(transaction(vec![duplicate_pads]))
+            .unwrap_err()
+            .diagnostic
+            .code,
+        "PCBIR012"
+    );
+
+    let invalid_type = defined_part(
+        "U1",
+        json!({}),
+        json!({"A": {"pad": "1", "electricalType": "mystery"}}),
+        "partial",
+    );
+    assert_eq!(
+        compile(transaction(vec![invalid_type]))
+            .unwrap_err()
+            .diagnostic
+            .code,
+        "PCBIR022"
+    );
+
+    let invalid_coverage = defined_part(
+        "U1",
+        json!({}),
+        json!({"A": {"pad": "1", "electricalType": "passive"}}),
+        "unknown",
+    );
+    assert_eq!(
+        compile(transaction(vec![invalid_coverage]))
+            .unwrap_err()
+            .diagnostic
+            .code,
+        "PCBIR022"
+    );
+}
+
+#[test]
 fn diagnoses_route_pin_and_net_mismatches() {
     let part = defined_part(
         "U1",
         json!({"A": {"id": "NET-A"}, "B": {"id": "NET-B"}}),
-        json!({"A": {"pad": "1"}, "B": {"pad": "2"}}),
+        json!({
+            "A": {"pad": "1", "electricalType": "passive"},
+            "B": {"pad": "2", "electricalType": "passive"}
+        }),
         "complete",
     );
     let route = |pin: &str| {

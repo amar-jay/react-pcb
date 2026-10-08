@@ -11,7 +11,7 @@ use crate::protocol::{DeclarationNode, DeclarationTransaction, PROTOCOL_VERSION}
 mod parse;
 mod validate;
 
-use parse::{parse_board, parse_part, parse_route, parse_units};
+use parse::{constraint_key, parse_board, parse_part, parse_route, parse_units};
 use validate::{validate_instances, validate_route_endpoint};
 
 #[cfg(test)]
@@ -91,16 +91,19 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
     let mut routes = Vec::new();
     let mut nets = BTreeSet::new();
     let mut modules = BTreeSet::new();
+    let mut constraints = BTreeSet::new();
     let mut diagnostics = Vec::new();
     let mut compiler_diagnostics = Vec::new();
 
     if let Err(error) = compile_nodes(
         &board_node.children,
+        None,
         &mut component_definitions,
         &mut component_instances,
         &mut routes,
         &mut nets,
         &mut modules,
+        &mut constraints,
         &mut diagnostics,
         &mut compiler_diagnostics,
     ) {
@@ -152,11 +155,13 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
 
 fn compile_nodes(
     nodes: &[DeclarationNode],
+    parent_scope: Option<&str>,
     component_definitions: &mut BTreeMap<String, Value>,
     component_instances: &mut Vec<ComponentInstance>,
     routes: &mut Vec<RouteConstraint>,
     nets: &mut BTreeSet<NetId>,
     modules: &mut BTreeSet<String>,
+    constraints: &mut BTreeSet<String>,
     diagnostics: &mut Vec<Diagnostic>,
     compiler_diagnostics: &mut Vec<Diagnostic>,
 ) -> Result<(), CompileError> {
@@ -168,6 +173,34 @@ fn compile_nodes(
                     .get("scope")
                     .and_then(Value::as_str)
                     .ok_or_else(|| CompileError::invalid("module scope must be a string"))?;
+                let name = child
+                    .props
+                    .get("name")
+                    .and_then(Value::as_str)
+                    .ok_or_else(|| CompileError::invalid("module name must be a string"))?;
+                if scope.trim().is_empty() || name.trim().is_empty() {
+                    return Err(CompileError::diagnostic(
+                        Diagnostic::error("PCBIR019", "module name and scope must not be empty")
+                            .with_help("Give the module a non-empty name."),
+                    ));
+                }
+                if name.contains('/') {
+                    return Err(CompileError::diagnostic(
+                        Diagnostic::error("PCBIR019", "module name must not contain '/'")
+                            .with_entity(name)
+                            .with_help("Use nested Module components to create hierarchy."),
+                    ));
+                }
+                let expected_scope = parent_scope
+                    .map(|parent| format!("{parent}/{name}"))
+                    .unwrap_or_else(|| name.to_owned());
+                if scope != expected_scope {
+                    return Err(CompileError::diagnostic(
+                        Diagnostic::error("PCBIR019", "module scope does not match its hierarchy")
+                            .with_entity(scope)
+                            .with_help(format!("Use the derived scope {expected_scope}.")),
+                    ));
+                }
                 if !modules.insert(scope.to_owned()) {
                     return Err(CompileError::diagnostic(
                         Diagnostic::error("PCBIR013", "duplicate module scope")
@@ -186,11 +219,13 @@ fn compile_nodes(
                 }
                 compile_nodes(
                     &child.children,
+                    Some(scope),
                     component_definitions,
                     component_instances,
                     routes,
                     nets,
                     modules,
+                    constraints,
                     diagnostics,
                     compiler_diagnostics,
                 )?;
@@ -232,6 +267,36 @@ fn compile_nodes(
                 let route = parse_route(child)?;
                 nets.insert(route.net.clone());
                 routes.push(route);
+            }
+            "pcb-zone" | "pcb-keepout" => {
+                let key = constraint_key(child)?;
+                if !constraints.insert(key) {
+                    let (code, message, help) = if child.node_type == "pcb-zone" {
+                        (
+                            "PCBIR015",
+                            "duplicate copper zone declaration",
+                            "Remove the repeated zone, or change its net, layers, boundary, or clearance.",
+                        )
+                    } else {
+                        (
+                            "PCBIR016",
+                            "duplicate keepout declaration",
+                            "Remove the repeated keepout, or change its region, restrictions, or exceptions.",
+                        )
+                    };
+                    return Err(CompileError::diagnostic(
+                        Diagnostic::error(code, message)
+                            .with_entity(&child.node_type)
+                            .with_help(help),
+                    ));
+                }
+                diagnostics.push(
+                    Diagnostic::warning(
+                        "PCBIR001",
+                        format!("declaration {} is not compiled yet", child.node_type),
+                    )
+                    .with_entity(&child.node_type),
+                );
             }
             other => diagnostics.push(
                 Diagnostic::warning(

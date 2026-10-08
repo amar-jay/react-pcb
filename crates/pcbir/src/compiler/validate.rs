@@ -37,6 +37,7 @@ pub fn validate_instances(
                 ));
             }
         }
+        validate_pin_definition(&instance.definition, definition, pins)?;
         for (name, pin) in pins {
             if pin.get("required").and_then(Value::as_bool) == Some(true)
                 && !instance.connections.contains_key(name)
@@ -48,20 +49,27 @@ pub fn validate_instances(
                 ));
             }
         }
-        validate_complete_pin_coverage(&instance.definition, definition, pins)?;
     }
     Ok(())
 }
 
-fn validate_complete_pin_coverage(
+fn validate_pin_definition(
     definition_key: &str,
     definition: &Value,
     pins: &serde_json::Map<String, Value>,
 ) -> Result<(), CompileError> {
-    if definition.get("pinoutCoverage").and_then(Value::as_str) != Some("complete") {
-        return Ok(());
+    let coverage = definition.get("pinoutCoverage").and_then(Value::as_str);
+    if !matches!(coverage, Some("complete" | "partial")) {
+        return Err(CompileError::diagnostic(
+            Diagnostic::error(
+                "PCBIR022",
+                "component definition has invalid pinout coverage",
+            )
+            .with_entity(definition_key)
+            .with_help("Set pinoutCoverage to complete or partial."),
+        ));
     }
-    if pins.is_empty() {
+    if coverage == Some("complete") && pins.is_empty() {
         return Err(CompileError::diagnostic(
             Diagnostic::error("PCBIR010", "complete component definition has no pins")
                 .with_entity(definition_key)
@@ -71,6 +79,40 @@ fn validate_complete_pin_coverage(
 
     let mut physical_pads = BTreeSet::new();
     for (name, pin) in pins {
+        let pin = pin.as_object().ok_or_else(|| {
+            CompileError::diagnostic(
+                Diagnostic::error("PCBIR022", format!("pin {name} must be an object"))
+                    .with_entity(definition_key),
+            )
+        })?;
+        if pin
+            .get("required")
+            .is_some_and(|required| !required.is_boolean())
+        {
+            return Err(CompileError::diagnostic(
+                Diagnostic::error("PCBIR022", format!("pin {name} required must be boolean"))
+                    .with_entity(definition_key),
+            ));
+        }
+        let electrical_type = pin.get("electricalType").and_then(Value::as_str);
+        let valid_types = [
+            "power-input",
+            "power-output",
+            "input",
+            "output",
+            "bidirectional",
+            "passive",
+        ];
+        if electrical_type.is_none_or(|kind| !valid_types.contains(&kind)) {
+            return Err(CompileError::diagnostic(
+                Diagnostic::error(
+                    "PCBIR022",
+                    format!("pin {name} has invalid electrical type"),
+                )
+                .with_entity(definition_key)
+                .with_help("Use a supported electricalType value."),
+            ));
+        }
         let pad = pin.get("pad").ok_or_else(|| {
             CompileError::diagnostic(
                 Diagnostic::error("PCBIR011", format!("pin {name} has no physical pad"))
