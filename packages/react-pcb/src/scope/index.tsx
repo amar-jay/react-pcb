@@ -1,12 +1,9 @@
-import React, {createContext, type ReactNode, useContext, useMemo} from 'react';
-import {net, part} from './model/index.ts';
+import React, {createContext, useContext, useMemo} from 'react';
+import {net, part, type Children} from '../model/index.ts';
 
 const ScopeContext = createContext<readonly string[]>([]);
 
-export type ModuleProps = {
-  name: string;
-  children?: ReactNode;
-};
+export type ModuleProps = Children & {name: string};
 
 function assertSegment(value: string, kind: string) {
   if (value.length === 0 || value.includes('/')) {

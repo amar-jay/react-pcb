@@ -1,5 +1,6 @@
 import type {ReactNode} from 'react';
-import {renderDeclarations} from './renderer/index.ts';
+import {createDeclarationTransaction} from '../protocol/index.ts';
+import {renderDeclarations} from '../renderer/index.ts';
 
 export type CompileOptions = {
   command?: readonly string[];
@@ -11,7 +12,7 @@ export async function compile(element: ReactNode, options: CompileOptions = {}):
   const command = options.command ?? ['cargo', 'run', '--quiet', '-p', 'pcbir', '--', 'compile'];
   const process = Bun.spawn([...command], {
     cwd: options.cwd,
-    stdin: new Blob([JSON.stringify({protocolVersion: 1, baseRevision: null, declarations})]),
+    stdin: new Blob([JSON.stringify(createDeclarationTransaction(declarations))]),
     stdout: 'pipe',
     stderr: 'pipe',
   });

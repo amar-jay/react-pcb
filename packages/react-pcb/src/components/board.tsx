@@ -1,9 +1,9 @@
 import React from 'react';
-import type {ReactNode} from 'react';
-import type {LayerSet} from '../../layers.ts';
+
+import type {LayerSet} from '../layers/index.ts';
+import type {Children, Region} from '../model/index.ts';
 
 export type LengthUnit = 'mm' | 'mil' | 'in';
-
 export type BoardProps = Children & {
   outline: Region;
   layers: LayerSet;

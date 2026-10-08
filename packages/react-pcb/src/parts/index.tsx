@@ -1,7 +1,6 @@
 import React from 'react';
-import {Part, type PartProps} from './components/index.tsx';
-
-type Net = PartProps['connect'][string];
+import {Part, type PartProps} from '../components/index.ts';
+import type {Net} from '../model/index.ts';
 
 export type ElectricalType =
   | 'power-input'
