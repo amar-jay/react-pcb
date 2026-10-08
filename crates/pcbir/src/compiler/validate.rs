@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use serde_json::Value;
 
-use crate::diagnostic::{Diagnostic, Severity};
+use crate::diagnostic::Diagnostic;
 use crate::ir::{ComponentInstance, PinRef, RouteConstraint};
 
 use super::CompileError;
@@ -19,7 +19,7 @@ pub fn validate_instances(
             continue;
         };
         let pins = pins.as_object().ok_or_else(|| {
-            CompileError(format!(
+            CompileError::invalid(format!(
                 "component definition {} pins must be an object",
                 instance.definition
             ))
@@ -27,20 +27,25 @@ pub fn validate_instances(
 
         for pin in instance.connections.keys() {
             if !pins.contains_key(pin) {
-                return Err(CompileError(format!(
-                    "part {} references unknown pin {} in component definition {}",
-                    instance.id, pin, instance.definition
-                )));
+                return Err(CompileError::diagnostic(
+                    Diagnostic::error("PCBIR008", format!("part references unknown pin {pin}"))
+                        .with_entity(&instance.id)
+                        .with_help(format!(
+                            "Declare {pin} in component definition {}, or correct the connection name.",
+                            instance.definition
+                        )),
+                ));
             }
         }
         for (name, pin) in pins {
             if pin.get("required").and_then(Value::as_bool) == Some(true)
                 && !instance.connections.contains_key(name)
             {
-                return Err(CompileError(format!(
-                    "part {} requires a connection for pin {}",
-                    instance.id, name
-                )));
+                return Err(CompileError::diagnostic(
+                    Diagnostic::error("PCBIR009", format!("required pin {name} is not connected"))
+                        .with_entity(&instance.id)
+                        .with_help(format!("Add {name} to the part's connect property.")),
+                ));
             }
         }
         validate_complete_pin_coverage(&instance.definition, definition, pins)?;
@@ -57,41 +62,62 @@ fn validate_complete_pin_coverage(
         return Ok(());
     }
     if pins.is_empty() {
-        return Err(CompileError(format!(
-            "complete component definition {definition_key} must declare at least one pin"
-        )));
+        return Err(CompileError::diagnostic(
+            Diagnostic::error("PCBIR010", "complete component definition has no pins")
+                .with_entity(definition_key)
+                .with_help("Declare every physical pad, or mark pinoutCoverage as partial."),
+        ));
     }
 
     let mut physical_pads = BTreeSet::new();
     for (name, pin) in pins {
         let pad = pin.get("pad").ok_or_else(|| {
-            CompileError(format!(
-                "pin {name} in component definition {definition_key} has no pad"
-            ))
+            CompileError::diagnostic(
+                Diagnostic::error("PCBIR011", format!("pin {name} has no physical pad"))
+                    .with_entity(definition_key)
+                    .with_help("Set pad to a pad name or a non-empty list of pad names."),
+            )
         })?;
         let pads: Vec<&str> = match pad {
             Value::String(value) if !value.is_empty() => vec![value],
             Value::Array(values) if !values.is_empty() => values
                 .iter()
                 .map(|value| {
-                    value.as_str().filter(|value| !value.is_empty()).ok_or_else(|| {
-                        CompileError(format!(
-                            "pin {name} in component definition {definition_key} has an invalid pad"
-                        ))
-                    })
+                    value
+                        .as_str()
+                        .filter(|value| !value.is_empty())
+                        .ok_or_else(|| {
+                            CompileError::diagnostic(
+                                Diagnostic::error(
+                                    "PCBIR011",
+                                    format!("pin {name} has an invalid pad"),
+                                )
+                                .with_entity(definition_key)
+                                .with_help(
+                                    "Set pad to a pad name or a non-empty list of pad names.",
+                                ),
+                            )
+                        })
                 })
                 .collect::<Result<_, _>>()?,
             _ => {
-                return Err(CompileError(format!(
-                    "pin {name} in component definition {definition_key} has an invalid pad"
-                )));
+                return Err(CompileError::diagnostic(
+                    Diagnostic::error("PCBIR011", format!("pin {name} has an invalid pad"))
+                        .with_entity(definition_key)
+                        .with_help("Set pad to a pad name or a non-empty list of pad names."),
+                ));
             }
         };
         for pad in pads {
             if !physical_pads.insert(pad) {
-                return Err(CompileError(format!(
-                    "physical pad {pad} appears more than once in complete component definition {definition_key}"
-                )));
+                return Err(CompileError::diagnostic(
+                    Diagnostic::error(
+                        "PCBIR012",
+                        format!("physical pad {pad} is declared more than once"),
+                    )
+                    .with_entity(definition_key)
+                    .with_help("Assign each physical pad to exactly one logical pin."),
+                ));
             }
         }
     }
@@ -111,37 +137,37 @@ pub fn validate_route_endpoint(
         .and_then(Value::as_object)
         && !pins.contains_key(&endpoint.name)
     {
-        diagnostics.push(Diagnostic {
-            code: "PCBIR003",
-            severity: Severity::Error,
-            message: format!(
-                "route references unknown pin {} on part {}",
-                endpoint.name, endpoint.part
-            ),
-            entity: Some(endpoint.part.clone()),
-        });
+        diagnostics.push(
+            Diagnostic::error(
+                "PCBIR003",
+                format!("route references unknown pin {}", endpoint.name),
+            )
+            .with_entity(&endpoint.part)
+            .with_help("Use a pin declared by the endpoint's component definition."),
+        );
         return;
     }
 
     match instance.connections.get(&endpoint.name) {
         Some(net) if net == &route.net => {}
-        Some(net) => diagnostics.push(Diagnostic {
-            code: "PCBIR004",
-            severity: Severity::Error,
-            message: format!(
-                "route for net {} references {}.{}, which belongs to net {}",
-                route.net.0, endpoint.part, endpoint.name, net.0
-            ),
-            entity: Some(endpoint.part.clone()),
-        }),
-        None => diagnostics.push(Diagnostic {
-            code: "PCBIR005",
-            severity: Severity::Error,
-            message: format!(
-                "route references unconnected pin {}.{}",
-                endpoint.part, endpoint.name
-            ),
-            entity: Some(endpoint.part.clone()),
-        }),
+        Some(net) => diagnostics.push(
+            Diagnostic::error(
+                "PCBIR004",
+                format!(
+                    "route for net {} references pin {}, which belongs to net {}",
+                    route.net.0, endpoint.name, net.0
+                ),
+            )
+            .with_entity(&endpoint.part)
+            .with_help("Route between pins connected to the same net."),
+        ),
+        None => diagnostics.push(
+            Diagnostic::error(
+                "PCBIR005",
+                format!("route references unconnected pin {}", endpoint.name),
+            )
+            .with_entity(&endpoint.part)
+            .with_help("Connect the endpoint pin before routing it."),
+        ),
     }
 }

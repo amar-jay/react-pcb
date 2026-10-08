@@ -4,7 +4,7 @@ use std::fmt;
 use serde::Serialize;
 use serde_json::Value;
 
-use crate::diagnostic::{Diagnostic, Severity};
+use crate::diagnostic::Diagnostic;
 use crate::ir::{BoardIr, ComponentInstance, NetId, Revision, RouteConstraint};
 use crate::protocol::{DeclarationNode, DeclarationTransaction, PROTOCOL_VERSION};
 
@@ -22,14 +22,40 @@ mod tests;
 pub struct CompileOutput {
     pub ir: BoardIr,
     pub diagnostics: Vec<Diagnostic>,
+    pub compiler_diagnostics: Vec<Diagnostic>,
 }
 
-#[derive(Debug)]
-pub struct CompileError(pub String);
+#[derive(Debug, Serialize)]
+pub struct CompileError {
+    pub diagnostic: Diagnostic,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub diagnostics: Vec<Diagnostic>,
+}
+
+impl CompileError {
+    pub fn invalid(message: impl Into<String>) -> Self {
+        Self {
+            diagnostic: Diagnostic::error("PCBIR100", message),
+            diagnostics: Vec::new(),
+        }
+    }
+
+    pub fn diagnostic(diagnostic: Diagnostic) -> Self {
+        Self {
+            diagnostic,
+            diagnostics: Vec::new(),
+        }
+    }
+
+    pub fn with_diagnostics(mut self, diagnostics: Vec<Diagnostic>) -> Self {
+        self.diagnostics = diagnostics;
+        self
+    }
+}
 
 impl fmt::Display for CompileError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter.write_str(&self.0)
+        formatter.write_str(&self.diagnostic.message)
     }
 }
 
@@ -37,24 +63,24 @@ impl std::error::Error for CompileError {}
 
 pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, CompileError> {
     if transaction.protocol_version != PROTOCOL_VERSION {
-        return Err(CompileError(format!(
+        return Err(CompileError::invalid(format!(
             "unsupported protocol version {}; expected {PROTOCOL_VERSION}",
             transaction.protocol_version
         )));
     }
     if transaction.declarations.kind != "react-pcb-declarations" {
-        return Err(CompileError("invalid declaration tree kind".into()));
+        return Err(CompileError::invalid("invalid declaration tree kind"));
     }
     if transaction.declarations.children.len() != 1 {
-        return Err(CompileError(
-            "a design must contain exactly one board".into(),
+        return Err(CompileError::invalid(
+            "a design must contain exactly one board",
         ));
     }
 
     let board_node = &transaction.declarations.children[0];
     if board_node.node_type != "pcb-board" {
-        return Err(CompileError(
-            "the declaration root must be pcb-board".into(),
+        return Err(CompileError::invalid(
+            "the declaration root must be pcb-board",
         ));
     }
 
@@ -64,18 +90,26 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
     let mut component_instances = Vec::new();
     let mut routes = Vec::new();
     let mut nets = BTreeSet::new();
+    let mut modules = BTreeSet::new();
     let mut diagnostics = Vec::new();
+    let mut compiler_diagnostics = Vec::new();
 
-    compile_nodes(
+    if let Err(error) = compile_nodes(
         &board_node.children,
         &mut component_definitions,
         &mut component_instances,
         &mut routes,
         &mut nets,
+        &mut modules,
         &mut diagnostics,
-    )?;
+        &mut compiler_diagnostics,
+    ) {
+        return Err(error.with_diagnostics(compiler_diagnostics));
+    }
 
-    validate_instances(&component_instances, &component_definitions)?;
+    if let Err(error) = validate_instances(&component_instances, &component_definitions) {
+        return Err(error.with_diagnostics(compiler_diagnostics));
+    }
 
     let known_instances: BTreeMap<_, _> = component_instances
         .iter()
@@ -84,12 +118,11 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
     for route in &routes {
         for endpoint in [&route.from, &route.to] {
             let Some(instance) = known_instances.get(endpoint.part.as_str()) else {
-                diagnostics.push(Diagnostic {
-                    code: "PCBIR002",
-                    severity: Severity::Error,
-                    message: format!("route references unknown part {}", endpoint.part),
-                    entity: Some(endpoint.part.clone()),
-                });
+                diagnostics.push(
+                    Diagnostic::error("PCBIR002", "route references an unknown part")
+                        .with_entity(&endpoint.part)
+                        .with_help("Declare the part before using it as a route endpoint."),
+                );
                 continue;
             };
             validate_route_endpoint(
@@ -113,6 +146,7 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
             route_constraints: routes,
         },
         diagnostics,
+        compiler_diagnostics,
     })
 }
 
@@ -122,35 +156,71 @@ fn compile_nodes(
     component_instances: &mut Vec<ComponentInstance>,
     routes: &mut Vec<RouteConstraint>,
     nets: &mut BTreeSet<NetId>,
+    modules: &mut BTreeSet<String>,
     diagnostics: &mut Vec<Diagnostic>,
+    compiler_diagnostics: &mut Vec<Diagnostic>,
 ) -> Result<(), CompileError> {
     for child in nodes {
         match child.node_type.as_str() {
-            "pcb-module" => compile_nodes(
-                &child.children,
-                component_definitions,
-                component_instances,
-                routes,
-                nets,
-                diagnostics,
-            )?,
+            "pcb-module" => {
+                let scope = child
+                    .props
+                    .get("scope")
+                    .and_then(Value::as_str)
+                    .ok_or_else(|| CompileError::invalid("module scope must be a string"))?;
+                if !modules.insert(scope.to_owned()) {
+                    return Err(CompileError::diagnostic(
+                        Diagnostic::error("PCBIR013", "duplicate module scope")
+                            .with_entity(scope)
+                            .with_help(
+                                "Give sibling modules unique names so every module has a unique scope.",
+                            ),
+                    ));
+                }
+                if child.children.is_empty() {
+                    compiler_diagnostics.push(
+                        Diagnostic::warning("PCBIR014", "module contains no declarations")
+                            .with_entity(scope)
+                            .with_help("Add declarations to the module or remove it."),
+                    );
+                }
+                compile_nodes(
+                    &child.children,
+                    component_definitions,
+                    component_instances,
+                    routes,
+                    nets,
+                    modules,
+                    diagnostics,
+                    compiler_diagnostics,
+                )?;
+            }
             "pcb-part" => {
                 let (instance, definition) = parse_part(&child.props)?;
                 if component_instances
                     .iter()
                     .any(|existing| existing.id == instance.id)
                 {
-                    return Err(CompileError(format!(
-                        "duplicate component instance id {}",
-                        instance.id
-                    )));
+                    return Err(CompileError::diagnostic(
+                        Diagnostic::error("PCBIR006", "duplicate component instance ID")
+                            .with_entity(&instance.id)
+                            .with_help(
+                                "Give each placed part a unique ID, or place repeated circuits in modules with unique names.",
+                            ),
+                    ));
                 }
                 if let Some(existing) = component_definitions.get(&instance.definition) {
                     if existing != &definition {
-                        return Err(CompileError(format!(
-                            "component definition {} conflicts with an existing definition",
-                            instance.definition
-                        )));
+                        return Err(CompileError::diagnostic(
+                            Diagnostic::error(
+                                "PCBIR007",
+                                "component definition conflicts with an existing definition",
+                            )
+                            .with_entity(&instance.definition)
+                            .with_help(
+                                "Use one definition for this MPN, or assign distinct component keys.",
+                            ),
+                        ));
                     }
                 } else {
                     component_definitions.insert(instance.definition.clone(), definition);
@@ -163,12 +233,13 @@ fn compile_nodes(
                 nets.insert(route.net.clone());
                 routes.push(route);
             }
-            other => diagnostics.push(Diagnostic {
-                code: "PCBIR001",
-                severity: Severity::Warning,
-                message: format!("declaration {other} is not compiled yet"),
-                entity: None,
-            }),
+            other => diagnostics.push(
+                Diagnostic::warning(
+                    "PCBIR001",
+                    format!("declaration {other} is not compiled yet"),
+                )
+                .with_entity(other),
+            ),
         }
     }
     Ok(())

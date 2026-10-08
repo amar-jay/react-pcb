@@ -14,8 +14,13 @@ export type {
   RouteThroughProps,
   ZoneProps,
 } from './components/index.ts';
-export {compile} from './compiler/index.ts';
-export type {CompileOptions} from './compiler/index.ts';
+export {compile, formatDiagnostic, PcbCompileError} from './compiler/index.ts';
+export type {
+  CompileOptions,
+  CompileResult,
+  CompilerDiagnostic,
+  DiagnosticSeverity,
+} from './compiler/index.ts';
 export {net, pad, part, point, rect} from './model/index.ts';
 export type {Children, Net, Pin, Point, Rect, Region} from './model/index.ts';
 export {definePart} from './parts/index.tsx';

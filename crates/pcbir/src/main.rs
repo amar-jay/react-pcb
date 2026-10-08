@@ -1,4 +1,4 @@
-use pcbir::{DeclarationTransaction, compile};
+use pcbir::{CompileError, DeclarationTransaction, compile};
 use std::io::{self, Read};
 
 fn main() {
@@ -16,12 +16,20 @@ fn main() {
     };
     let output = match compile(transaction) {
         Ok(output) => output,
-        Err(error) => fail(error.to_string()),
+        Err(error) => fail_compile(error),
     };
     println!(
         "{}",
         serde_json::to_string_pretty(&output).expect("compile output is serializable")
     );
+}
+
+fn fail_compile(error: CompileError) -> ! {
+    eprintln!(
+        "{}",
+        serde_json::to_string(&error).expect("compile errors are serializable")
+    );
+    std::process::exit(1);
 }
 
 fn fail(message: String) -> ! {

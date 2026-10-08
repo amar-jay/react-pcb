@@ -74,10 +74,7 @@ fn rejects_conflicting_definitions_for_one_component_key() {
         with_definition("U2", "B"),
     ]))
     .unwrap_err();
-    assert_eq!(
-        error.0,
-        "component definition SAME conflicts with an existing definition"
-    );
+    assert_eq!(error.diagnostic.code, "PCBIR007");
 }
 
 #[test]
@@ -87,7 +84,45 @@ fn rejects_duplicate_component_instance_ids() {
         part("U1", "TEST", json!({})),
     ]))
     .unwrap_err();
-    assert_eq!(error.0, "duplicate component instance id U1");
+    assert_eq!(error.diagnostic.code, "PCBIR006");
+    assert_eq!(error.diagnostic.entity.as_deref(), Some("U1"));
+}
+
+#[test]
+fn rejects_duplicate_modules_even_when_one_is_empty() {
+    let module = |children: Vec<Value>| {
+        json!({
+            "type": "pcb-module",
+            "props": {"name": "usb-controller", "scope": "usb-controller"},
+            "children": children
+        })
+    };
+    let error = compile(transaction(vec![
+        module(vec![]),
+        module(vec![part("usb-controller/U1", "TEST", json!({}))]),
+    ]))
+    .unwrap_err();
+
+    assert_eq!(error.diagnostic.code, "PCBIR013");
+    assert_eq!(error.diagnostic.entity.as_deref(), Some("usb-controller"));
+}
+
+#[test]
+fn warns_about_empty_modules() {
+    let empty_module = json!({
+        "type": "pcb-module",
+        "props": {"name": "unused", "scope": "unused"},
+        "children": []
+    });
+    let output = compile(transaction(vec![empty_module])).unwrap();
+
+    assert!(output.diagnostics.is_empty());
+    assert_eq!(output.compiler_diagnostics.len(), 1);
+    assert_eq!(output.compiler_diagnostics[0].code, "PCBIR014");
+    assert_eq!(
+        output.compiler_diagnostics[0].entity.as_deref(),
+        Some("unused")
+    );
 }
 
 #[test]
@@ -95,14 +130,20 @@ fn rejects_unknown_and_missing_required_part_pins() {
     let pins = json!({"VCC": {"pad": "1", "required": true}});
     let unknown = defined_part("U1", json!({"BAD": {"id": "3V3"}}), pins.clone(), "partial");
     assert_eq!(
-        compile(transaction(vec![unknown])).unwrap_err().0,
-        "part U1 references unknown pin BAD in component definition TEST-PART"
+        compile(transaction(vec![unknown]))
+            .unwrap_err()
+            .diagnostic
+            .code,
+        "PCBIR008"
     );
 
     let missing = defined_part("U1", json!({}), pins, "partial");
     assert_eq!(
-        compile(transaction(vec![missing])).unwrap_err().0,
-        "part U1 requires a connection for pin VCC"
+        compile(transaction(vec![missing]))
+            .unwrap_err()
+            .diagnostic
+            .code,
+        "PCBIR009"
     );
 }
 
@@ -115,8 +156,11 @@ fn validates_complete_definition_physical_pad_coverage() {
         "complete",
     );
     assert_eq!(
-        compile(transaction(vec![part])).unwrap_err().0,
-        "physical pad 1 appears more than once in complete component definition TEST-PART"
+        compile(transaction(vec![part]))
+            .unwrap_err()
+            .diagnostic
+            .code,
+        "PCBIR012"
     );
 }
 

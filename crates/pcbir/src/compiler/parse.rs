@@ -13,21 +13,21 @@ use super::CompileError;
 pub fn parse_board(props: &Value) -> Result<Board, CompileError> {
     let outline = props
         .get("outline")
-        .ok_or_else(|| CompileError("board outline is required".into()))?;
+        .ok_or_else(|| CompileError::invalid("board outline is required"))?;
     if string(outline, "kind")? != "rect" {
-        return Err(CompileError(
-            "only rectangular outlines are supported by the scaffold".into(),
+        return Err(CompileError::invalid(
+            "only rectangular outlines are supported by the scaffold",
         ));
     }
     let layers: LayerSet = serde_json::from_value(
         props
             .get("layers")
             .cloned()
-            .ok_or_else(|| CompileError("board layers are required".into()))?,
+            .ok_or_else(|| CompileError::invalid("board layers are required"))?,
     )
-    .map_err(|error| CompileError(format!("invalid board layers: {error}")))?;
+    .map_err(|error| CompileError::invalid(format!("invalid board layers: {error}")))?;
     if layers.kind != "layer-set" || layers.stackup.kind != "stackup" {
-        return Err(CompileError("invalid layer set kind".into()));
+        return Err(CompileError::invalid("invalid layer set kind"));
     }
     let copper_count = layers
         .stackup
@@ -36,8 +36,8 @@ pub fn parse_board(props: &Value) -> Result<Board, CompileError> {
         .filter(|entry| matches!(entry, StackupLayer::Copper { .. }))
         .count();
     if !(1..=32).contains(&copper_count) {
-        return Err(CompileError(
-            "stackup must contain 1 to 32 copper layers".into(),
+        return Err(CompileError::invalid(
+            "stackup must contain 1 to 32 copper layers",
         ));
     }
     let metadata = props
@@ -65,20 +65,20 @@ pub fn parse_units(props: &Value) -> Result<LengthUnit, CompileError> {
         .cloned()
         .map(serde_json::from_value)
         .transpose()
-        .map_err(|error| CompileError(format!("invalid board units: {error}")))
+        .map_err(|error| CompileError::invalid(format!("invalid board units: {error}")))
         .map(|units| units.unwrap_or(LengthUnit::Mm))
 }
 
 pub fn parse_part(props: &Value) -> Result<(ComponentInstance, Value), CompileError> {
     let id_value = props
         .get("id")
-        .ok_or_else(|| CompileError("part id is required".into()))?;
+        .ok_or_else(|| CompileError::invalid("part id is required"))?;
     let id = string(id_value, "id")?;
     let reference = string(id_value, "reference")?;
     let connections = props
         .get("connect")
         .and_then(Value::as_object)
-        .ok_or_else(|| CompileError(format!("part {reference} connections are required")))?
+        .ok_or_else(|| CompileError::invalid(format!("part {reference} connections are required")))?
         .iter()
         .map(|(pin, net)| Ok((pin.clone(), NetId(string(net, "id")?))))
         .collect::<Result<BTreeMap<_, _>, CompileError>>()?;
@@ -87,8 +87,8 @@ pub fn parse_part(props: &Value) -> Result<(ComponentInstance, Value), CompileEr
         .and_then(Value::as_array)
         .map(|point| {
             if point.len() != 2 {
-                return Err(CompileError(
-                    "part position must contain two numbers".into(),
+                return Err(CompileError::invalid(
+                    "part position must contain two numbers",
                 ));
             }
             Ok([value_number(&point[0])?, value_number(&point[1])?])
@@ -99,7 +99,9 @@ pub fn parse_part(props: &Value) -> Result<(ComponentInstance, Value), CompileEr
         .cloned()
         .map(serde_json::from_value)
         .transpose()
-        .map_err(|error| CompileError(format!("invalid side for part {reference}: {error}")))?
+        .map_err(|error| {
+            CompileError::invalid(format!("invalid side for part {reference}: {error}"))
+        })?
         .unwrap_or(BoardSide::Front);
     let rotation = props
         .get("rotation")
@@ -156,7 +158,7 @@ pub fn parse_route(node: &DeclarationNode) -> Result<RouteConstraint, CompileErr
             let region = child
                 .props
                 .get("region")
-                .ok_or_else(|| CompileError("route region is required".into()))?;
+                .ok_or_else(|| CompileError::invalid("route region is required"))?;
             Ok(Rect {
                 x: number(region, "x")?,
                 y: number(region, "y")?,
@@ -169,18 +171,18 @@ pub fn parse_route(node: &DeclarationNode) -> Result<RouteConstraint, CompileErr
         net: NetId(string(
             props
                 .get("net")
-                .ok_or_else(|| CompileError("route net is required".into()))?,
+                .ok_or_else(|| CompileError::invalid("route net is required"))?,
             "id",
         )?),
         from: parse_pin(
             props
                 .get("from")
-                .ok_or_else(|| CompileError("route start is required".into()))?,
+                .ok_or_else(|| CompileError::invalid("route start is required"))?,
         )?,
         to: parse_pin(
             props
                 .get("to")
-                .ok_or_else(|| CompileError("route end is required".into()))?,
+                .ok_or_else(|| CompileError::invalid("route end is required"))?,
         )?,
         width: props.get("width").map(value_number).transpose()?,
         through,
@@ -190,7 +192,7 @@ pub fn parse_route(node: &DeclarationNode) -> Result<RouteConstraint, CompileErr
 fn parse_pin(value: &Value) -> Result<PinRef, CompileError> {
     let part = value
         .get("part")
-        .ok_or_else(|| CompileError("pin part is required".into()))?;
+        .ok_or_else(|| CompileError::invalid("pin part is required"))?;
     Ok(PinRef {
         part: string(part, "id")?,
         name: string(value, "name")?,
@@ -202,7 +204,7 @@ fn string(value: &Value, key: &str) -> Result<String, CompileError> {
         .get(key)
         .and_then(Value::as_str)
         .map(str::to_owned)
-        .ok_or_else(|| CompileError(format!("{key} must be a string")))
+        .ok_or_else(|| CompileError::invalid(format!("{key} must be a string")))
 }
 
 fn optional_string(value: &Value, key: &str) -> Option<String> {
@@ -212,12 +214,12 @@ fn optional_string(value: &Value, key: &str) -> Option<String> {
 fn number(value: &Value, key: &str) -> Result<f64, CompileError> {
     value
         .get(key)
-        .ok_or_else(|| CompileError(format!("{key} is required")))
+        .ok_or_else(|| CompileError::invalid(format!("{key} is required")))
         .and_then(value_number)
 }
 
 fn value_number(value: &Value) -> Result<f64, CompileError> {
     value
         .as_f64()
-        .ok_or_else(|| CompileError("expected a number".into()))
+        .ok_or_else(|| CompileError::invalid("expected a number"))
 }
