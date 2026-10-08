@@ -1,11 +1,11 @@
 import React from 'react';
 
-import type {CopperLayer} from '../layers/index.ts';
+import type {CopperLayerInput} from '../layers/index.ts';
 import type {Net, Region} from '../model/index.ts';
 
 export type ZoneProps = {
   net: Net;
-  layers: readonly CopperLayer[];
+  layers: readonly CopperLayerInput[];
   boundary: Region | 'board';
   clearance?: number;
 };

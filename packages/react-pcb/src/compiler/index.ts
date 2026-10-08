@@ -1,11 +1,11 @@
 import type {ReactNode} from 'react';
 import {createDeclarationTransaction} from '../protocol/index.ts';
 import {renderDeclarations} from '../renderer/index.ts';
-import {compilerError, formatDiagnostic} from './diagnostics.ts';
+import {compilerError, formatDiagnostic, PcbCompileError} from './diagnostics.ts';
 import type {CompilerDiagnostic} from './diagnostics.ts';
 import {PCB_IR_SCHEMA_VERSION, type BoardIr} from '../ir/index.ts';
 
-export {formatDiagnostic, PcbCompileError} from './diagnostics.ts';
+export {formatDiagnostic, PcbCompileError};
 export type {CompilerDiagnostic, DiagnosticSeverity} from './diagnostics.ts';
 
 export type CompileOptions = {

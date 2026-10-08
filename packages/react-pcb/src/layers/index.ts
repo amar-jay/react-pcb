@@ -42,24 +42,42 @@ export type LayerSet = Readonly<{
   technical: readonly TechnicalLayer[];
 }>;
 
-export function copperLayer(
-  options: Readonly<{id: string; thickness: number; usage?: CopperUsage}>,
-): CopperLayer {
-  assertName(options.id, 'layer ID', true);
+type CopperLayerOptions = Readonly<{id?: string; thickness: number; usage?: CopperUsage}>;
+type DielectricLayerOptions = Readonly<{
+  id?: string;
+  material: string;
+  thickness: number;
+  epsilonR: number;
+  lossTangent?: number;
+}>;
+export type CopperLayerInput = Omit<CopperLayer, 'id'> & Readonly<{id?: string}>;
+export type DielectricLayerInput = Omit<DielectricLayer, 'id'> & Readonly<{id?: string}>;
+export type StackupLayerInput = CopperLayerInput | DielectricLayerInput;
+
+export function copperLayer(options: CopperLayerOptions & Readonly<{id: string}>): CopperLayer;
+export function copperLayer(options: CopperLayerOptions): CopperLayerInput;
+export function copperLayer(options: CopperLayerOptions): CopperLayerInput {
+  if (options.id !== undefined) assertName(options.id, 'layer ID', true);
   assertPositive(options.thickness, 'copper thickness');
-  return Object.freeze({kind: 'copper', id: options.id, thickness: options.thickness, usage: options.usage ?? 'signal'});
+  return {
+    kind: 'copper',
+    ...(options.id === undefined ? {} : {id: options.id}),
+    thickness: options.thickness,
+    usage: options.usage ?? 'signal',
+  };
 }
 
-export function dielectricLayer(
-  options: Readonly<{id: string; material: string; thickness: number; epsilonR: number; lossTangent?: number}>,
-): DielectricLayer {
-  assertName(options.id, 'layer ID', true);
+export function dielectricLayer(options: DielectricLayerOptions & Readonly<{id: string}>): DielectricLayer;
+export function dielectricLayer(options: DielectricLayerOptions): DielectricLayerInput;
+export function dielectricLayer(options: DielectricLayerOptions): DielectricLayerInput {
+  if (options.id !== undefined) assertName(options.id, 'layer ID', true);
   assertPositive(options.thickness, 'dielectric thickness');
   assertPositive(options.epsilonR, 'dielectric epsilonR');
   if (options.lossTangent !== undefined) {
     assertNonNegative(options.lossTangent, 'dielectric lossTangent');
   }
-  return Object.freeze({kind: 'dielectric', ...options});
+  const {id, ...rest} = options;
+  return {kind: 'dielectric', ...rest, ...(id === undefined ? {} : {id})};
 }
 
 export function solderMaskLayer(options: Readonly<{id: string; side: BoardSide; expansion?: number}>): SolderMaskLayer {
@@ -85,16 +103,32 @@ export function mechanicalLayer(
   return Object.freeze({kind: 'mechanical', id: options.id, purpose: options.purpose, side: options.side});
 }
 
-export function defineStackup(entries: readonly StackupLayer[]): Stackup {
+export function defineStackup(entries: readonly StackupLayerInput[]): Stackup {
   if (entries.length === 0 || entries[0]?.kind !== 'copper' || entries.at(-1)?.kind !== 'copper') {
     throw new Error('a stackup must start and end with copper');
   }
   entries.forEach((entry, index) => {
     if (index > 0 && entry.kind === entries[index - 1]?.kind) throw new Error('stackup entries must alternate between copper and dielectric');
   });
-  const copperLayerCount = entries.filter(entry => entry.kind === 'copper').length;
-  if (copperLayerCount > 32) throw new Error('a stackup may contain at most 32 copper layers');
-  return Object.freeze({kind: 'stackup', entries: Object.freeze([...entries])});
+  const counts = {copper: 0, dielectric: 0};
+  const identified = entries.map(entry => {
+    const position = ++counts[entry.kind];
+    const id = entry.id ?? `${entry.kind}/${position}`;
+    assertName(id, 'layer ID', true);
+	  return {entry, id};
+  });
+  if (counts.copper > 32) throw new Error('a stackup may contain at most 32 copper layers');
+  const ids = new Set<string>();
+  for (const {id} of identified) {
+    if (ids.has(id)) throw new Error(`duplicate layer ID ${id}`);
+    ids.add(id);
+  }
+  const layers = identified.map(({entry, id}): StackupLayer => {
+    const layer = entry as {id?: string};
+    if (layer.id === undefined) layer.id = id;
+    return Object.freeze(entry) as StackupLayer;
+  });
+  return Object.freeze({kind: 'stackup', entries: Object.freeze(layers)});
 }
 
 export function defineLayerSet(options: Readonly<{stackup: Stackup; technical?: readonly TechnicalLayer[]}>): LayerSet {

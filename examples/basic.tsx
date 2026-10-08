@@ -28,10 +28,10 @@ import {
 import {STM32G0B1CBT6} from './parts/STM32G0B1CBT6.ts';
 import {USB4105GFA} from './parts/USB4105GFA.ts';
 
-const frontCopper = copperLayer({id: 'copper/1', thickness: 0.035, usage: 'signal'});
-const groundPlane = copperLayer({id: 'copper/2', thickness: 0.018, usage: 'plane'});
-const powerPlane = copperLayer({id: 'copper/3', thickness: 0.018, usage: 'plane'});
-const backCopper = copperLayer({id: 'copper/4', thickness: 0.035, usage: 'signal'});
+const frontCopper = copperLayer({thickness: 0.035, usage: 'signal'});
+const groundPlane = copperLayer({thickness: 0.018, usage: 'plane'});
+const powerPlane = copperLayer({thickness: 0.018, usage: 'plane'});
+const backCopper = copperLayer({id: 'copper/5', thickness: 0.035, usage: 'signal'});
 
 const boardLayers = defineLayerSet({
   stackup: defineStackup([
@@ -156,7 +156,7 @@ try {
   console.log(JSON.stringify(result, null, 2));
 } catch (error) {
   if (error instanceof PcbCompileError) {
-    console.error(error.message);
+    console.log(error.message);
     process.exit(1);
   }
   throw error;

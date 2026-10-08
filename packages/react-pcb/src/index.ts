@@ -66,6 +66,7 @@ export {
 export type {
   BoardSide,
   CopperLayer,
+  CopperLayerInput,
   CopperUsage,
   DielectricLayer,
   LayerSet,
