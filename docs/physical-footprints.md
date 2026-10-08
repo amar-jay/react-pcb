@@ -1,6 +1,6 @@
 # Physical footprint contract
 
-Phase one introduces board-independent, explicit physical geometry. Phase two adds deterministic SVG projection. Phase three adds absolute-positioned JSX authoring; Flexbox and Grid remain later phases.
+Phase one introduces board-independent, explicit physical geometry. Phase two adds deterministic SVG projection. Phase three adds absolute-positioned JSX authoring. Phases four and five add restricted Flexbox and explicit Grid layout.
 
 ## Authoring
 
@@ -109,7 +109,7 @@ All declarations share one `FootprintStyle` model:
 | Property | Contract |
 | --- | --- |
 | `width`, `height` | Required positive physical-unit strings on roots, groups, and features. |
-| `position` | Required as `'absolute'` on children of absolute-layout containers; omit for flow children of flex containers. Optional on the root. |
+| `position` | Required as `'absolute'` on children of absolute-layout containers; omit for flow children of flex/grid containers. Optional on the root. |
 | `left`, `right` | Exactly one horizontal offset per absolute child. `right` computes `parent.width - right - width`. |
 | `top`, `bottom` | Exactly one vertical offset per absolute child. `bottom` computes `parent.height - bottom - height`. |
 | Root `left`, `top` | Optional translation of the root's top-left corner from footprint origin; default zero. Root `right`/`bottom` are rejected. |
@@ -122,7 +122,7 @@ Transforms reflect local axes around the box center, rotate clockwise around tha
 
 Lengths reuse the checked Rust parser (`nm`, `um`, `mm`, `mil`, `in`), without browser layout, floats, implicit units, or rounding. Layout uses doubled nanometres internally to preserve exact box centers during nested transforms. Resolved feature centers must be whole nanometres and fit the canonical exact integer range; half-nanometre centers are diagnosed rather than quantized. Odd feature dimensions remain supported when the composed transform produces an integer center. Bounds still preserve half-nanometre edges. Overflows and invalid canonical geometry are rejected before output.
 
-Unsupported declarations, props, styles, transforms, nonphysical units, percentages, automatic/intrinsic sizing, unsupported Flexbox properties, Grid, and overdetermined or missing offsets produce actionable errors. Unknown properties are never treated as cosmetic CSS. Undefined optional TypeScript props are omitted during serialization; functions, symbols, bigints, and non-finite numbers are rejected by the frontend snapshot.
+Unsupported declarations, props, styles, transforms, nonphysical units, percentages, automatic/intrinsic sizing, unsupported Flexbox/Grid properties, and overdetermined or missing offsets produce actionable errors. Unknown properties are never treated as cosmetic CSS. Undefined optional TypeScript props are omitted during serialization; functions, symbols, bigints, and non-finite numbers are rejected by the frontend snapshot.
 
 ### Feature meaning and identity
 
@@ -185,13 +185,13 @@ appear in `bun run footprints:inspect`; their land dimensions are illustrative.
 
 | Property | Contract |
 | --- | --- |
-| `display` | Only `'flex'`; supported on roots and groups. Omission retains absolute child layout. |
+| `display` | `'flex'` selects Flexbox on roots and groups; `'grid'` selects the Grid contract below. Omission retains absolute child layout. |
 | `flexDirection` | `'row'` (default, +x) or `'column'` (+y). |
 | `gap` | One non-negative physical length between adjacent flow children; default zero. No leading/trailing gap. |
 | `justifyContent` | `'flex-start'` (default), `'center'`, or `'flex-end'` along the main axis. |
 | `alignItems` | `'flex-start'` (default), `'center'`, or `'flex-end'` along the cross axis. No stretching. |
 
-Flex-only properties require `display: 'flex'`. Children without `position` are
+`flexDirection` and `justifyContent` require `display: 'flex'`; `gap` and `alignItems` are also supported by Grid under the contract below. Children without `position` are
 flow items and must omit all four offsets. Children with `position: 'absolute'`
 retain the existing offset rules and consume no flow space or gaps. Absolute
 children can extend outside containers. A flow child may itself be a flex group;
@@ -235,3 +235,84 @@ compile away; physical schema version two, board schema version two, and layout
 protocol version one remain unchanged. Existing absolute declaration envelopes
 remain valid. New flex declarations require a compiler with Phase four support;
 older compilers reject the new properties.
+
+
+## Restricted Grid (Phase five)
+
+`Footprint` and `FootprintGroup` accept `display: 'grid'` with explicit physical
+track arrays. Both container dimensions remain required and independent of the
+tracks. Every flow child explicitly selects a one-based starting row and column;
+there is no implicit placement. Ordinary JavaScript arrays and mapping generate
+repeated tracks without a second string grammar.
+
+```tsx
+<Footprint name="example:grid-header" style={{
+  display: 'grid', width: '5.08mm', height: '7.62mm',
+  left: '-1.27mm', top: '-1.27mm',
+  gridTemplateColumns: ['2.54mm', '2.54mm'],
+  gridTemplateRows: ['2.54mm', '2.54mm', '2.54mm'],
+  justifyItems: 'center', alignItems: 'center',
+}}>
+  {[1, 2, 3].flatMap(row => [1, 2].map(column => <Pad
+    key={`${row}/${column}`} name={String((row - 1) * 2 + column)}
+    layers={['all-copper', 'all-mask']}
+    drill={{diameter: '0.8mm', plated: true}}
+    style={{width: '1.6mm', height: '1.6mm', gridRow: row, gridColumn: column}}
+  />))}
+</Footprint>
+```
+
+| Property | Contract |
+| --- | --- |
+| `gridTemplateColumns`, `gridTemplateRows` | Required nonempty arrays of positive physical-unit strings on grid containers. |
+| `gap` | Optional non-negative physical length between adjacent tracks on both axes; default zero. No outside gap. |
+| `gridColumn`, `gridRow` | Required positive integer starting track numbers on each grid flow child, starting at one. |
+| `gridColumnSpan`, `gridRowSpan` | Optional positive integer track counts, default one. The entire span must reference declared tracks. |
+| `justifyItems` | Horizontal alignment inside each assigned cell/span: `'start'` (default), `'center'`, or `'end'`. |
+| `alignItems` | Vertical alignment inside each assigned cell/span: `'start'` (default), `'center'`, or `'end'`. Grid does not accept Flexbox's `'flex-start'`/`'flex-end'` values. |
+
+Tracks begin at the container's untransformed top-left corner. Each track's
+start is the sum of preceding track sizes and gaps. Their combined extent must
+fit the fixed container width/height; unused space stays after the tracks, with
+no stretching or distribution. An assigned span runs from the starting track's
+near edge to its final track's far edge, including internal gaps. A fixed child
+box must fit that cell/span on both axes. Missing, fractional, zero, negative,
+string, or out-of-range track indices/spans fail with a child-scoped diagnostic;
+invalid tracks or oversized track extents fail at the container.
+
+Grid placement properties are valid only on flow children of grid containers.
+Those children omit `position` and all offsets. Absolute-positioned children use
+the existing offset rules, omit all Grid placement properties, and do not claim
+cells. A group may participate in a grid while laying out its own children using
+Grid, Flexbox, or absolute positioning; placement refers to its parent while its
+track declarations refer to its own children. Unnamed/unkeyed wrappers preserve
+feature identity. Explicit assignments make child positions independent of
+sibling order; adding/reordering absolute graphics leaves pad pitch unchanged.
+Several children may deliberately select the same cell/span; Grid does not
+perform physical overlap or clearance validation.
+
+Alignment positions each fixed, untransformed child box at the near edge, center,
+or far edge of its assigned area. Typed child and ancestor transforms apply
+subsequently, exactly as for absolute/Flexbox layout. Geometry may extend outside
+cells after rotation or translation. Center alignment retains half-nanometre
+origins internally without rounding. Final feature centers and bounds must pass
+the existing exact physical representation checks; unsupported half-nanometre
+feature centers are diagnosed. Tracks, gaps, sizes and offsets use the checked
+physical-unit parser, with wider integer accumulation for track sums and spans.
+
+Template strings (including `repeat()`), named lines/areas, line-end/slash syntax,
+negative line numbering, automatic placement, implicit tracks, `fr`, percentages,
+intrinsic/automatic sizing, track distribution, stretch, per-item alignment,
+`rowGap`/`columnGap`, and all undeclared CSS properties remain unsupported. The
+shared TypeScript style type exposes the supported vocabulary; Rust validates
+which properties apply to each declaration and layout context.
+
+`examples/footprints/grid.tsx` includes two four-pad rows and a 2×3 through-hole
+header. Tests independently transcribe every pad's explicit coordinates, shapes,
+layers and drills, compare canonical geometry and SVG, and check pitch, bounds,
+spans, nested transforms, JSON round trips, stable identities, diagnostics, and
+front/back board placement. `bun run footprints:inspect` includes both Grid
+fixtures; their land patterns are illustrative. Grid styles compile away, with
+no changes to physical/board schema version two or layout protocol version one.
+Older compilers reject the new properties; existing absolute/Flexbox declarations
+retain their behavior.

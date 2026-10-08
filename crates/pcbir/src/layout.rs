@@ -1,4 +1,4 @@
-//! Restricted absolute and fixed-size Flexbox layout authoring. Frontend declarations never enter IR.
+//! Restricted absolute, fixed-size Flexbox, and explicit Grid layout authoring. Frontend declarations never enter IR.
 use crate::physical::{self, Bounds, Drill, Feature, PhysicalFootprint, Purpose, Role, Shape};
 use crate::{CompileError, DeclarationNode, Diagnostic};
 use serde::Deserialize;
@@ -16,7 +16,7 @@ pub struct FootprintDeclarations {
 
 fn invalid(message: impl Into<String>) -> CompileError {
     CompileError::diagnostic(Diagnostic::error("PCBFP002", message).with_help(
-        "Use fixed physical dimensions, absolute offsets or row/column Flexbox, and supported typed transforms. See docs/physical-footprints.md.",
+        "Use fixed physical dimensions, absolute offsets, row/column Flexbox, or explicit Grid tracks, and supported typed transforms. See docs/physical-footprints.md.",
     ))
 }
 fn attach(mut error: CompileError, node: &DeclarationNode, entity: &str) -> CompileError {
@@ -154,7 +154,18 @@ fn flex(style: &Value, container: bool) -> Result<Option<Flex>, CompileError> {
     let properties = ["flexDirection", "gap", "justifyContent", "alignItems"];
     if style.get("display").is_none() {
         if properties.iter().any(|key| style.get(key).is_some()) {
-            return Err(invalid("flex properties require display: flex"));
+            return Err(invalid("layout properties require display: flex or grid"));
+        }
+        return Ok(None);
+    }
+    if style["display"].as_str() == Some("grid") {
+        if ["flexDirection", "justifyContent"]
+            .iter()
+            .any(|key| style.get(key).is_some())
+        {
+            return Err(invalid(
+                "flexDirection and justifyContent require display: flex",
+            ));
         }
         return Ok(None);
     }
@@ -164,7 +175,7 @@ fn flex(style: &Value, container: bool) -> Result<Option<Flex>, CompileError> {
         ));
     }
     if style["display"].as_str() != Some("flex") {
-        return Err(invalid("display must be flex"));
+        return Err(invalid("display must be flex or grid"));
     }
     let axis = match style.get("flexDirection").map(Value::as_str) {
         None | Some(Some("row")) => 0,
@@ -197,10 +208,145 @@ fn flex(style: &Value, container: bool) -> Result<Option<Flex>, CompileError> {
     }))
 }
 
+const GRID_PLACEMENT: [&str; 4] = ["gridColumn", "gridRow", "gridColumnSpan", "gridRowSpan"];
+struct Track {
+    offset: i128,
+    size: i64,
+}
+struct Grid {
+    tracks: [Vec<Track>; 2],
+    alignment: [Alignment; 2],
+}
+fn grid(style: &Value, container: bool, size: [i64; 2]) -> Result<Option<Grid>, CompileError> {
+    let properties = ["gridTemplateColumns", "gridTemplateRows", "justifyItems"];
+    if style.get("display").and_then(Value::as_str) != Some("grid") {
+        if properties.iter().any(|key| style.get(key).is_some()) {
+            return Err(invalid("grid container properties require display: grid"));
+        }
+        return Ok(None);
+    }
+    if !container {
+        return Err(invalid("only containers support display: grid"));
+    }
+    let gap = style
+        .get("gap")
+        .map(|_| length(style, "gap"))
+        .transpose()?
+        .unwrap_or(0);
+    if gap < 0 {
+        return Err(invalid("grid gap must not be negative"));
+    }
+    let mut tracks = [Vec::new(), Vec::new()];
+    for (axis, key) in [(0, "gridTemplateColumns"), (1, "gridTemplateRows")] {
+        let values = style
+            .get(key)
+            .and_then(Value::as_array)
+            .filter(|v| !v.is_empty())
+            .ok_or_else(|| {
+                invalid(format!(
+                    "{key} requires a nonempty array of explicit physical track sizes"
+                ))
+            })?;
+        let mut offset = 0_i128;
+        for value in values {
+            let track_size = physical::length(value.as_str().ok_or_else(|| {
+                invalid(format!("{key} track sizes must be physical-unit strings"))
+            })?)?;
+            if track_size <= 0 {
+                return Err(invalid(format!("{key} track sizes must be positive")));
+            }
+            tracks[axis].push(Track {
+                offset,
+                size: track_size,
+            });
+            offset += i128::from(track_size) + i128::from(gap);
+        }
+        if offset - i128::from(gap) > i128::from(size[axis]) {
+            return Err(invalid(format!(
+                "{key} tracks and gaps exceed container size"
+            )));
+        }
+    }
+    let alignment = |key: &str| -> Result<Alignment, CompileError> {
+        match style.get(key).map(Value::as_str) {
+            None | Some(Some("start")) => Ok(Alignment::Start),
+            Some(Some("center")) => Ok(Alignment::Center),
+            Some(Some("end")) => Ok(Alignment::End),
+            _ => Err(invalid(format!(
+                "grid {key} must be start, center, or end; stretch is unsupported"
+            ))),
+        }
+    };
+    Ok(Some(Grid {
+        tracks,
+        alignment: [alignment("justifyItems")?, alignment("alignItems")?],
+    }))
+}
+impl Grid {
+    fn origin(&self, props: &Value) -> Result<Option<[i128; 2]>, CompileError> {
+        let style = props
+            .get("style")
+            .ok_or_else(|| invalid("style is required"))?;
+        if style.get("position").and_then(Value::as_str) == Some("absolute") {
+            return Ok(None);
+        }
+        let mut origin = [0; 2];
+        for (axis, start_key, span_key, dimension) in [
+            (0, "gridColumn", "gridColumnSpan", "width"),
+            (1, "gridRow", "gridRowSpan", "height"),
+        ] {
+            let index = |value: &Value, key: &str| -> Result<usize, CompileError> {
+                value
+                    .as_u64()
+                    .filter(|n| *n > 0)
+                    .and_then(|n| usize::try_from(n).ok())
+                    .ok_or_else(|| invalid(format!("{key} must be a positive integer")))
+            };
+            let start = index(
+                style.get(start_key).ok_or_else(|| {
+                    invalid(format!("grid flow child requires explicit {start_key}"))
+                })?,
+                start_key,
+            )? - 1;
+            let span = style
+                .get(span_key)
+                .map(|v| index(v, span_key))
+                .transpose()?
+                .unwrap_or(1);
+            let end = start
+                .checked_add(span)
+                .filter(|end| *end <= self.tracks[axis].len())
+                .ok_or_else(|| {
+                    invalid(format!(
+                        "{start_key} and {span_key} reference tracks outside the explicit grid"
+                    ))
+                })?;
+            let first = &self.tracks[axis][start];
+            let last = &self.tracks[axis][end - 1];
+            let cell_size = last.offset + i128::from(last.size) - first.offset;
+            let child_size = length(style, dimension)?;
+            if child_size <= 0 {
+                return Err(invalid(
+                    "width and height must be positive physical lengths",
+                ));
+            }
+            if i128::from(child_size) > cell_size {
+                return Err(invalid(format!(
+                    "grid child {dimension} exceeds its assigned cell or span"
+                )));
+            }
+            origin[axis] =
+                2 * first.offset + self.alignment[axis].offset2(cell_size - i128::from(child_size));
+        }
+        Ok(Some(origin))
+    }
+}
+
 #[derive(Clone, Copy)]
 struct ParentBox {
     size: [i64; 2],
     flow_origin: Option<[i128; 2]>,
+    grid_item: bool,
 }
 struct BoxLayout {
     size: [i64; 2],
@@ -228,6 +374,13 @@ fn layout(
             "gap",
             "justifyContent",
             "alignItems",
+            "gridTemplateColumns",
+            "gridTemplateRows",
+            "justifyItems",
+            "gridColumn",
+            "gridRow",
+            "gridColumnSpan",
+            "gridRowSpan",
         ],
         "style",
     )?;
@@ -250,6 +403,14 @@ fn layout(
         ));
     }
     flex(style, container)?;
+    grid(style, container, size)?;
+    if GRID_PLACEMENT.iter().any(|key| style.get(key).is_some())
+        && !parent.is_some_and(|p| p.grid_item)
+    {
+        return Err(invalid(
+            "grid placement properties require a flow child of a grid container",
+        ));
+    }
     let mut origin = [0_i128; 2];
     for (axis, near, far) in [(0, "left", "right"), (1, "top", "bottom")] {
         let n = style.get(near).map(|_| length(style, near)).transpose()?;
@@ -399,6 +560,25 @@ impl Compiler<'_> {
         transform: Transform,
         scope: &[String],
     ) -> Result<(), CompileError> {
+        if let Some(grid) = grid(&node.props["style"], true, box_layout.size)? {
+            for child in &node.children {
+                let id = feature_id(child, scope, self.key)?;
+                let origin = grid
+                    .origin(&child.props)
+                    .map_err(|e| attach(e, child, &format!("{}/{id}", self.key)))?;
+                self.walk(
+                    child,
+                    ParentBox {
+                        size: box_layout.size,
+                        grid_item: origin.is_some(),
+                        flow_origin: origin,
+                    },
+                    transform,
+                    scope,
+                )?;
+            }
+            return Ok(());
+        }
         let flex = flex(&node.props["style"], true)?;
         let mut sizes = Vec::new();
         let mut used = 0_i128;
@@ -468,6 +648,7 @@ impl Compiler<'_> {
                 ParentBox {
                     size: box_layout.size,
                     flow_origin,
+                    grid_item: false,
                 },
                 transform,
                 scope,
@@ -945,5 +1126,90 @@ mod tests {
         assert_eq!(ir.features[2].at, [5, 1]);
         v["root"]["children"] = json!([absolute]);
         assert_eq!(compile(v).unwrap().features[0].at, [0, 0]);
+    }
+    fn grid_declaration() -> Value {
+        let mut v = flex_declaration();
+        v["root"]["props"]["style"] = json!({
+            "display":"grid","width":"10nm","height":"10nm",
+            "gridTemplateColumns":["4nm","4nm"],"gridTemplateRows":["10nm"],
+            "gap":"2nm","justifyItems":"center","alignItems":"center"
+        });
+        v["root"]["children"][0]["props"]["style"] = json!({
+            "width":"2nm","height":"2nm","gridColumn":2,"gridRow":1
+        });
+        v
+    }
+    #[test]
+    fn grid_protocol_resolves_gaps_spans_and_exact_centers() {
+        let mut v = grid_declaration();
+        assert_eq!(compile(v.clone()).unwrap().features[0].at, [8, 5]);
+        v["root"]["children"][0]["props"]["style"]["gridColumn"] = json!(1);
+        v["root"]["children"][0]["props"]["style"]["gridColumnSpan"] = json!(2);
+        v["root"]["children"][0]["props"]["style"]["width"] = json!("3nm");
+        let ir = compile(v.clone()).unwrap();
+        assert_eq!(ir.features[0].at, [5, 5]);
+        assert_eq!(ir.bounds.min2, [7, 8]);
+        v["root"]["props"]["style"]["justifyItems"] = json!("start");
+        assert!(
+            compile(v)
+                .unwrap_err()
+                .diagnostic
+                .message
+                .contains("half-nanometre")
+        );
+    }
+    #[test]
+    fn grid_direct_input_checks_track_references_and_wide_arithmetic() {
+        for (key, value) in [
+            ("gridColumn", json!(0)),
+            ("gridRow", json!(2)),
+            ("gridColumn", json!(1.5)),
+            ("gridColumn", json!("1 / 3")),
+            ("gridRowSpan", json!(0)),
+            ("gridColumnSpan", json!(u64::MAX)),
+        ] {
+            let mut v = grid_declaration();
+            v["root"]["children"][0]["props"]["style"][key] = value;
+            let error = compile(v).unwrap_err();
+            assert_eq!(error.diagnostic.entity.as_deref(), Some("flex-direct/P"));
+        }
+        let mut v = grid_declaration();
+        v["root"]["props"]["style"]["width"] = json!("9007199254740991nm");
+        v["root"]["props"]["style"]["gridTemplateColumns"] =
+            json!(["9007199254740990nm", "9007199254740990nm"]);
+        assert!(
+            compile(v)
+                .unwrap_err()
+                .diagnostic
+                .message
+                .contains("tracks and gaps exceed")
+        );
+        for bad in [
+            json!([]),
+            json!("repeat(2, 4nm)"),
+            json!([null]),
+            json!(["-1nm"]),
+            json!(["1fr"]),
+        ] {
+            let mut v = grid_declaration();
+            v["root"]["props"]["style"]["gridTemplateRows"] = bad;
+            assert!(compile(v).is_err());
+        }
+    }
+    #[test]
+    fn grid_absolute_children_need_no_cell_and_cannot_claim_tracks() {
+        let mut v = grid_declaration();
+        v["root"]["children"][0]["props"]["style"] = json!({
+            "position":"absolute","width":"2nm","height":"2nm","left":"-2nm","top":"0nm"
+        });
+        assert_eq!(compile(v.clone()).unwrap().features[0].at, [-1, 1]);
+        v["root"]["children"][0]["props"]["style"]["gridColumn"] = json!(1);
+        assert!(
+            compile(v)
+                .unwrap_err()
+                .diagnostic
+                .message
+                .contains("grid placement properties require")
+        );
     }
 }

@@ -1,4 +1,5 @@
 import React from 'react';
+import {GridPadRows, GridPinHeader} from './grid.tsx';
 import {Flex0402, FlexSoicRow} from './flex.tsx';
 import {Positioned0402} from './0402.tsx';
 import {USB4105Footprint} from './USB4105.tsx';
@@ -40,6 +41,8 @@ console.log(`${output}/usb4105.svg`);
 for (const [name, element] of [
   ['flex-0402', React.createElement(Flex0402)],
   ['flex-soic-row', React.createElement(FlexSoicRow)],
+  ['grid-pad-rows', React.createElement(GridPadRows)],
+  ['grid-pin-header', React.createElement(GridPinHeader)],
 ] as const) {
   const ir = await compileFootprint(element, {cwd: import.meta.dir + '/../..'});
   const svg = await footprintSvg(ir, {cwd: import.meta.dir + '/../..'});

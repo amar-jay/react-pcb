@@ -89,7 +89,7 @@ test('invalid flex input fails with scoped diagnostics and never silently shrink
     <Pad name="P" source={{file: 'pad.tsx', line: 9}} layers={['front-copper']} style={{width: '1mm', height: '1mm'}} />
   </Footprint>);
   const cases: [boolean, Record<string, unknown>, string][] = [
-    [false, {display: 'grid'}, 'display must be flex'],
+    [false, {display: 'block'}, 'display must be flex'],
     [false, {flexDirection: 'row-reverse'}, 'row or column'],
     [false, {gap: '-1mm'}, 'gap must not be negative'],
     [false, {gap: '1px'}, 'length requires'],

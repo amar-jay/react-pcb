@@ -101,10 +101,10 @@ Acceptance: a two-pad passive and an SOIC-style pad row compile to analytically 
 
 ### 5. Restricted Grid
 
-- [ ] Implement explicit physical track sizes, row/column assignments, and spans.
-- [ ] Specify alignment within cells and reject invalid or missing track references.
-- [ ] Keep repeated-track syntax restricted and unambiguous if introduced.
-- [ ] Exercise layouts with two-sided pad rows and a small pin-header array.
+- [x] Implement explicit physical track sizes, row/column assignments, and spans.
+- [x] Specify alignment within cells and reject invalid or missing track references.
+- [x] Use explicit track arrays; defer repeated-track strings and implicit tracks.
+- [x] Exercise layouts with two-sided pad rows and a small pin-header array.
 
 Acceptance: fixture assertions verify every pad center, size, pitch, and bounds. Grid and explicit-coordinate versions produce equivalent physical geometry.
 
