@@ -1,4 +1,4 @@
-import {resolve} from 'node:path';
+import { resolve } from 'node:path';
 import tailwind from 'bun-plugin-tailwind';
 
 export const frontendEntry = resolve(import.meta.dir, 'index.html');
@@ -10,13 +10,15 @@ export async function bundleFrontend(outdir?: string) {
     target: 'browser',
     compile: true,
     minify: true,
-    define: {'process.env.NODE_ENV': '"production"'},
+    define: { 'process.env.NODE_ENV': '"production"' },
     plugins: [tailwind],
-    ...(outdir ? {outdir} : {}),
+    ...(outdir ? { outdir } : {}),
   });
-  if (!result.success) throw new AggregateError(result.logs, 'Preview frontend build failed');
-  const html = result.outputs.find(output => output.path.endsWith('.html'));
-  if (!html) throw new Error('Preview frontend build did not produce index.html');
+  if (!result.success)
+    throw new AggregateError(result.logs, 'Preview frontend build failed');
+  const html = result.outputs.find((output) => output.path.endsWith('.html'));
+  if (!html)
+    throw new Error('Preview frontend build did not produce index.html');
   return html.text();
 }
 

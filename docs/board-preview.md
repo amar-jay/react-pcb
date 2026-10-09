@@ -9,6 +9,8 @@ The viewer, HTML export, entry worker, watch logic and local server live in the
 [`@react-pcb/preview` workspace package](../packages/preview/README.md). It depends
 on `@react-pcb/core`; core has no dependency on the preview package. Board authoring,
 compilation and the Rust SVG projection remain in core.
+The browser UI uses React, Tailwind CSS, and shadcn controls from `@amarjay-ui`.
+Bun bundles its HTML entry for development and for production export.
 
 ```sh
 # Local preview; open the printed URL (default http://127.0.0.1:3000).
@@ -24,6 +26,11 @@ The default export destination is `dist/index.html`. `--port 0` lets the OS choo
 an available port. The server binds to localhost and stops on Ctrl+C. Static
 exports include all scene data, styles and viewer code, with no CDN, browser-side
 compiler, network dependency, or asset directory required.
+
+`bun run preview:build` builds the React site shell into `dist/`. It can load board
+data when hosted alongside the preview API. Use `board:build` to embed a particular
+board in a file that opens directly in a browser. Both use Bun's standalone HTML
+bundler, including local fonts.
 
 ## Board entry contract
 
@@ -63,10 +70,19 @@ in the source tree. Programmatic callers can set `cwd` for another Rust workspac
   the board layer set; their spelling does not determine side or purpose. Front
   copper/front silkscreen, drills and references start visible. Inner/back copper
   and other technical layers start hidden.
+- Layer controls are grouped into copper, technical front/back pairs, and overlays.
+  Collapsible groups keep large layer sets manageable. The board overview shows
+  dimensions, placement counts, and the ordered material stackup.
 - Zoom with the buttons or wheel, drag to pan, and use **Fit board** to restore the
   current board/geometry bounds. Inspect a part by clicking it or selecting it from
   the list. The inspector shows placement, footprint, connections and manufacturing
   check coverage.
+  Canvas rulers and cursor coordinates are in millimetres and follow pan, zoom,
+  and resizing. Inspector values retain the board's declared units.
+- Use the **Layers** and **Parts** navigation controls, search by reference,
+  footprint, value, MPN, or manufacturer, and switch between light and dark themes.
+  The workspace stacks its canvas, navigation, and inspector on mobile. Focus the
+  canvas to pan with arrow keys, zoom with `+`/`-`, or fit the board with `F`.
 - Highlight a net from the selector or a part's connection list. Highlighting uses
   canonical logical-pin-to-pad bindings and connection IDs; it does not imply a
   routed trace.
@@ -77,8 +93,9 @@ in the source tree. Programmatic callers can set `cwd` for another Rust workspac
   footprints without canonical physical geometry stay listed with explicit
   warnings; the preview does not invent pad geometry for them.
 - Save the compiled result as JSON or the full projection as SVG. The saved SVG
-  contains every declared layer/overlay; current visibility, highlighting and zoom
+  contains every declared layer/overlay; viewer colors, visibility, highlighting and zoom
   are viewer state rather than changes to canonical geometry or the saved SVG.
+  Both downloads are in the **Export** menu.
 
 ## Geometry and serialization
 
@@ -126,8 +143,9 @@ last valid board stays visible and is marked as the last successful build. If th
 first build fails, the server still runs and displays the error. Fixing the source
 or creating a missing imported file triggers recovery. Layer choices, zoom, net
 highlighting and selection survive successful updates where their IDs still exist.
-The browser retries after a disconnected server. This is recompilation and live
-viewer refresh, rather than React component hot-module replacement.
+The browser retries after a disconnected server. Board source changes use
+recompilation and live viewer refresh. Edits to the React UI and styles use Bun's
+frontend HMR; they do not require restarting the compiler or preview server.
 
 Files loaded dynamically through filesystem calls or computed imports cannot be
 fully discovered statically. Add explicit files or directories:
@@ -186,7 +204,13 @@ Preview tests cover exact placement and board-layer binding, both sides, odd
 nanometre edges, unit conversion, stable and collision-free SVG IDs, forged
 realization rejection, safe offline serialization, transitive import updates,
 atomic exports, failed/initial builds, missing imports, dynamic data, source edits
-during compilation, HTTP responses and server cleanup. CI runs these through
+during compilation, HTML bundling, served frontend assets, HTTP responses and
+server cleanup. CI runs these through
 `bun run check` and exports the basic board as an additional artifact-generation
 check. Desktop/mobile browser inspection verifies live refresh, preserved controls,
-zoom/pan, part selection, net highlighting and error recovery.
+zoom/pan, part selection, net highlighting, search, themes, export menus and error
+recovery. Browser verification also opens the exported React HTML offline with
+no network requests and checks that React HMR preserves viewer controls. Ruler
+tests cover coordinate alignment, negative coordinates, fractional labels and
+unmeasurable canvases. Responsive browser checks include narrow mobile, tablet,
+and desktop widths.

@@ -1,5 +1,5 @@
-import {useEffect, useState} from 'react';
-import type {PreviewSnapshot} from '../../../index.ts';
+import { useEffect, useState } from 'react';
+import type { PreviewSnapshot } from '../../index.ts';
 
 function initialSnapshot(): PreviewSnapshot {
   const payload = document.getElementById('preview-data')?.textContent;
@@ -7,32 +7,54 @@ function initialSnapshot(): PreviewSnapshot {
     const parsed = JSON.parse(payload) as PreviewSnapshot | null;
     if (parsed) return parsed;
   }
-  return {entry: '', result: null, projection: null, error: null, version: -1, building: false, live: location.protocol !== 'file:'};
+  return {
+    entry: '',
+    result: null,
+    projection: null,
+    error: null,
+    version: -1,
+    building: false,
+    live: location.protocol !== 'file:',
+  };
 }
 
 /** One request at a time, canceled when the viewer unmounts or hot reloads. */
 export function usePreview() {
   const [snapshot, setSnapshot] = useState(initialSnapshot);
-  const [connection, setConnection] = useState<'connecting' | 'connected' | 'disconnected'>(snapshot.live ? 'connecting' : 'connected');
+  const [connection, setConnection] = useState<
+    'connecting' | 'connected' | 'disconnected'
+  >(snapshot.live ? 'connecting' : 'connected');
   useEffect(() => {
     if (!snapshot.live) return;
     const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout>;
     let version = snapshot.version;
     const get = async (path: string) => {
-      const response = await fetch(path, {cache: 'no-store', signal: controller.signal});
-      if (!response.ok) throw new Error(`Preview request failed (${response.status})`);
+      const response = await fetch(path, {
+        cache: 'no-store',
+        signal: controller.signal,
+      });
+      if (!response.ok)
+        throw new Error(`Preview request failed (${response.status})`);
       return response.json();
     };
     const poll = async () => {
       try {
-        const status = await get('/__preview/status') as {version: number; building: boolean};
+        const status = (await get('/__preview/status')) as {
+          version: number;
+          building: boolean;
+        };
         if (status.version !== version) {
-          const next = await get('/__preview/data') as PreviewSnapshot;
+          const next = (await get('/__preview/data')) as PreviewSnapshot;
           if (controller.signal.aborted) return;
           version = next.version;
           setSnapshot(next);
-        } else setSnapshot(previous => previous.building === status.building ? previous : {...previous, building: status.building});
+        } else
+          setSnapshot((previous) =>
+            previous.building === status.building
+              ? previous
+              : { ...previous, building: status.building },
+          );
         setConnection('connected');
       } catch {
         if (!controller.signal.aborted) setConnection('disconnected');
@@ -41,8 +63,11 @@ export function usePreview() {
       }
     };
     void poll();
-    return () => {controller.abort(); clearTimeout(timer);};
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+    };
     // Snapshot updates must not restart the polling loop.
   }, [snapshot.live]);
-  return {snapshot, connection};
+  return { snapshot, connection };
 }

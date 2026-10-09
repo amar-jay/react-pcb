@@ -5,6 +5,13 @@ the browser viewer, offline HTML generation, isolated JSX entry builds, file
 watching, local server, and CLI. It uses the public `@react-pcb/core` API for board
 compilation and SVG projection. Core does not depend on preview.
 
+The UI uses React, Bun's HTML bundler, Tailwind CSS, and shadcn components from
+the `@amarjay-ui` registry. It includes a board canvas, layer/overlay controls,
+searchable parts, an inspector, diagnostics, an export menu, and light/dark themes.
+The workbench groups layers into copper, technical front/back pairs, and overlays.
+Canvas rulers follow actual millimetre coordinates through pan and zoom; the
+inspector displays board dimensions and stackup or the selected part's details.
+
 From the repository root:
 
 ```sh
@@ -24,6 +31,43 @@ Default-export a synchronous board component or JSX element from your entry.
 Static export produces a single offline HTML file. Dev mode rebuilds imported
 board and footprint changes, preserves viewer controls, and displays build errors
 with the last successful board.
+
+## Frontend development and builds
+
+Run `board:dev` to work on the UI with a real board. Bun serves
+`src/frontend/index.html` and provides React HMR for frontend edits. Board edits
+compile separately and update the viewer through the preview API. Both preserve
+layer choices, zoom/pan, selection, and net highlighting.
+
+```sh
+# Build the React site shell into the repository's dist/ directory.
+bun run preview:build
+# Embed a compiled board in the same React UI, also in dist/ by default.
+bun run board:build examples/basic.tsx
+```
+
+The package's `bun run build` also writes to the repository's `dist/` directory.
+The site shell loads board data from `/__preview/*` when hosted with the preview
+server. For an HTML file that opens directly with a board already loaded, use
+`board:build`. Production HTML inlines React, styles, icons, and local fonts; no
+asset directory or CDN is needed.
+
+`components.json` configures the registry and component aliases. Registry source
+lives in `src/frontend/components/ui`; workbench components, hooks, and styles
+live alongside it. Styles are separated by shell, navigation, canvas, and inspector
+under `src/frontend/styles/`, with shared theme tokens in `styles.css`.
+Add controls from the package directory:
+
+```sh
+bunx --bun shadcn@latest registry add @amarjay-ui
+bunx --bun shadcn@latest add @amarjay-ui/button
+```
+
+The checked-in root and package `bunfig.toml` files enable `bun-plugin-tailwind`
+for HTML routes. A host Bun project using the programmatic server also needs
+that plugin configured under `[serve.static]`.
+
+## Programmatic API
 
 ```tsx
 import {boardHtml, exportBoardPreview, startBoardPreview} from '@react-pcb/preview';

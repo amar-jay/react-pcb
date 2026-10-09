@@ -1,7 +1,7 @@
 import {resolve} from 'node:path';
 import {buildBoardPreview, type PreviewBuildOptions} from './build.ts';
 import type {PreviewSnapshot} from './index.ts';
-import {previewHtml} from './html.ts';
+import frontend from './frontend/index.html';
 import {fingerprint} from './watch.ts';
 
 export type PreviewServerOptions = PreviewBuildOptions & {
@@ -52,13 +52,15 @@ export async function startBoardPreview(entry: string, options: PreviewServerOpt
     })().finally(() => { running = null; });
     return running;
   };
-  const server = Bun.serve({hostname: '127.0.0.1', port: options.port ?? 3000, fetch(request) {
+  const server = Bun.serve({hostname: '127.0.0.1', port: options.port ?? 3000,
+    routes: {'/': frontend, '/index.html': frontend},
+    development: {hmr: true, console: true},
+    fetch(request) {
     const path = new URL(request.url).pathname;
     const headers = {'Cache-Control': 'no-store'};
     if (request.method !== 'GET') return new Response('Method not allowed', {status: 405, headers});
     if (path === '/__preview/status') return Response.json({version: snapshot.version, building: snapshot.building}, {headers});
     if (path === '/__preview/data') return Response.json(snapshot, {headers});
-    if (path === '/' || path === '/index.html') return new Response(previewHtml(snapshot), {headers: {...headers, 'Content-Type': 'text/html; charset=utf-8'}});
     return new Response('Not found', {status: 404, headers});
   }});
   const timer = setInterval(async () => {

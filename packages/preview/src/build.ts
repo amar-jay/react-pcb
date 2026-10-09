@@ -41,7 +41,7 @@ export async function exportBoardPreview(entry: string, output = 'dist/index.htm
   await mkdir(dirname(destination), {recursive: true});
   const temporary = `${destination}.${crypto.randomUUID()}.tmp`;
   try {
-    await Bun.write(temporary, previewHtml({result: build.result, projection: build.projection, error: null, entry: resolve(entry), version: 1, building: false, live: false}));
+    await Bun.write(temporary, await previewHtml({result: build.result, projection: build.projection, error: null, entry: resolve(entry), version: 1, building: false, live: false}));
     await rename(temporary, destination);
   } finally { await rm(temporary, {force: true}); }
   return destination;

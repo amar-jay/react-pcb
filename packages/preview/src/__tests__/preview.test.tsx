@@ -65,6 +65,8 @@ test('offline HTML embeds the actual board and safely handles markup in metadata
   expect(parsed.live).toBe(false);
   expect(parsed.projection.svg).toContain('data-part-id="P1"');
   expect(html).not.toContain('<script src=');
+  expect(html).not.toContain('data-bun-dev-server-script');
+  expect(html).toContain('data:font/woff2;base64,');
   expect(html).toContain('Save SVG');
 });
 
@@ -165,8 +167,11 @@ test('workspace CLI exports HTML and serves the board through the installed prev
       new Promise<never>((_,reject) => { timeout = setTimeout(() => reject(new Error('Preview CLI did not start')),10000); }),
     ]);
     reader.releaseLock();
-    expect(await (await fetch(url)).text()).toContain('Preview fixture');
+    const shell = await (await fetch(url)).text();
+    expect(shell).toContain('id="root"');
+    expect(shell).toContain('data-bun-dev-server-script');
     const state = await (await fetch(new URL('/__preview/data',url))).json();
+    expect(state.result.ir.board.metadata.title).toBe('Preview fixture');
     expect(state.error).toBeNull();
     expect(state.result.ir.parts[0].id).toBe('C1');
   } finally {
@@ -182,8 +187,15 @@ test('live preview reloads imported geometry and recovers from compiler, syntax,
   try {
     expect(server.snapshot.error).toBeNull();
     const response = await fetch(server.url);
-    expect(response.headers.get('cache-control')).toBe('no-store');
-    expect(await response.text()).toContain('preview-data');
+    const shell = await response.text();
+    expect(shell).toContain('preview-data');
+    const stylesheet = shell.match(/<link rel="stylesheet" href="([^"]+)"/)![1]!;
+    const script = shell.match(/src="([^"]+)" data-bun-dev-server-script/)![1]!;
+    const css = await fetch(new URL(stylesheet,server.url));
+    expect(css.status).toBe(200);
+    expect(await css.text()).toContain('.workbench-app');
+    expect((await fetch(new URL(script,server.url))).status).toBe(200);
+    expect((await fetch(new URL('/__preview/data',server.url))).headers.get('cache-control')).toBe('no-store');
     expect((await fetch(new URL('/missing',server.url))).status).toBe(404);
     expect((await fetch(server.url,{method:'POST'})).status).toBe(405);
     await Bun.write(join(directory,'footprint.ts'),pad(3));

@@ -1,1 +1,127 @@
+@import "@fontsource/ibm-plex-sans/latin-400.css";
+@import "@fontsource/ibm-plex-sans/latin-500.css";
+@import "@fontsource/ibm-plex-sans/latin-600.css";
+@import "@fontsource/ibm-plex-mono/latin-400.css";
 @import "tailwindcss";
+@import "./styles/workbench.css";
+@import "./styles/navigation.css";
+@import "./styles/canvas.css";
+@import "./styles/inspector.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --font-sans: "IBM Plex Sans", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--foreground);
+  --color-popover: var(--card);
+  --color-popover-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--muted);
+  --color-accent-foreground: var(--foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--border);
+  --color-ring: var(--primary);
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+}
+
+:root {
+  color-scheme: light;
+  --background: #f3f4f7;
+  --foreground: #252735;
+  --card: #fff;
+  --primary: #555bd5;
+  --primary-foreground: #fff;
+  --secondary: #eeeffb;
+  --secondary-foreground: #555bd5;
+  --muted: #f0f1f5;
+  --muted-foreground: #727684;
+  --destructive: #b94748;
+  --border: #e4e6ed;
+  --success: #428078;
+  --panel: #fff;
+  --canvas: #eef0f4;
+  --canvas-dot: #c9cdd8;
+  --canvas-text: #727684;
+  font-family: "IBM Plex Sans", sans-serif;
+  color: var(--foreground);
+  background: var(--background);
+  font-size: 14px;
+  line-height: 1.5;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #17191f;
+  --foreground: #e4e5ed;
+  --card: #21242c;
+  --primary: #9ca0ff;
+  --primary-foreground: #1c1b32;
+  --secondary: #2d2d43;
+  --secondary-foreground: #b7bafb;
+  --muted: #292d37;
+  --muted-foreground: #a2a7b5;
+  --destructive: #f08986;
+  --border: #343844;
+  --success: #75bcb0;
+  --panel: #21242c;
+  --canvas: #1b1e26;
+  --canvas-dot: #363b48;
+  --canvas-text: #929aaa;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    border-color: var(--border);
+  }
+  body {
+    margin: 0;
+  }
+  button,
+  input,
+  select {
+    font: inherit;
+  }
+  button,
+  summary,
+  select {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: default;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  p,
+  dl,
+  dd {
+    margin: 0;
+  }
+  [hidden] {
+    display: none !important;
+  }
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 3px;
+  }
+  ::selection {
+    background: #b9cdf5;
+    color: #17243b;
+  }
+}

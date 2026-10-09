@@ -29,10 +29,14 @@ bun run board:build examples/basic.tsx --out dist/index.html
 
 The [`@react-pcb/preview` package](packages/preview/README.md) owns the board viewer,
 HTML export, and local preview server. It includes layer toggles, zoom/pan, part
-inspection, net highlighting, and compiler/manufacturing diagnostics. Dev mode reloads imported footprint changes
+inspection, searchable parts, net highlighting, and compiler/manufacturing
+diagnostics in a responsive React UI with light/dark themes and Amarjay shadcn
+controls. Dev mode uses Bun's HTML bundler for UI HMR and reloads imported footprint changes
 and shows compile errors while keeping the last valid board. See the
 [board preview guide](docs/board-preview.md) for entry exports, watch options and
 the programmatic API.
+
+`bun run preview:build` builds the React site shell into `dist/`.
 
 **Illustrative JSX API**
 
