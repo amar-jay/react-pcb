@@ -6,7 +6,7 @@ import type {PreviewSnapshot} from './index.ts';
 import {previewHtml} from './html.ts';
 
 export type PreviewBuildOptions = Pick<CompileOptions, 'cwd' | 'command'>;
-export type PreviewBuild = Pick<PreviewSnapshot, 'result' | 'projection' | 'error'> & {
+export type PreviewBuild = Pick<PreviewSnapshot, 'result' | 'projection' | 'error' | 'buildDiagnostics'> & {
   dependencies: string[];
   directories: string[];
   inputs: Record<string, string>;

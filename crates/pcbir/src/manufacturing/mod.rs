@@ -1,8 +1,10 @@
 //! Profile-driven footprint checks. Reports retain explicit coverage and never
 //! claim board-level DRC, land-pattern verification, or fabrication approval.
+mod board;
 mod geometry;
 use crate::physical::{Feature, PhysicalFootprint, Purpose, Role};
 use crate::{CompileError, Diagnostic};
+pub use board::{BoardReport, BoardValidationInput, validate_board};
 use geometry::Solid;
 use serde::{Deserialize, Serialize};
 
@@ -455,10 +457,10 @@ pub fn validate(footprint: &PhysicalFootprint, profile: &Profile) -> Result<Repo
     let mut unverified = Check::new("unverified");
     for message in [
         "manufacturer land-pattern provenance and tolerances are not verified by geometry checks",
-        "board-level spacing, net-aware exceptions, board edges, inter-part courtyards, and single-copper-layer role aliases are not checked",
+        "standalone footprint checks do not evaluate placement, net bindings, board edges, or inter-part courtyards; inspect the board manufacturing report",
         "mask/paste process suitability, paste area ratios, NPTH copper isolation, plating tolerances, and 3D package bodies are not checked",
         "board mask expansion metadata is not applied; explicit physical openings remain authoritative",
-        "spacing treats distinct copper features as separate regardless of logical pin/net binding",
+        "footprint-local spacing treats distinct features separately; board checks resolve concrete layers and pad net bindings",
     ] {
         unverified.skip(message, &footprint.key);
     }

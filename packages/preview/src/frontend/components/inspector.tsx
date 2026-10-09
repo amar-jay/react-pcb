@@ -42,6 +42,7 @@ export function Inspector({
   const outline = ir.regions[ir.board.outline]?.geometry;
   const stackup = ir.board.layers.stackup.entries;
   const copper = stackup.filter((layer) => layer.kind === 'copper');
+  const boardReport = snapshot.result?.boardManufacturingReport;
   if (!part)
     return (
       <>
@@ -90,6 +91,32 @@ export function Inspector({
           <MousePointer2 size={16} />
           <p>Select a part on the board or in the parts list to inspect it.</p>
         </div>
+        {boardReport && (
+          <section className="inspector-section board-check-section">
+            <h4>
+              {snapshot.error ? 'Last successful board checks' : 'Board checks'}
+            </h4>
+            <dl className="board-checks">
+              {boardReport.checks
+                .filter((check) => check.id !== 'unverified')
+                .map((check) => (
+                  <div className="detail-row" key={check.id}>
+                    <dt>
+                      {check.id === 'board-copper-spacing'
+                        ? 'Copper spacing'
+                        : 'Inter-part courtyards'}
+                    </dt>
+                    <dd data-status={check.status}>
+                      {check.status.replaceAll('-', ' ')}
+                    </dd>
+                  </div>
+                ))}
+            </dl>
+            <p className="scope-note">
+              Placed copper and declared courtyard geometry.
+            </p>
+          </section>
+        )}
         <section className="inspector-section stackup-section">
           <h4>
             Layer stackup <small>Front → back</small>
@@ -204,7 +231,7 @@ export function Inspector({
         </div>
       </section>
       <section className="inspector-section manufacturing-section">
-        <h4>Manufacturing checks</h4>
+        <h4>Footprint checks</h4>
         {report ? (
           <details
             className="manufacturing-report"

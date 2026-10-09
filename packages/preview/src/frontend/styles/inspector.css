@@ -361,6 +361,16 @@
 .checks-list dd[data-status="passed"] {
   color: var(--success);
 }
+.board-checks dd[data-status="passed"] {
+  color: var(--success);
+}
+.board-checks dd[data-status="failed"] {
+  color: var(--destructive);
+}
+.board-checks dd[data-status="partial"],
+.board-checks dd[data-status="skipped"] {
+  color: var(--muted-foreground);
+}
 .checks-list dd[data-status="failed"] {
   color: var(--destructive);
 }
@@ -411,9 +421,13 @@
   }
   #part-details[data-kind="board"] .stackup-section {
     grid-column: 2;
-    grid-row: 1 / 4;
+    grid-row: 1 / 5;
     border: none;
     margin: 0;
     padding: 0;
+  }
+  #part-details[data-kind="board"] .board-check-section {
+    grid-column: 1;
+    margin: 0;
   }
 }

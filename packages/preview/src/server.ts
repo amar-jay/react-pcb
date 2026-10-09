@@ -34,7 +34,7 @@ export async function startBoardPreview(entry: string, options: PreviewServerOpt
           build = {result: null, projection: null, error: String(error), dependencies: [absolute], directories: [], inputs: {}};
         }
         if (stopped) break;
-        snapshot = {...snapshot, version: snapshot.version + 1, building: false, error: build.error,
+        snapshot = {...snapshot, version: snapshot.version + 1, building: false, error: build.error, buildDiagnostics: build.buildDiagnostics ?? [],
           ...(build.result && build.projection ? {result: build.result, projection: build.projection} : {})};
         const paths = new Set([...build.dependencies, ...build.directories, ...extra]);
         if (build.error) for (const path of files.keys()) paths.add(path);

@@ -1,6 +1,7 @@
 import {compilerError} from '../compiler/diagnostics.ts';
 import type {CompilerDiagnostic} from '../compiler/diagnostics.ts';
 import type {PhysicalFootprint, PhysicalLength} from './physical.ts';
+import type {BoardIr} from '../ir/index.ts';
 
 /** Explicit user-selected process limits; no fabricator defaults are inferred. */
 export type ManufacturingProfileInput = Readonly<{
@@ -42,6 +43,18 @@ export type ManufacturingReport = Readonly<{
   complete: false;
   checks: readonly ManufacturingCheck[];
 }>;
+export type BoardManufacturingReport = Omit<ManufacturingReport, 'footprint'> & Readonly<{board: string}>;
+
+/** Inspect exact placed copper and declared courtyards without mutating board IR. */
+export async function validateBoardManufacturing(board: BoardIr, profile: ManufacturingProfileInput,
+  options: {cwd?: string; command?: readonly string[]} = {}): Promise<BoardManufacturingReport> {
+  const process = Bun.spawn([...(options.command ?? ['cargo', 'run', '--quiet', '-p', 'pcbir', '--', 'validate-board'])], {
+    cwd: options.cwd, stdin: new Blob([JSON.stringify({board, profile})]), stdout: 'pipe', stderr: 'pipe',
+  });
+  const [stdout, stderr, code] = await Promise.all([new Response(process.stdout).text(), new Response(process.stderr).text(), process.exited]);
+  if (code !== 0) throw compilerError(stderr, code);
+  return JSON.parse(stdout) as BoardManufacturingReport;
+}
 
 /** Inspect canonical geometry without altering it. Rule violations are returned
  * in the report; malformed geometry or profile inputs reject with PcbCompileError. */

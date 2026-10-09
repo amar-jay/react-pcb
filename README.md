@@ -16,7 +16,9 @@ bun run footprints:inspect /tmp/react-pcb-footprints
 ```
 
 The basic example compiles three physical footprint definitions and returns scoped
-manufacturing reports. The inspection command writes standalone JSON/SVG fixtures,
+footprint and board manufacturing reports. Board checks enforce placed copper
+spacing and same-side inter-part courtyard reservations using the selected profile.
+The inspection command writes standalone JSON/SVG fixtures,
 selected manufacturing reports, and an `index.html` with semantic layer toggles.
 Illustrative dimensions and limits do not establish fabrication approval.
 

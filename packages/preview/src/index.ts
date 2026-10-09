@@ -1,5 +1,5 @@
 import type {ReactNode} from 'react';
-import {compile, boardSvg, type CompileOptions, type CompileResult, type BoardProjection} from '@react-pcb/core';
+import {compile, boardSvg, type CompileOptions, type CompileResult, type BoardProjection, type CompilerDiagnostic} from '@react-pcb/core';
 import {previewHtml} from './html.ts';
 
 export type PreviewSnapshot = {
@@ -7,6 +7,8 @@ export type PreviewSnapshot = {
   result: CompileResult | null;
   projection: BoardProjection | null;
   error: string | null;
+  /** Findings from the latest failed build, separate from retained last-good scene data. */
+  buildDiagnostics?: readonly CompilerDiagnostic[];
   version: number;
   building: boolean;
   live: boolean;

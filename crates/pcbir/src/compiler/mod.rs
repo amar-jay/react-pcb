@@ -13,7 +13,7 @@ use serde_json::Value;
 mod constraints;
 mod layers;
 mod parse;
-mod validate;
+pub(crate) mod validate;
 
 use parse::{constraint_key, parse_board, parse_part, parse_units};
 use validate::{validate_instances, validate_route_endpoint};
@@ -28,6 +28,7 @@ pub struct CompileOutput {
     pub diagnostics: Vec<Diagnostic>,
     pub compiler_diagnostics: Vec<Diagnostic>,
     pub manufacturing_reports: BTreeMap<String, crate::manufacturing::Report>,
+    pub board_manufacturing_report: Option<crate::manufacturing::BoardReport>,
 }
 
 #[derive(Debug, Serialize)]
@@ -220,36 +221,49 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
                     .with_entity(key));
             }
         }
-        if let Some(index) = diagnostics
-            .iter()
-            .position(|d| matches!(d.severity, crate::Severity::Error))
-        {
-            let fatal = diagnostics.remove(index);
-            let mut previous = context.compiler_diagnostics;
-            previous.extend(diagnostics);
-            return Err(CompileError::diagnostic(fatal).with_diagnostics(previous));
-        }
     }
-
+    let ir = BoardIr {
+        schema_version: SCHEMA_VERSION,
+        revision: Revision(transaction.base_revision.unwrap_or(0) + 1),
+        units,
+        board,
+        component_definitions: context.component_definitions,
+        parts: context.component_instances,
+        footprint_definitions: context.footprint_definitions,
+        nets: context.nets.into_values().collect(),
+        route_constraints: context.physical.routes,
+        differential_pairs: context.physical.pairs,
+        zones: context.physical.zones,
+        keepouts: context.physical.keepouts,
+        regions: context.physical.regions,
+    };
+    let board_manufacturing_report = if let Some(profile) = &ir.board.manufacturing_profile {
+        let report = crate::manufacturing::validate_board(&ir, profile)?;
+        diagnostics.extend(
+            report
+                .checks
+                .iter()
+                .flat_map(|check| check.diagnostics.iter().cloned()),
+        );
+        Some(report)
+    } else {
+        None
+    };
+    if let Some(index) = diagnostics
+        .iter()
+        .position(|d| matches!(d.severity, crate::Severity::Error))
+    {
+        let fatal = diagnostics.remove(index);
+        let mut previous = context.compiler_diagnostics;
+        previous.extend(diagnostics);
+        return Err(CompileError::diagnostic(fatal).with_diagnostics(previous));
+    }
     Ok(CompileOutput {
-        ir: BoardIr {
-            schema_version: SCHEMA_VERSION,
-            revision: Revision(transaction.base_revision.unwrap_or(0) + 1),
-            units,
-            board,
-            component_definitions: context.component_definitions,
-            parts: context.component_instances,
-            footprint_definitions: context.footprint_definitions,
-            nets: context.nets.into_values().collect(),
-            route_constraints: context.physical.routes,
-            differential_pairs: context.physical.pairs,
-            zones: context.physical.zones,
-            keepouts: context.physical.keepouts,
-            regions: context.physical.regions,
-        },
+        ir,
         diagnostics,
         compiler_diagnostics: context.compiler_diagnostics,
         manufacturing_reports,
+        board_manufacturing_report,
     })
 }
 

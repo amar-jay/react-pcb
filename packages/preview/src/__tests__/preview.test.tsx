@@ -261,3 +261,40 @@ test('a dependency edited during the first compile triggers a fresh build before
     await server.stop();await rm(directory,{recursive:true,force:true});
   }
 },20000);
+
+test('board collisions reach live diagnostics on initial failure and stale-scene rebuilds, then clear on recovery', async () => {
+  const {directory,entry} = await fixture();
+  const board = (x:number) => `import React from 'react';
+import {Board,Part,part,net,rect,defineLayerSet,mechanicalLayer,definePhysicalFootprint} from '@react-pcb/core';
+import {testLayers} from '../packages/preview/src/__tests__/fixtures.ts';
+const layers=defineLayerSet({...testLayers,technical:[...testLayers.technical,mechanicalLayer({id:'reserved/front',purpose:'courtyard',side:'front'})]});
+const fp=definePhysicalFootprint({key:'collision:land',features:[
+{id:'P',purpose:'pad',at:['0mm','0mm'],shape:{kind:'rect',size:['1mm','1mm']},layers:['front-copper']},
+{id:'court',purpose:'courtyard',at:['0mm','0mm'],shape:{kind:'rect',size:['2mm','2mm']},layers:['front-courtyard'],stroke:'0.05mm'}]});
+export default function BoardView(){return <Board outline={rect(0,0,10,10)} layers={layers} manufacturingProfile={{schemaVersion:1,key:'preview:board',minCopperFeature:'0.1mm',minCopperSpacing:'0.2mm',minDrillDiameter:'0.1mm',minAnnularRing:'0mm',minCourtyardClearance:'0mm'}}>
+<Part id={part('A')} footprint={fp} at={[2,2]} connect={{P:net('A')}}/><Part id={part('B')} footprint={fp} at={[${x},2]} connect={{P:net('B')}}/></Board>;}`;
+  let server: Awaited<ReturnType<typeof startBoardPreview>> | undefined;
+  try {
+    await Bun.write(entry,board(2.5));
+    const failed = await buildBoardPreview(entry);
+    expect(failed.result).toBeNull();
+    expect(failed.buildDiagnostics?.filter(d=>d.code==='PCBMFG002')).toHaveLength(2);
+    server = await startBoardPreview(entry,{port:0,pollInterval:30});
+    const running = server;
+    expect(running.snapshot.result).toBeNull();
+    expect(running.snapshot.buildDiagnostics?.some(d=>d.help?.includes('board-copper-spacing'))).toBe(true);
+    await Bun.write(entry,board(6));
+    await until(()=>!running.snapshot.error && !!running.snapshot.result,'collision did not recover');
+    const good = running.snapshot.projection!.svg;
+    expect(running.snapshot.result!.boardManufacturingReport?.conformsToCheckedRules).toBe(true);
+    await Bun.write(entry,board(2.5));
+    await until(()=>!!running.snapshot.error,'collision rebuild did not fail');
+    expect(running.snapshot.projection!.svg).toBe(good);
+    const state = await (await fetch(new URL('/__preview/data',running.url))).json();
+    expect(state.buildDiagnostics.filter((d:{code:string})=>d.code==='PCBMFG002')).toHaveLength(2);
+    expect(state.buildDiagnostics.some((d:{help?:string})=>d.help?.includes('inter-part-courtyard'))).toBe(true);
+    await Bun.write(entry,board(6));
+    await until(()=>!running.snapshot.error,'collision rebuild did not recover');
+    expect(running.snapshot.buildDiagnostics).toEqual([]);
+  } finally {await server?.stop();await rm(directory,{recursive:true,force:true});}
+},15000);

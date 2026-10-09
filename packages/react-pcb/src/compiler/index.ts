@@ -1,4 +1,4 @@
-import type {ManufacturingReport} from '../footprints/manufacturing.ts';
+import type {BoardManufacturingReport, ManufacturingReport} from '../footprints/manufacturing.ts';
 import type {ReactNode} from 'react';
 import {createDeclarationTransaction} from '../protocol/index.ts';
 import {renderDeclarations} from '../renderer/index.ts';
@@ -19,6 +19,7 @@ export type CompileOptions = {
 export type CompileResult = {
   ir: BoardIr;
   manufacturingReports: Readonly<Record<string, ManufacturingReport>>;
+  boardManufacturingReport: BoardManufacturingReport | null;
   diagnostics: CompilerDiagnostic[];
 };
 
@@ -54,10 +55,14 @@ export async function compile(
     });
   }
   const {compilerDiagnostics, ...result} = response;
+  if (result.ir.board.manufacturingProfile && !result.boardManufacturingReport) {
+    throw new PcbCompileError({code: 'PCBCLI002', severity: 'error', message: 'compiler does not provide board-level manufacturing checks for the selected profile', entity: result.ir.board.id,
+      help: 'Use a compiler that implements board-level manufacturing validation.'});
+  }
   if (!options.hideWarnings) {
     for (const diagnostic of compilerDiagnostics) {
       console.error(formatDiagnostic(diagnostic));
     }
   }
-  return {...result, diagnostics: [...compilerDiagnostics, ...result.diagnostics]};
+  return {...result, boardManufacturingReport: result.boardManufacturingReport ?? null, diagnostics: [...compilerDiagnostics, ...result.diagnostics]};
 }

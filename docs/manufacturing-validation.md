@@ -1,4 +1,4 @@
-# Footprint manufacturing validation
+# Footprint and board manufacturing validation
 
 Phase six adds explicit, scoped process checks to the footprint authoring system.
 A profile is supplied by the caller; no distributor or fabricator capabilities
@@ -30,13 +30,66 @@ The standalone CLI exits successfully when it produces such a report; callers
 must inspect `conformsToCheckedRules`. It exits unsuccessfully for malformed input.
 
 `<Board manufacturingProfile={profile}>` applies the same profile to each unique
-physical footprint definition during compilation. A checked-rule violation
+physical footprint definition and resolved placed geometry during compilation. A checked-rule violation
 rejects board compilation with `PCBMFG002`, preserving other findings and skipped
 checks in the error's `diagnostics`. Successful compilation returns
-`manufacturingReports`, keyed by footprint key, and includes skipped-check warnings
+`manufacturingReports`, keyed by footprint key, plus `boardManufacturingReport`, and includes skipped-check warnings
 in `diagnostics`. Legacy/library definitions without canonical physical geometry
 emit `PCBMFG003` and receive no fabricated report. An omitted board profile leaves
 structural checks active and selects no manufacturing policy.
+
+## Placed-board checks
+
+`boardManufacturingReport` is separate from reusable footprint reports. It retains
+the board ID, normalized profile, coverage counts, diagnostics, and
+`conformsToCheckedRules`; `complete` remains `false`. Without a board profile,
+the compiler returns `boardManufacturingReport: null`.
+
+`board-copper-spacing` compares placed pads and copper primitives on each shared
+concrete copper layer ID using `minCopperSpacing`. It checks both different parts
+and concrete-layer aliases within a part, including single-copper-layer boards.
+Actual world coordinates include quarter-turn rotation, back-side reflection,
+and board-unit conversion. Layer ID spelling and descriptive net names have no
+electrical meaning.
+
+Two pads bound through `pinMap` and `connections` to the same established net ID
+are exempt from board copper spacing. Unconnected pads, different net IDs with
+identical names, and copper graphics without an electrical binding remain checked.
+Standalone footprint spacing retains its conservative, net-independent contract.
+
+`inter-part-courtyard` runs when the profile selects `minCourtyardClearance`.
+It checks that declared courtyard reservations of different parts do not overlap
+on the same physical side, resolving side from concrete mechanical-layer metadata.
+Front and back reservations are checked independently. Courtyards already encode
+package enclosure margins: their shapes are compared at their declared centerlines,
+without applying `minCourtyardClearance` a second time. Touching boundaries pass;
+interior overlap fails, including when the parts share a net. Multiple outlines
+are compared individually, and overlapping outlines within one part do not create
+inter-part failures. Documentation stroke is not an additional reserved margin.
+
+Unplaced parts, unavailable physical geometry, and missing courtyards on a part's
+placement side produce explicit skipped/partial coverage. Declared courtyards on
+the opposite side are also checked when present; a through-hole pad alone does
+not establish a package body or courtyard on that side. No envelope is invented
+from pads or bounding boxes. Board edges, routed traces/vias, realized zones,
+board mask/paste checks, NPTH isolation, and 3D bodies remain unverified.
+
+For inspection without rejecting a valid IR document because of rule failures:
+
+```tsx
+import {validateBoardManufacturing} from '@react-pcb/core';
+
+const report = await validateBoardManufacturing(ir, profile);
+// Failed rules are returned in report.checks; malformed IR/profile rejects.
+```
+
+The CLI equivalent is `pcbir validate-board`, reading `{board: ir, profile}`.
+Rust callers use `manufacturing::validate_board`. The validator verifies stored
+realization against definitions and placements, validates IDs/references, and
+never modifies IR. Findings sort by stable part/feature/layer IDs; declaration
+reordering preserves the report. Board compilation collects footprint and board
+findings before rejecting selected-rule failures with `PCBMFG002`. The preview
+shows these failed-build diagnostics while retaining its last valid scene.
 
 The canonical board retains the selected profile as
 `board.manufacturingProfile`, including its stable `key`, schema version and
@@ -58,13 +111,13 @@ fabricator defaults are allowed.
 | `schemaVersion` | Required, exactly `1`; independent of footprint/board versions. |
 | `key` | Required nonempty stable policy ID. |
 | `minCopperFeature` | Required positive minimum smaller dimension of a copper primitive. |
-| `minCopperSpacing` | Required non-negative Euclidean separation of distinct copper primitives on shared semantic copper roles. |
+| `minCopperSpacing` | Required non-negative Euclidean separation: shared semantic roles in footprints; concrete copper layers and established pad-net exemptions on boards. |
 | `minDrillDiameter` | Required positive minimum tool diameter, including slot minor diameter. |
 | `minAnnularRing` | Required non-negative Euclidean margin between a plated pad's drill/slot and its actual copper shape. |
 | `minMaskExpansion` | Optional non-negative enclosure margin of mask apertures around each copper pad on its front/back sides. |
 | `minMaskWeb` | Optional non-negative separation between exposed mask apertures on each side. |
 | `minPasteFeature` | Optional positive minimum smaller dimension of a paste aperture. |
-| `minCourtyardClearance` | Optional non-negative enclosure margin to a courtyard's declared centerline. |
+| `minCourtyardClearance` | Optional non-negative enclosure margin to a courtyard's declared centerline; also selects inter-part courtyard overlap checks. |
 
 Omitted optional thresholds are explicitly skipped; they are not assumed zero.
 A selected check with no applicable entities is `not-applicable`. Boundary
@@ -86,9 +139,9 @@ required for a legitimate mechanical-only footprint.
 Copper spacing compares each pair that shares front, back or all-copper roles.
 Distinct feature IDs are treated separately even if a future board pin/net mapping
 joins them; the report states this conservative electrical assumption. It does
-not check distances between different placed parts. Standalone roles cannot
-identify front/back aliases on a single-copper-layer board; that board-level
-case is explicitly unverified.
+not check distances between different placed parts. The separate board report
+checks placed geometry, concrete layers, and stable pad-net bindings, including
+front/back copper aliases on a single-copper-layer board.
 
 Pad mask roles create nominal apertures using the pad's shape. Explicit
 `mask-opening` features contribute their own exact aperture shapes. Expansion
@@ -117,7 +170,8 @@ package-body geometry for this check. Missing applicable side outlines are
 skipped with an explicit reason. Multiple outlines are permitted, but each object
 must fit in one individual outline; union-of-outlines containment is not inferred.
 Through-hole copper is applicable on both sides. Real 3D bodies, assembly-height
-constraints and courtyard collisions between placed parts are unverified.
+constraints remain unverified. The board report checks declared courtyard
+collisions between different placed parts.
 
 ## Exact geometry and determinism
 
@@ -181,8 +235,10 @@ sources and the actual assembly/fabrication process before using a design.
 clearance. `inspectionProfile` names illustrative limits. `examples/basic.tsx`
 reuses it and selects an illustrative board profile with zero mask expansion
 for the USB/MCU's nominal openings. All three board footprints have canonical
-physical definitions and instance geometry. The board emits three scoped reports,
+physical definitions and instance geometry. The board emits three footprint reports and a board report,
 including warnings about remaining unverified coverage.
+The capacitor now sits at `[23, 18]` mm, outside the MCU courtyard. Its previous
+`[27, 18]` placement is a regression case that fails both new board checks.
 
 `bun run footprints:inspect` includes this fixture and writes per-fixture
 `.manufacturing.json` reports beside its JSON/SVG previews. The generic Grid/Flexbox
@@ -198,3 +254,8 @@ and generates the inspection artifacts. Tests cover exact boundaries and overflo
 round/slotted drills, curved containment, diagonal separation, both board sides,
 missing/unresolved geometry, malformed policies, shared masks, absent courtyards,
 odd-width strokes, immutable definitions and deterministic reports.
+`board-manufacturing.test.tsx` adds real C1/U1 collisions, exact board spacing and
+courtyard boundaries, stable net IDs, both sides, concrete layer aliases, curved
+reservations, missing coverage, unit conversion, and forged-realization rejection.
+Preview tests verify initial board failures, retained scenes and current diagnostics,
+and clearing findings after recovery.

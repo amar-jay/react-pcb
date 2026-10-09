@@ -103,7 +103,9 @@ function UsbController({ground, supply, vbus}: UsbControllerProps) {
         value="100nF"
         footprint={capacitorFootprint}
         pinMap={{1: '1', 2: '2'}}
-        at={[27, 18]}
+        // Clear the MCU's declared courtyard; the old [27, 18] placement
+        // overlapped its body and two copper pads.
+        at={[23, 18]}
         connect={{1: supply, 2: ground}}
       />
 

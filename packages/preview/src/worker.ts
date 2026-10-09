@@ -1,7 +1,7 @@
 import React from 'react';
 import {dirname, resolve} from 'node:path';
 import {pathToFileURL, fileURLToPath} from 'node:url';
-import {compile, boardSvg} from '@react-pcb/core';
+import {compile, boardSvg, PcbCompileError} from '@react-pcb/core';
 import type {PreviewBuild, PreviewBuildOptions} from './build.ts';
 import {fingerprint} from './watch.ts';
 
@@ -45,7 +45,9 @@ try {
   const projection = await boardSvg(result.ir, {cwd: options.cwd});
   response = {result, projection, error: null, dependencies: [], directories: [], inputs};
 } catch (error) {
-  response = {result: null, projection: null, error: error instanceof Error ? error.message : String(error), dependencies: [], directories: [], inputs};
+  response = {result: null, projection: null, error: error instanceof Error ? error.message : String(error),
+    buildDiagnostics: error instanceof PcbCompileError ? [...error.diagnostics, error.diagnostic] : [{code:'PCBPREVIEW003',severity:'error',message:error instanceof Error ? error.message : String(error),entity:null}],
+    dependencies: [], directories: [], inputs};
 }
 response.dependencies = [...dependencies].sort();
 response.directories = [...directories].sort();

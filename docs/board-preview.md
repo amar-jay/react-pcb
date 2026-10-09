@@ -92,6 +92,11 @@ in the source tree. Programmatic callers can set `cwd` for another Rust workspac
 - Read compiler, manufacturing and preview diagnostics. Unplaced parts and
   footprints without canonical physical geometry stay listed with explicit
   warnings; the preview does not invent pad geometry for them.
+  A selected board manufacturing profile checks placed copper spacing and
+  same-side inter-part courtyard overlaps. The overview distinguishes board
+  checks from the selected part's footprint checks. A failed build's findings
+  replace the diagnostic list while its last successful scene stays visible.
+  Errors appear before warnings; the build banner summarizes the first error.
 - Save the compiled result as JSON or the full projection as SVG. The saved SVG
   contains every declared layer/overlay; viewer colors, visibility, highlighting and zoom
   are viewer state rather than changes to canonical geometry or the saved SVG.

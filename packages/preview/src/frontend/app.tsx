@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import type { CompilerDiagnostic } from '@react-pcb/core';
 import {
   AlertCircle,
   AlertTriangle,
@@ -59,11 +60,31 @@ export function App() {
       ? ir.board.metadata.title
       : 'Board preview';
   const filename = snapshot.entry.split(/[\\/]/).pop() || 'Board JSX';
-  const findings = [
-    ...(snapshot.result?.diagnostics ?? []),
-    ...(snapshot.projection?.diagnostics ?? []),
-  ];
+  const findings: readonly CompilerDiagnostic[] = snapshot.error
+    ? snapshot.buildDiagnostics?.length
+      ? snapshot.buildDiagnostics
+      : [
+          {
+            code: 'PCBPREVIEW003',
+            severity: 'error',
+            message: snapshot.error,
+            entity: null,
+          },
+        ]
+    : [
+        ...(snapshot.result?.diagnostics ?? []),
+        ...(snapshot.projection?.diagnostics ?? []),
+      ];
   const errors = findings.filter((item) => item.severity === 'error').length;
+  const orderedFindings = [...findings].sort((a, b) =>
+    a.severity === b.severity ? 0 : a.severity === 'error' ? -1 : 1,
+  );
+  const firstBuildError = snapshot.buildDiagnostics?.find(
+    (item) => item.severity === 'error',
+  );
+  const buildErrorText = firstBuildError
+    ? `${firstBuildError.code}: ${firstBuildError.message}`
+    : snapshot.error;
   const warnings = findings.filter(
     (item) => item.severity === 'warning',
   ).length;
@@ -250,7 +271,7 @@ export function App() {
                 <AlertCircle />
                 <AlertTitle>Board compilation failed</AlertTitle>
                 <AlertDescription>
-                  <pre id="error-message">{snapshot.error}</pre>
+                  <pre id="error-message">{buildErrorText}</pre>
                   {ir && (
                     <p id="stale-label">
                       Showing the last successful build. Fix the source to
@@ -307,7 +328,7 @@ export function App() {
                 {!findings.length && (
                   <p className="empty-copy">No compiler findings.</p>
                 )}
-                {findings.map((item, index) => (
+                {orderedFindings.map((item, index) => (
                   <div
                     className="diagnostic"
                     key={`${item.code}:${item.entity}:${index}`}
