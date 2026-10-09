@@ -1,3 +1,4 @@
+#!/usr/bin/env bun
 import {exportBoardPreview} from './build.ts';
 import {startBoardPreview} from './server.ts';
 
@@ -9,7 +10,7 @@ let port = 3000;
 const watch: string[] = [];
 try {
   if (!['build', 'dev'].includes(mode ?? '') || !entry || entry.startsWith('--')) {
-    throw new Error('Usage: bun run board:build <board.tsx> [--out dist/index.html]\n       bun run board:dev <board.tsx> [--port 3000] [--watch path]');
+    throw new Error('Usage: react-pcb-preview build <board.tsx> [--out dist/index.html]\n       react-pcb-preview dev <board.tsx> [--port 3000] [--watch path]');
   }
   while (args.length) {
     const flag = args.shift();

@@ -5,6 +5,11 @@ server that recompiles when the board, its imported footprints/components, or th
 workspace compiler changes. Both modes use the same viewer and authoritative
 compiled PCB IR.
 
+The viewer, HTML export, entry worker, watch logic and local server live in the
+[`@react-pcb/preview` workspace package](../packages/preview/README.md). It depends
+on `@react-pcb/core`; core has no dependency on the preview package. Board authoring,
+compilation and the Rust SVG projection remain in core.
+
 ```sh
 # Local preview; open the printed URL (default http://127.0.0.1:3000).
 bun run board:dev examples/basic.tsx
@@ -140,7 +145,8 @@ leaves any existing destination unchanged; successful exports replace it atomica
 ## Programmatic API
 
 ```tsx
-import {boardHtml, boardSvg, compile, exportBoardPreview, startBoardPreview} from '@react-pcb/core';
+import {compile} from '@react-pcb/core';
+import {boardHtml, boardSvg, exportBoardPreview, startBoardPreview} from '@react-pcb/preview';
 import MyBoard from './board.tsx';
 
 await Bun.write('dist/index.html', await boardHtml(<MyBoard />, {cwd: process.cwd()}));
@@ -162,6 +168,12 @@ root; their `cwd` and `command` options select the compiler invocation. `boardSv
 also accepts its own command override. `startBoardPreview` returns its URL, latest
 snapshot and an async `stop()` method that releases the server and watch timer and
 waits for an active rebuild to finish.
+
+Import preview APIs from `@react-pcb/preview` instead of `@react-pcb/core`.
+`boardSvg` and its `BoardProjection` type remain available from core and are
+re-exported by preview for convenience. The package provides the
+`react-pcb-preview build <board.tsx>` and `react-pcb-preview dev <board.tsx>`
+executables; the root `board:build` and `board:dev` scripts call this executable.
 
 The Rust CLI exposes the projection directly: `pcbir board-svg < board-ir.json`
 returns `{svg, diagnostics}` JSON. `PCBPREVIEW001` means invalid preview input;

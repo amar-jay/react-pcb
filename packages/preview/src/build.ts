@@ -1,7 +1,7 @@
 import {mkdtemp, mkdir, rm, rename} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {resolve, dirname, join} from 'node:path';
-import type {CompileOptions} from '../compiler/index.ts';
+import type {CompileOptions} from '@react-pcb/core';
 import type {PreviewSnapshot} from './index.ts';
 import {previewHtml} from './html.ts';
 
@@ -11,7 +11,7 @@ export type PreviewBuild = Pick<PreviewSnapshot, 'result' | 'projection' | 'erro
   directories: string[];
   inputs: Record<string, string>;
 };
-export const compilerRoot = resolve(import.meta.dir, '../../../..');
+export const compilerRoot = resolve(import.meta.dir, '../../..');
 
 /** Fresh process per build prevents stale transitive imports and renderer state. */
 export async function buildBoardPreview(entry: string, options: PreviewBuildOptions = {}): Promise<PreviewBuild> {

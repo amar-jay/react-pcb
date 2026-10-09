@@ -27,8 +27,9 @@ bun run board:dev examples/basic.tsx
 bun run board:build examples/basic.tsx --out dist/index.html
 ```
 
-The board viewer includes layer toggles, zoom/pan, part inspection, net highlighting,
-and compiler/manufacturing diagnostics. Dev mode reloads imported footprint changes
+The [`@react-pcb/preview` package](packages/preview/README.md) owns the board viewer,
+HTML export, and local preview server. It includes layer toggles, zoom/pan, part
+inspection, net highlighting, and compiler/manufacturing diagnostics. Dev mode reloads imported footprint changes
 and shows compile errors while keeping the last valid board. See the
 [board preview guide](docs/board-preview.md) for entry exports, watch options and
 the programmatic API.

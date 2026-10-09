@@ -1,8 +1,7 @@
 import React from 'react';
 import {dirname, resolve} from 'node:path';
-import {pathToFileURL} from 'node:url';
-import {compile} from '../compiler/index.ts';
-import {boardSvg} from './index.ts';
+import {pathToFileURL, fileURLToPath} from 'node:url';
+import {compile, boardSvg} from '@react-pcb/core';
 import type {PreviewBuild, PreviewBuildOptions} from './build.ts';
 import {fingerprint} from './watch.ts';
 
@@ -24,7 +23,7 @@ try {
   const build = await Bun.build({entrypoints: [entry], target: 'bun', packages: 'external', plugins: [{
     name: 'pcb-preview-dependencies',
     setup(builder) {
-      builder.onResolve({filter: /^@react-pcb\/core$/}, () => ({path: resolve(import.meta.dir, '../index.ts')}));
+      builder.onResolve({filter: /^@react-pcb\/core$/}, () => ({path: fileURLToPath(import.meta.resolve('@react-pcb/core'))}));
       builder.onResolve({filter: /^\./}, args => {
         if (args.importer) directories.add(dirname(resolve(dirname(args.importer), args.path)));
         return undefined;

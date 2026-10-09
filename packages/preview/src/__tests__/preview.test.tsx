@@ -3,12 +3,26 @@ import React from 'react';
 import {mkdtemp, rm, mkdir} from 'node:fs/promises';
 import {existsSync} from 'node:fs';
 import {join, resolve} from 'node:path';
-import {Board, Part, boardHtml, boardSvg, buildBoardPreview, exportBoardPreview, startBoardPreview,
-  compile, definePhysicalFootprint, net, part, rect} from '../index.ts';
+import {Board, Part, compile, definePhysicalFootprint, net, part, rect} from '@react-pcb/core';
+import {boardHtml, boardSvg, buildBoardPreview, exportBoardPreview, startBoardPreview} from '@react-pcb/preview';
 import {testLayers} from './fixtures.ts';
 
 const cwd = resolve(import.meta.dir, '../../../..');
 const options = {cwd, hideWarnings: true};
+
+test('core can be bundled without loading preview or server code', async () => {
+  const loaded: string[] = [];
+  const build = await Bun.build({entrypoints: [Bun.resolveSync('@react-pcb/core', cwd)], target: 'bun', packages: 'external', plugins: [{
+    name: 'verify-core-boundary',
+    setup(builder) {
+      builder.onLoad({filter: /.*/}, args => { loaded.push(args.path); return undefined; });
+    },
+  }]});
+  expect(build.success).toBe(true);
+  expect(loaded.some(path => path.endsWith('/compiler/index.ts'))).toBe(true);
+  expect(loaded.some(path => path.includes('/packages/preview/') || path.includes('/src/preview/'))).toBe(false);
+});
+
 const footprint = definePhysicalFootprint({key:'preview:slot', features:[
   {id:'P',purpose:'pad',at:['1mm','2mm'],shape:{kind:'oval',size:['1mm','2mm']},layers:['front-copper','front-mask'],
     drill:{diameter:'0.6mm',slot:['0.6mm','1.6mm'],plated:true}},
@@ -75,7 +89,7 @@ test('projection preserves odd-nanometre edges, converts board units and separat
 const source = (title = 'Preview fixture', extraImport = '') => `
 import React from 'react';
 import {Board,Part,net,part,rect} from '@react-pcb/core';
-import {testLayers} from '../packages/react-pcb/src/__tests__/fixtures.ts';
+import {testLayers} from '../packages/preview/src/__tests__/fixtures.ts';
 import {footprint} from './footprint.ts';
 ${extraImport}
 export default function MyBoard(){return <Board outline={rect(0,0,20,20)} layers={testLayers} metadata={{title:${JSON.stringify(title)}}}>
@@ -120,6 +134,47 @@ async function until(predicate: () => boolean, message: string) {
     await Bun.sleep(50);
   }
 }
+
+test('workspace CLI exports HTML and serves the board through the installed preview package', async () => {
+  const {directory,entry} = await fixture();
+  let server: ReturnType<typeof Bun.spawn> | undefined;
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const output = join(directory,'cli','index.html');
+    const build = Bun.spawn([process.execPath,'run','board:build',entry,'--out',output], {cwd,stdout:'pipe',stderr:'pipe'});
+    const [stdout,stderr,code] = await Promise.all([new Response(build.stdout).text(),new Response(build.stderr).text(),build.exited]);
+    expect({code,stderr: code === 0 ? '' : stderr}).toEqual({code:0,stderr:''});
+    expect(stdout).toContain(output);
+    expect(await Bun.file(output).text()).toContain('Preview fixture');
+
+    const running = Bun.spawn([process.execPath,'run','board:dev',entry,'--port','0'], {cwd,stdout:'pipe',stderr:'pipe'});
+    server = running;
+    const reader = running.stdout.getReader();
+    const url = await Promise.race([
+      (async () => {
+        let text = '';
+        const decoder = new TextDecoder();
+        while (true) {
+          const {value,done} = await reader.read();
+          if (done) throw new Error('Preview CLI exited before serving a URL');
+          text += decoder.decode(value,{stream:true});
+          const match = text.match(/Board preview: (http:\/\/\S+)/);
+          if (match) return match[1]!;
+        }
+      })(),
+      new Promise<never>((_,reject) => { timeout = setTimeout(() => reject(new Error('Preview CLI did not start')),10000); }),
+    ]);
+    reader.releaseLock();
+    expect(await (await fetch(url)).text()).toContain('Preview fixture');
+    const state = await (await fetch(new URL('/__preview/data',url))).json();
+    expect(state.error).toBeNull();
+    expect(state.result.ir.parts[0].id).toBe('C1');
+  } finally {
+    clearTimeout(timeout);
+    if (server) {server.kill('SIGTERM'); await server.exited;}
+    await rm(directory,{recursive:true,force:true});
+  }
+},20000);
 
 test('live preview reloads imported geometry and recovers from compiler, syntax, and missing-import errors', async () => {
   const {directory,entry} = await fixture();

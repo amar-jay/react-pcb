@@ -6,7 +6,9 @@
     "moduleDetection": "force",
     "moduleResolution": "bundler",
     "paths": {
-      "@react-pcb/core": ["./packages/react-pcb/src/index.ts"]
+      "@react-pcb/core": ["./packages/react-pcb/src/index.ts"],
+      "@react-pcb/preview": ["./packages/preview/src/index.ts"],
+      "@preview/*": ["./packages/preview/src/frontend/*"]
     },
     "jsx": "react-jsx",
     "types": ["bun"],
