@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { BoardCanvas, type CanvasActions } from "./components/board-canvas.tsx";
 import { CanvasToolbar } from "./components/canvas-toolbar.tsx";
 import {
@@ -10,6 +11,7 @@ import { InspectorSheet } from "./components/inspector-sheet.tsx";
 import { NavigationPanel } from "./components/navigation-panel.tsx";
 import { PreviewStatus } from "./components/preview-status.tsx";
 import { SidebarProvider } from "./components/ui/sidebar";
+import { Toaster } from "./components/ui/sonner";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { WorkbenchCommand } from "./components/workbench-command.tsx";
 import { useBoardPreferences } from "./hooks/use-board-preferences.ts";
@@ -21,6 +23,8 @@ import {
 	analysisLayerColor,
 	exportBoardSvg,
 } from "./lib/scene-presentation.ts";
+
+const failureToastId = "compilation-failure";
 
 export function App() {
 	const { snapshot, connection } = usePreview();
@@ -36,7 +40,7 @@ export function App() {
 		setSelected(id);
 		if (id) setInspectorOpen(true);
 	};
-	const [theme, setTheme] = useState(() => {
+	const [theme, setTheme] = useState<"light" | "dark">(() => {
 		try {
 			return localStorage.getItem("react-pcb-theme") === "dark"
 				? "dark"
@@ -75,6 +79,7 @@ export function App() {
 			? ir.board.metadata.title
 			: "Board preview";
 	const findings = previewFindings(snapshot);
+	const retained = Boolean(ir);
 
 	useEffect(() => {
 		document.title = `${title} · react-pcb`;
@@ -93,14 +98,32 @@ export function App() {
 		if (net && !ir?.nets.some((item) => item.id === net)) setNet("");
 	}, [ir, selected, net]);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: Every build closes stale failure details, even when its error text is unchanged.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: Notify on every failed build, even when its error text is unchanged.
 	useEffect(() => {
 		setFailureOpen(false);
 		if (snapshot.error) {
-			setInspectorOpen(false);
-			setDiagnosticsOpen(false);
+			toast.error("Board compilation failed", {
+				id: failureToastId,
+				duration: Number.POSITIVE_INFINITY,
+				description: retained
+					? "Showing the last successful board. Your latest changes are not displayed."
+					: "Fix the compilation errors to display your board.",
+				action: {
+					label: "View errors",
+					onClick: () => setFailureOpen(true),
+				},
+			});
+		} else {
+			toast.dismiss(failureToastId);
 		}
-	}, [snapshot.version, snapshot.error]);
+	}, [snapshot.version, snapshot.error, retained]);
+
+	useEffect(
+		() => () => {
+			toast.dismiss(failureToastId);
+		},
+		[],
+	);
 
 	return (
 		<TooltipProvider delayDuration={350}>
@@ -209,6 +232,7 @@ export function App() {
 						/>
 					</main>
 				</SidebarProvider>
+				<Toaster theme={theme} position="top-center" closeButton richColors />
 				<BuildFailureDialog
 					open={failureOpen}
 					onOpenChange={setFailureOpen}
