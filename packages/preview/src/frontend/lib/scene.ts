@@ -72,7 +72,7 @@ export function sceneLayers(
       ? technicalName.charAt(0).toUpperCase() + technicalName.slice(1)
       : id;
     const color = overlay
-      ? ({ references: '#e8eddb', drills: '#263e34', constraints: '#c48bbc' }[
+      ? ({ references: '#e8eddb', drills: '#263e34', constraints: '#e879c9' }[
           id
         ] ?? '#a6adbd')
       : depth >= 0
@@ -85,7 +85,13 @@ export function sceneLayers(
           ? '#e8eddb'
           : technical?.kind === 'solder-mask'
             ? '#68aa98'
-            : '#a4abc5';
+            : technical?.kind === 'mechanical' &&
+                technical.purpose === 'fabrication'
+              ? '#67e8f9'
+              : technical?.kind === 'mechanical' &&
+                  technical.purpose === 'courtyard'
+                ? '#fb7185'
+                : '#a4abc5';
     return {
       key: `${overlay ? 'overlay' : 'layer'}:${id}`,
       id,

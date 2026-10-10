@@ -15,6 +15,10 @@ import type { BoardIr } from '@react-pcb/core';
 import type { SceneLayer } from '../lib/scene.ts';
 import { boardSize } from '../lib/scene.ts';
 import {
+  applyScenePresentation,
+  type ScenePresentation,
+} from '../lib/scene-presentation.ts';
+import {
   rulerTicks,
   measureDistance,
   type RulerTick,
@@ -46,6 +50,7 @@ type Props = {
   net: string;
   onSelect: (id: string) => void;
   statusControls: ReactNode;
+  presentation: ScenePresentation;
 };
 
 export function BoardCanvas({
@@ -58,6 +63,7 @@ export function BoardCanvas({
   net,
   onSelect,
   statusControls,
+  presentation,
 }: Props) {
   const scene = useRef<HTMLDivElement>(null);
   const shell = useRef<HTMLDivElement>(null);
@@ -208,17 +214,7 @@ export function BoardCanvas({
   useLayoutEffect(() => {
     const svg = getSvg();
     if (!svg || !ir) return;
-    for (const group of svg.querySelectorAll<SVGGElement>(
-      'g[data-layer-id],g[data-overlay]',
-    )) {
-      const key = `${group.dataset.layerId ? 'layer' : 'overlay'}:${group.dataset.layerId ?? group.dataset.overlay}`;
-      const layer = layers.find((layer) => layer.key === key);
-      group.style.display = (visibility[key] ?? layer?.visible) ? '' : 'none';
-      if (layer) {
-        group.style.fill = layer.color;
-        group.style.stroke = layer.color;
-      }
-    }
+    applyScenePresentation(svg, layers, visibility, presentation);
     const parts = new Map(ir.parts.map((part) => [part.id, part]));
     for (const feature of svg.querySelectorAll<SVGElement>('[data-part-id]')) {
       const part = parts.get(feature.dataset.partId!);
@@ -237,7 +233,16 @@ export function BoardCanvas({
         !!net && !matches && feature.tagName !== 'text',
       );
     }
-  }, [markup, ir, layers, visibility, selected, net]);
+  }, [
+    markup,
+    ir,
+    layers,
+    visibility,
+    selected,
+    net,
+    presentation.view,
+    presentation.theme,
+  ]);
 
   useEffect(() => {
     if (!shell.current) return;
@@ -322,8 +327,9 @@ export function BoardCanvas({
         )}
         <div
           id="scene"
+          data-view={presentation.view}
           ref={scene}
-          className="absolute top-[66px] right-[42px] bottom-[54px] left-[54px] touch-none cursor-grab data-[measuring=true]:cursor-crosshair data-[measuring=true]:[&_[data-part-id]]:cursor-crosshair data-[dragging=true]:cursor-grabbing focus-visible:rounded-[2px] focus-visible:outline-offset-[5px] max-[701px]:top-[72px] max-[701px]:right-3 max-[701px]:bottom-[62px] max-[701px]:left-10 [&_svg]:block [&_svg]:size-full [&_svg]:overflow-visible [&_svg]:drop-shadow-[0_9px_12px_#233d3426] [&_svg>rect]:fill-[#234e41] [&_svg>rect]:stroke-[#527560] dark:[&_svg>rect]:fill-[#2a5848] dark:[&_svg>rect]:stroke-[#49816b] [&_g[data-overlay=references]]:stroke-none! [&_g[data-overlay=references]_text]:font-mono [&_g[data-overlay=references]_text]:text-[1px] [&_g[data-overlay=drills]]:stroke-none! [&_[data-part-id]]:cursor-pointer [&_.selected]:[filter:drop-shadow(0_0_0.18px_#c6e6ff)_drop-shadow(0_0_0.28px_#8fc3ef)] [&_.net-match]:drop-shadow-[0_0_0.4px_#fff0af] [&_.dimmed]:opacity-[0.19]"
+          className="absolute top-[66px] right-[42px] bottom-[54px] left-[54px] touch-none cursor-grab data-[measuring=true]:cursor-crosshair data-[measuring=true]:[&_[data-part-id]]:cursor-crosshair data-[dragging=true]:cursor-grabbing focus-visible:rounded-[2px] focus-visible:outline-offset-[5px] max-[701px]:top-[72px] max-[701px]:right-3 max-[701px]:bottom-[62px] max-[701px]:left-10 [&_svg]:block [&_svg]:size-full [&_svg]:overflow-visible data-[view=board]:[&_svg]:drop-shadow-[0_9px_12px_#233d3426] [&_[data-part-id]]:cursor-pointer [&_.selected]:[filter:drop-shadow(0_0_0.18px_#c6e6ff)_drop-shadow(0_0_0.28px_#8fc3ef)] [&_.net-match]:drop-shadow-[0_0_0.4px_#fff0af] [&_.dimmed]:opacity-[0.19] data-[view=analysis]:[&_.dimmed]:opacity-50 data-[view=analysis]:[&_.selected]:[filter:drop-shadow(0_0_0.1px_#555bd5)_drop-shadow(0_0_0.2px_#555bd5)]"
           data-measuring={measuring}
           tabIndex={0}
           role="region"

@@ -1,3 +1,5 @@
+import { BoardViewSelect } from './board-view-select.tsx';
+import type { BoardView } from '../lib/scene-presentation.ts';
 import type { ReactNode } from 'react';
 import type { BoardIr } from '@react-pcb/core';
 import { FileCode2, Network } from 'lucide-react';
@@ -17,6 +19,8 @@ export function CanvasToolbar({
   net,
   onNet,
   children,
+  view,
+  onView,
 }: {
   ir: BoardIr | undefined;
   title: string;
@@ -24,6 +28,8 @@ export function CanvasToolbar({
   net: string;
   onNet: (id: string) => void;
   children: ReactNode;
+  view: BoardView;
+  onView: (view: BoardView) => void;
 }) {
   // Keep the reset option distinct from every canonical net ID.
   let allNetsValue = '__all__';
@@ -50,6 +56,7 @@ export function CanvasToolbar({
             </span>
           </div>
         </div>
+        <BoardViewSelect value={view} onChange={onView} />
       </div>
       <div className="flex min-w-0 items-center gap-2 max-[600px]:w-full max-[600px]:justify-end">
         <Select

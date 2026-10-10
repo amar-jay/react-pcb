@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { usePreview } from './hooks/use-preview.ts';
+import { useBoardPreferences } from './hooks/use-board-preferences.ts';
 import { useIsMobile } from './hooks/use-mobile';
 import {
-  matchingLayerPreset,
-  presetVisibility,
-  type LayerPresetId,
-} from './lib/layer-presets.ts';
-import { sceneLayers } from './lib/scene.ts';
+  exportBoardSvg,
+  analysisLayerColor,
+} from './lib/scene-presentation.ts';
+import { sceneLayers, download } from './lib/scene.ts';
 import { previewFindings } from './lib/findings.ts';
 import { NavigationPanel } from './components/navigation-panel.tsx';
 import { WorkbenchCommand } from './components/workbench-command.tsx';
@@ -36,7 +36,6 @@ export function App() {
     setSelected(id);
     if (id) setInspectorOpen(true);
   };
-  const [visibility, setVisibility] = useState<Record<string, boolean>>({});
   const [theme, setTheme] = useState(() => {
     try {
       return localStorage.getItem('react-pcb-theme') === 'dark'
@@ -50,19 +49,25 @@ export function App() {
     () => sceneLayers(snapshot.projection?.svg ?? null, ir),
     [snapshot.projection?.svg, ir],
   );
-  const [chosenPreset, setChosenPreset] = useState<LayerPresetId | null>(null);
-  const applyPreset = (preset: LayerPresetId) => {
-    setChosenPreset(preset);
-    setVisibility(presetVisibility(layers, preset));
+  const {
+    boardView,
+    setBoardView,
+    visibility,
+    preset,
+    applyPreset,
+    toggleLayer,
+  } = useBoardPreferences(snapshot.entry, layers);
+  const exportSvg = () => {
+    if (snapshot.projection)
+      download(
+        'board.svg',
+        exportBoardSvg(snapshot.projection.svg, layers, visibility, {
+          view: boardView,
+          theme,
+        }),
+        'image/svg+xml',
+      );
   };
-  const toggleLayer = (key: string, visible: boolean) => {
-    setChosenPreset(null);
-    setVisibility((previous) => ({ ...previous, [key]: visible }));
-  };
-  useEffect(() => {
-    if (chosenPreset) setVisibility(presetVisibility(layers, chosenPreset));
-  }, [layers, chosenPreset]);
-  const preset = chosenPreset ?? matchingLayerPreset(layers, visibility);
   const part = ir?.parts.find((part) => part.id === selected);
   const activeNet = ir?.nets.some((item) => item.id === net) ? net : '';
   const title =
@@ -110,12 +115,20 @@ export function App() {
             onToggleTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')}
             failed={Boolean(snapshot.error)}
             selected={part?.id ?? null}
-            layers={layers}
+            layers={
+              boardView === 'analysis'
+                ? layers.map((layer) => ({
+                    ...layer,
+                    color: analysisLayerColor(layer, theme === 'dark'),
+                  }))
+                : layers
+            }
             visibility={visibility}
             onSelect={selectPart}
             onToggle={toggleLayer}
             preset={preset}
             onPreset={applyPreset}
+            onExportSvg={exportSvg}
           />
 
           <main className="mx-4 my-3.5 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border bg-card group-data-[inspector-open=true]/workbench:mr-[422px] max-md:m-2">
@@ -125,6 +138,8 @@ export function App() {
               entry={snapshot.entry}
               net={activeNet}
               onNet={setNet}
+              view={boardView}
+              onView={setBoardView}
             >
               <WorkbenchCommand
                 snapshot={snapshot}
@@ -139,6 +154,8 @@ export function App() {
                 onNet={setNet}
                 onToggleLayer={toggleLayer}
                 onPreset={applyPreset}
+                onExportSvg={exportSvg}
+                onView={setBoardView}
                 onOverview={() => {
                   setSelected(null);
                   setInspectorOpen(true);
@@ -167,6 +184,7 @@ export function App() {
             )}
             <BoardCanvas
               ref={canvas}
+              presentation={{ view: boardView, theme }}
               svg={snapshot.projection?.svg ?? null}
               ir={ir}
               layers={layers}

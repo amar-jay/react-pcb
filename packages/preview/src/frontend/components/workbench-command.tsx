@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import type { PreviewSnapshot } from '../../index.ts';
 import { layerPresets, type LayerPresetId } from '../lib/layer-presets.ts';
+import type { BoardView } from '../lib/scene-presentation.ts';
 import { download, type SceneLayer } from '../lib/scene.ts';
 import type { CanvasActions } from './board-canvas.tsx';
 import { IconButton } from './icon-button.tsx';
@@ -44,6 +45,8 @@ type Props = {
   onSelect: (id: string) => void;
   onNet: (id: string) => void;
   onToggleLayer: (key: string, visible: boolean) => void;
+  onExportSvg: () => void;
+  onView: (view: BoardView) => void;
   onPreset: (preset: LayerPresetId) => void;
   onOverview: () => void;
   onDiagnostics: () => void;
@@ -61,6 +64,8 @@ export function WorkbenchCommand({
   onNet,
   onToggleLayer,
   onPreset,
+  onExportSvg,
+  onView,
   onOverview,
   onDiagnostics,
   onFailure,
@@ -171,6 +176,23 @@ export function WorkbenchCommand({
             </CommandItem>
           </CommandGroup>
           <CommandSeparator />
+          <CommandGroup heading="Board view">
+            <CommandItem
+              keywords={['view']}
+              onSelect={() => run(() => onView('board'))}
+            >
+              <CircuitBoard />
+              Board view
+            </CommandItem>
+            <CommandItem
+              keywords={['view', 'SVG']}
+              onSelect={() => run(() => onView('analysis'))}
+            >
+              <Code2 />
+              Analysis view
+            </CommandItem>
+          </CommandGroup>
+          <CommandSeparator />
           <CommandGroup heading="Layer presets">
             {layerPresets.map((preset) => (
               <CommandItem
@@ -217,17 +239,7 @@ export function WorkbenchCommand({
           <CommandGroup heading="Export">
             <CommandItem
               disabled={!snapshot.projection}
-              onSelect={() =>
-                run(
-                  () =>
-                    snapshot.projection &&
-                    download(
-                      'board.svg',
-                      snapshot.projection.svg,
-                      'image/svg+xml',
-                    ),
-                )
-              }
+              onSelect={() => run(onExportSvg)}
             >
               <ArrowDownToLine />
               Save SVG

@@ -31,6 +31,7 @@ type Props = {
   visibility: Record<string, boolean>;
   onSelect: (id: string) => void;
   preset: LayerPresetId | 'custom';
+  onExportSvg: () => void;
   onPreset: (preset: LayerPresetId) => void;
   onToggle: (key: string, visible: boolean) => void;
 };
@@ -48,6 +49,7 @@ export function NavigationPanel({
   onToggle,
   preset,
   onPreset,
+  onExportSvg,
 }: Props) {
   const [tab, setTab] = useState<'layers' | 'parts'>('layers');
   const { setOpenMobile } = useSidebar();
@@ -152,7 +154,7 @@ export function NavigationPanel({
       </Tabs>
       <SidebarFooter className="gap-3 border-t px-4 py-3">
         <div className="flex items-center gap-2">
-          <ExportMenu snapshot={snapshot} />
+          <ExportMenu snapshot={snapshot} onExportSvg={onExportSvg} />
           <IconButton
             label={
               theme === 'light'

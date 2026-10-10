@@ -16,7 +16,13 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 
-export function ExportMenu({ snapshot }: { snapshot: PreviewSnapshot }) {
+export function ExportMenu({
+  snapshot,
+  onExportSvg,
+}: {
+  snapshot: PreviewSnapshot;
+  onExportSvg: () => void;
+}) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -36,10 +42,7 @@ export function ExportMenu({ snapshot }: { snapshot: PreviewSnapshot }) {
         <DropdownMenuItem
           id="download-svg"
           disabled={!snapshot.projection}
-          onSelect={() =>
-            snapshot.projection &&
-            download('board.svg', snapshot.projection.svg, 'image/svg+xml')
-          }
+          onSelect={onExportSvg}
         >
           <CircuitBoard />
           Save SVG
