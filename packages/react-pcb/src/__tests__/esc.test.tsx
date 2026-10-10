@@ -56,6 +56,7 @@ test('LFPAK56 includes every source/gate terminal, exact T-shaped drain and sten
   // Copper union area: 20.07 mm², exact seam at y=-2 mm. Separate
   // source/gate lands have 0.57 mm gaps and clear the drain by 1.05 mm.
   expect(feature(ir, 'mask-mb').shape).toEqual({kind: 'rect', size: [4850000, 4750000]});
+  expect(feature(ir, 'paste-4').shape).toEqual({kind: 'rect', size: [600000, 1050000]});
 });
 
 test('passive lands follow selected Murata ranges and resistance-specific Vishay row', async () => {

@@ -22,6 +22,12 @@ The inspection command writes standalone JSON/SVG fixtures,
 selected manufacturing reports, and an `index.html` with semantic layer toggles.
 Illustrative dimensions and limits do not establish fabrication approval.
 
+The [ESC footprint example](examples/esc/README.md) adds real component identities,
+eight physical footprint definitions, and a separate inspection gallery with
+manufacturing reports. Run `bun run example:esc` or
+`bun run footprints:esc:inspect`. Its documentation records datasheet dimensions,
+authored aperture choices, source gaps, and the remaining electrical design.
+
 To view board JSX in a browser or export one offline HTML file:
 
 ```sh

@@ -16,7 +16,7 @@ export function LFPAK56Footprint() {
       <Graphic name={`mask-${index + 1}`} purpose="mask-opening" layers={['front-mask']}
         style={box(x, 2725, 850, 1300)} />
       <Graphic name={`paste-${index + 1}`} purpose="paste-opening" layers={['front-paste']}
-        style={box(x, 2725, 650, 1100)} />
+        style={box(x, 2725, 600, 1050)} />
       <Graphic name={`paste-mb-top-${index + 1}`} purpose="paste-opening" layers={['front-paste']}
         style={box(x, -3000, 600, 900)} />
     </React.Fragment>)}

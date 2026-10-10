@@ -25,9 +25,10 @@ export function boardSize(ir: BoardIr) {
 export function sceneLayers(
   svg: string | null,
   ir: BoardIr | undefined,
+  parsed?: Document,
 ): SceneLayer[] {
   if (!svg || !ir) return [];
-  const document = new DOMParser().parseFromString(svg, 'image/svg+xml');
+  const document = parsed ?? new DOMParser().parseFromString(svg, 'image/svg+xml');
   const copper = ir.board.layers.stackup.entries.filter(
     (layer) => layer.kind === 'copper',
   );

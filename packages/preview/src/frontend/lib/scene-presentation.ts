@@ -115,8 +115,9 @@ export function exportBoardSvg(
   layers: SceneLayer[],
   visibility: Record<string, boolean>,
   presentation: ScenePresentation,
+  parsed?: Document,
 ) {
-  const document = new DOMParser().parseFromString(markup, 'image/svg+xml');
+  const document = parsed ?? new DOMParser().parseFromString(markup, 'image/svg+xml');
   if (
     document.querySelector('parsererror') ||
     document.documentElement.localName !== 'svg'
@@ -129,5 +130,14 @@ export function exportBoardSvg(
   )) {
     if (group.style.display === 'none') group.remove();
   }
-  return new XMLSerializer().serializeToString(svg);
+  // Some server DOM implementations retain empty declarations that browsers remove.
+  if (parsed) {
+    for (const element of svg.querySelectorAll('[style]')) {
+      const declarations = element.getAttribute('style')!.split(';');
+      element.setAttribute('style', declarations.filter(declaration =>
+        declaration.slice(declaration.indexOf(':') + 1).trim(),
+      ).join(';'));
+    }
+  }
+  return parsed ? svg.outerHTML : new XMLSerializer().serializeToString(svg);
 }

@@ -9,7 +9,6 @@ type ControlProps = {
   ground: Net;
   logic: Net;
   shuntN: Net;
-  phaseA: Net;
   pwmHigh: Net;
   pwmLow: Net;
 };
@@ -33,7 +32,6 @@ function ControlParts(props: ControlProps) {
           PB13: props.pwmLow,
           PA0: props.ground,
           PA1: props.shuntN,
-          // Phase-voltage conditioning is intentionally unresolved; never connect VBAT-level phase to an ADC.
         }}
       />
       <Capacitor id={logicCap} at={[32, 5]} side="back" connect={{1: props.logic, 2: props.ground}} />

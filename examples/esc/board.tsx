@@ -66,7 +66,6 @@ export function Esc() {
         ground={ground}
         logic={logic}
         shuntN={shuntN}
-        phaseA={phaseA}
         pwmHigh={pwmHigh}
         pwmLow={pwmLow}
       />

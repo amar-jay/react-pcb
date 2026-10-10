@@ -8,7 +8,9 @@
   ],
   "scripts": {
     "example": "bun run examples/basic.tsx",
+    "example:esc": "bun run examples/esc/index.tsx",
     "footprints:inspect": "bun run examples/footprints/inspect.ts",
+    "footprints:esc:inspect": "bun run examples/esc/footprints/inspect.tsx",
     "board:build": "bun run react-pcb-preview build",
     "board:dev": "bun run react-pcb-preview dev",
     "preview:build": "bun run packages/preview/src/frontend/build.ts",
