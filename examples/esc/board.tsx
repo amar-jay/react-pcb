@@ -15,7 +15,7 @@ import { Drive, gateDriver } from "./modules/drive.tsx";
 import { Inverter, phasePadA } from "./modules/inverter.tsx";
 import { Power, powerShunt } from "./modules/power.tsx";
 
-export function Esc() {
+export default function Esc() {
 	const ground = useNet("GND");
 	const vbat = useNet("VBAT");
 	const logic = useNet("3V3");

@@ -1,7 +1,8 @@
 import { compile, PcbCompileError } from "@react-pcb/core";
-import { Esc } from "./board.tsx";
+import Esc from "./board.tsx";
 
 export default Esc;
+
 if (import.meta.main)
 	try {
 		const result = await compile(<Esc />, { cwd: `${import.meta.dir}/../..` });

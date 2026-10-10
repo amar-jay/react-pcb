@@ -33,10 +33,10 @@ an available port. The server binds to localhost and stops on Ctrl+C. Static
 exports include all scene data, styles and viewer code, with no CDN, browser-side
 compiler, network dependency, or asset directory required.
 
-`bun run preview:build` builds the React site shell into `dist/`. It can load board
-data when hosted alongside the preview API. Use `board:build` to embed a particular
-board in a file that opens directly in a browser. Both use Bun's standalone HTML
-bundler, including local fonts.
+`bun run --cwd packages/preview build` builds the React site shell into `dist/`.
+It can load board data when hosted alongside the preview API. Use `board:build`
+to embed a particular board in a file that opens directly in a browser. Both use
+Bun's standalone HTML bundler, including local fonts.
 
 PNG output supports `--view board|analysis|both` (default Board), `--layers
 front|back|copper|fabrication|all` (default All), `--theme light|dark` (default

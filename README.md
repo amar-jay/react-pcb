@@ -48,7 +48,7 @@ and shows compile errors while keeping the last valid board. See the
 [board preview guide](docs/board-preview.md) for entry exports, watch options and
 the programmatic API.
 
-`bun run preview:build` builds the React site shell into `dist/`.
+`bun run --cwd packages/preview build` builds the React site shell into `dist/`.
 
 **Illustrative JSX API**
 

@@ -108,7 +108,7 @@ layer choices, zoom/pan, selection, and net highlighting.
 
 ```sh
 # Build the React site shell into the repository's dist/ directory.
-bun run preview:build
+bun run --cwd packages/preview build
 # Embed a compiled board in the same React UI, also in dist/ by default.
 bun run board:build examples/basic/board.tsx
 ```

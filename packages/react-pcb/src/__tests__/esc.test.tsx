@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { Esc } from "../../../../examples/esc/board.tsx";
+import Esc from "../../../../examples/esc/board.tsx";
 import {
 	Capacitor0402Footprint,
 	Capacitor1210Footprint,

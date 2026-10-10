@@ -18,5 +18,7 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run check
       - run: bun run board:inspect examples/basic/board.tsx --out /tmp/react-pcb-footprints
-      - run: bun run preview:build
+      - name: Build preview frontend
+        run: bun run build
+        working-directory: packages/preview
       - run: bun run board:build examples/basic/board.tsx --out /tmp/react-pcb-board/index.html
