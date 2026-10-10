@@ -184,33 +184,49 @@ export function BoardCanvas({
   }, [zoom]);
 
   return (
-    <div className="canvas-shell" ref={shell}>
-      <div className="ruler-corner" aria-hidden="true">
+    <div
+      className="relative min-h-[340px] flex-1 overflow-hidden bg-canvas bg-[radial-gradient(var(--canvas-dot)_0.7px,transparent_0.7px)] bg-size-[24px_24px] max-[701px]:min-h-[400px]"
+      ref={shell}
+    >
+      <div
+        className="absolute top-0 left-0 z-2 grid size-7 place-items-center border-r border-b bg-card font-mono text-[10px] leading-normal text-muted-foreground"
+        aria-hidden="true"
+      >
         mm
       </div>
-      <div className="canvas-ruler ruler-x" aria-hidden="true">
+      <div
+        className="pointer-events-none absolute z-1 overflow-hidden bg-[color-mix(in_srgb,var(--card)_75%,var(--canvas))] font-mono text-[10px] leading-normal text-muted-foreground inset-x-0 top-0 h-7 border-b [&>span]:absolute [&>span]:inset-y-0 [&>span]:flex [&>span]:items-center [&>span]:border-l [&>span]:border-muted-foreground/30 [&>span]:pl-[5px]"
+        aria-hidden="true"
+      >
         {rulers.x.map((tick) => (
           <span key={tick.value} style={{ left: tick.position }}>
             {tick.label}
           </span>
         ))}
       </div>
-      <div className="canvas-ruler ruler-y" aria-hidden="true">
+      <div
+        className="pointer-events-none absolute z-1 overflow-hidden bg-[color-mix(in_srgb,var(--card)_75%,var(--canvas))] font-mono text-[10px] leading-normal text-muted-foreground top-0 bottom-9 left-0 w-7 border-r [&>span]:absolute [&>span]:inset-x-0 [&>span]:border-t [&>span]:border-muted-foreground/30 [&>span]:pt-1 [&>span]:pl-[3px] [&>span]:text-[9px]"
+        aria-hidden="true"
+      >
         {rulers.y.map((tick) => (
           <span key={tick.value} style={{ top: tick.position }}>
             {tick.label}
           </span>
         ))}
       </div>
-      <div className="canvas-label">
+      <div className="absolute top-[45px] left-[49px] flex items-center gap-[7px] text-[12px] text-canvas-text max-[701px]:left-[42px] [&>svg]:text-muted-foreground">
         <Layers3 size={14} />
         Front view
       </div>
-      {ir && <div className="canvas-board-size">{boardSize(ir)}</div>}
+      {ir && (
+        <div className="absolute top-[45px] right-[38px] font-mono text-[11px] leading-normal text-canvas-text max-[1401px]:hidden">
+          {boardSize(ir)}
+        </div>
+      )}
       <div
         id="scene"
         ref={scene}
-        className="board-scene"
+        className="absolute top-[66px] right-[42px] bottom-[90px] left-[54px] touch-none cursor-grab data-[dragging=true]:cursor-grabbing focus-visible:rounded-[2px] focus-visible:outline-offset-[5px] max-[701px]:top-[72px] max-[701px]:right-3 max-[701px]:bottom-[98px] max-[701px]:left-10 [&_svg]:block [&_svg]:size-full [&_svg]:overflow-visible [&_svg]:drop-shadow-[0_9px_12px_#233d3426] [&_svg>rect]:fill-[#234e41] [&_svg>rect]:stroke-[#527560] dark:[&_svg>rect]:fill-[#2a5848] dark:[&_svg>rect]:stroke-[#49816b] [&_g[data-overlay=references]]:stroke-none! [&_g[data-overlay=references]_text]:font-mono [&_g[data-overlay=references]_text]:text-[1px] [&_g[data-overlay=drills]]:stroke-none! [&_[data-part-id]]:cursor-pointer [&_.selected]:[filter:drop-shadow(0_0_0.18px_#c6e6ff)_drop-shadow(0_0_0.28px_#8fc3ef)] [&_.net-match]:drop-shadow-[0_0_0.4px_#fff0af] [&_.dimmed]:opacity-[0.19]"
         tabIndex={0}
         role="region"
         aria-label="Board canvas. Drag to pan, scroll to zoom. Arrow keys pan; plus and minus zoom; F fits the board."
@@ -300,13 +316,16 @@ export function BoardCanvas({
         dangerouslySetInnerHTML={{ __html: markup ?? '' }}
       />
       {!markup && (
-        <div className="canvas-empty">
+        <div className="pointer-events-none absolute top-[38%] right-[15%] left-[15%] text-center text-canvas-text [&>svg]:mx-auto [&>svg]:mb-4 [&>svg]:text-primary [&_h2]:text-[18px] [&_h2]:font-medium [&_h2]:text-foreground [&_p]:mt-2 [&_p]:text-[13px]">
           <Crosshair size={32} strokeWidth={1} />
           <h2>No board loaded</h2>
           <p>A compiled board will appear here.</p>
         </div>
       )}
-      <div className="canvas-tools" aria-label="Canvas controls">
+      <div
+        className="absolute bottom-[55px] left-1/2 z-3 flex -translate-x-1/2 items-center rounded-[9px] border bg-card px-1.5 py-[5px] whitespace-nowrap shadow-[0_4px_12px_#202c3f16] max-[701px]:bottom-[53px] max-[701px]:p-1 [&_[data-slot=button]]:gap-2 [&_[data-slot=button]]:text-[12px]"
+        aria-label="Canvas controls"
+      >
         <IconButton
           id="zoom-out"
           label="Zoom out"
@@ -315,7 +334,10 @@ export function BoardCanvas({
         >
           <Minus />
         </IconButton>
-        <span id="zoom-level" className="zoom-level">
+        <span
+          id="zoom-level"
+          className="min-w-[58px] px-[5px] text-center font-mono text-[12px] leading-normal max-[701px]:min-w-[50px]"
+        >
           {zoomLevel}%
         </span>
         <IconButton
@@ -326,7 +348,7 @@ export function BoardCanvas({
         >
           <Plus />
         </IconButton>
-        <span className="tool-divider" />
+        <span className="mx-2.5 h-5 w-px bg-border max-[701px]:mx-[5px]" />
         <Button
           id="fit"
           variant="ghost"
@@ -338,12 +360,12 @@ export function BoardCanvas({
           Fit board
         </Button>
       </div>
-      <div className="canvas-footer">
+      <div className="absolute inset-x-0 bottom-0 flex h-9 items-center justify-between gap-2.5 border-t bg-[color-mix(in_srgb,var(--card)_75%,var(--canvas))] px-3.5 text-[11px] text-canvas-text max-[701px]:justify-center [&>span:first-child]:flex [&>span:first-child]:items-center [&>span:first-child]:gap-[7px] max-[1401px]:[&>span:first-child>span]:hidden max-[701px]:[&>span:first-child]:hidden">
         <span>
           <MousePointer2 size={12} />
           <span>Drag to pan · scroll to zoom</span>
         </span>
-        <span className="coordinates">
+        <span className="flex items-center gap-[7px] font-mono text-[10px] leading-normal [&_b]:min-w-[29px] [&_b]:font-normal [&_b]:text-foreground [&>span]:mx-0.5 [&>span]:h-[11px] [&>span]:w-px [&>span]:bg-border [&_small]:text-[10px]">
           X <b>{cursor ? cursor.x.toFixed(2) : '—'}</b>
           <span />Y <b>{cursor ? cursor.y.toFixed(2) : '—'}</b>
           <small>mm</small>

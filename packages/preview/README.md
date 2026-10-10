@@ -5,12 +5,17 @@ the browser viewer, offline HTML generation, isolated JSX entry builds, file
 watching, local server, and CLI. It uses the public `@react-pcb/core` API for board
 compilation and SVG projection. Core does not depend on preview.
 
-The UI uses React, Bun's HTML bundler, Tailwind CSS, and shadcn components from
-the `@amarjay-ui` registry. It includes a board canvas, layer/overlay controls,
-searchable parts, an inspector, diagnostics, an export menu, and light/dark themes.
+The UI uses React, Bun's HTML bundler, Tailwind CSS, shadcn sidebar/sheet/dialog
+primitives, and controls from the `@amarjay-ui` registry. It includes a board
+canvas, layer/overlay controls, searchable parts, an inspector, diagnostics,
+an export menu, and light/dark themes.
 The workbench groups layers into copper, technical front/back pairs, and overlays.
 Canvas rulers follow actual millimetre coordinates through pan and zoom; the
 inspector displays board dimensions and stackup or the selected part's details.
+The design sidebar collapses with its toggle or `Ctrl/Cmd+B`. Board/part details
+dock beside the canvas on large screens and open as a sheet on smaller screens.
+Compilation failures open a dismissible alert dialog; diagnostics have separate
+All, Errors, and Warnings tabs in a bottom sheet.
 
 From the repository root:
 
@@ -53,9 +58,11 @@ server. For an HTML file that opens directly with a board already loaded, use
 asset directory or CDN is needed.
 
 `components.json` configures the registry and component aliases. Registry source
-lives in `src/frontend/components/ui`; workbench components, hooks, and styles
-live alongside it. Styles are separated by shell, navigation, canvas, and inspector
-under `src/frontend/styles/`, with shared theme tokens in `styles.css`.
+lives in `src/frontend/components/ui`; workbench components and hooks live
+alongside it. Workbench layout and styling use Tailwind utilities in the components.
+`styles.css` holds shared light/dark theme tokens, base styles, and animation definitions.
+The header, canvas toolbar, inspector sheet, diagnostics, parts list, layer controls,
+and stackup are separate components.
 Add controls from the package directory:
 
 ```sh

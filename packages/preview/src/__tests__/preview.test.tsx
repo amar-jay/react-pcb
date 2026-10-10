@@ -193,7 +193,7 @@ test('live preview reloads imported geometry and recovers from compiler, syntax,
     const script = shell.match(/src="([^"]+)" data-bun-dev-server-script/)![1]!;
     const css = await fetch(new URL(stylesheet,server.url));
     expect(css.status).toBe(200);
-    expect(await css.text()).toContain('.workbench-app');
+    expect(await css.text()).toContain('.bg-card');
     expect((await fetch(new URL(script,server.url))).status).toBe(200);
     expect((await fetch(new URL('/__preview/data',server.url))).headers.get('cache-control')).toBe('no-store');
     expect((await fetch(new URL('/missing',server.url))).status).toBe(404);

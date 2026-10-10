@@ -9,7 +9,8 @@ The viewer, HTML export, entry worker, watch logic and local server live in the
 [`@react-pcb/preview` workspace package](../packages/preview/README.md). It depends
 on `@react-pcb/core`; core has no dependency on the preview package. Board authoring,
 compilation and the Rust SVG projection remain in core.
-The browser UI uses React, Tailwind CSS, and shadcn controls from `@amarjay-ui`.
+The browser UI uses React, Tailwind CSS, shadcn layout and interaction primitives,
+and controls from `@amarjay-ui`.
 Bun bundles its HTML entry for development and for production export.
 
 ```sh
@@ -81,7 +82,10 @@ in the source tree. Programmatic callers can set `cwd` for another Rust workspac
   and resizing. Inspector values retain the board's declared units.
 - Use the **Layers** and **Parts** navigation controls, search by reference,
   footprint, value, MPN, or manufacturer, and switch between light and dark themes.
-  The workspace stacks its canvas, navigation, and inspector on mobile. Focus the
+  Collapse the design sidebar with its toggle or `Ctrl/Cmd+B`. It becomes a drawer
+  on mobile. **Board overview** opens a details panel; selecting a part opens its
+  inspection details. The panel docks beside the canvas on large screens and
+  becomes a dismissible sheet on smaller screens. Focus the
   canvas to pan with arrow keys, zoom with `+`/`-`, or fit the board with `F`.
 - Highlight a net from the selector or a part's connection list. Highlighting uses
   canonical logical-pin-to-pad bindings and connection IDs; it does not imply a
@@ -96,7 +100,12 @@ in the source tree. Programmatic callers can set `cwd` for another Rust workspac
   same-side inter-part courtyard overlaps. The overview distinguishes board
   checks from the selected part's footprint checks. A failed build's findings
   replace the diagnostic list while its last successful scene stays visible.
-  Errors appear before warnings; the build banner summarizes the first error.
+  Compilation failure opens an alert dialog with blocking errors and optional
+  full compiler output. Dismiss it to inspect the retained scene, or reopen it
+  from **View compilation failure**. A successful rebuild closes the dialog.
+  **Diagnostics** opens a bottom sheet with All, Errors, and Warnings tabs;
+  errors appear first. Dialogs support keyboard navigation and return focus
+  to their opening control when dismissed.
 - Save the compiled result as JSON or the full projection as SVG. The saved SVG
   contains every declared layer/overlay; viewer colors, visibility, highlighting and zoom
   are viewer state rather than changes to canonical geometry or the saved SVG.

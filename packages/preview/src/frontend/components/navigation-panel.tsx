@@ -1,21 +1,23 @@
-import { useState } from 'react';
-import {
-  Box,
-  ChevronRight,
-  ChevronDown,
-  CircuitBoard,
-  Layers3,
-  Network,
-  Search,
-  X,
-} from 'lucide-react';
+import { LayerList, TechnicalLayers } from './layer-controls.tsx';
+import { useEffect, useState } from 'react';
+import { Box, CircuitBoard, Layers3, Network } from 'lucide-react';
 import type { BoardIr } from '@react-pcb/core';
 import type { SceneLayer } from '../lib/scene.ts';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
+import { PartsList } from './parts-list.tsx';
+import { LayerGroup } from './layer-group.tsx';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarTrigger,
+  useSidebar,
+} from './ui/sidebar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 
 type Props = {
   ir: BoardIr | undefined;
+  failed: boolean;
   selected: string | null;
   layers: SceneLayer[];
   visibility: Record<string, boolean>;
@@ -25,6 +27,7 @@ type Props = {
 
 export function NavigationPanel({
   ir,
+  failed,
   selected,
   layers,
   visibility,
@@ -32,250 +35,111 @@ export function NavigationPanel({
   onToggle,
 }: Props) {
   const [tab, setTab] = useState<'layers' | 'parts'>('layers');
-  const [query, setQuery] = useState('');
-  const parts =
-    ir?.parts.filter((part) => {
-      const component = ir.componentDefinitions[part.component];
-      return [
-        part.reference,
-        part.footprint,
-        component?.mpn,
-        component?.value,
-        component?.manufacturer,
-      ].some((value) => value?.toLowerCase().includes(query.toLowerCase()));
-    }) ?? [];
+  const { setOpenMobile } = useSidebar();
+  useEffect(() => {
+    if (failed) setOpenMobile(false);
+  }, [failed, setOpenMobile]);
   return (
-    <aside className="navigation-panel" aria-label="Board navigation">
-      <div className="panel-heading">
-        <h2>Design</h2>
-        <span>
-          {
-            layers.filter((layer) => visibility[layer.key] ?? layer.visible)
-              .length
-          }{' '}
-          visible
-        </span>
-      </div>
-      <div className="navigation-tabs">
-        <Button
-          variant="ghost"
-          aria-pressed={tab === 'layers'}
-          onClick={() => setTab('layers')}
+    <Sidebar aria-label="Board navigation">
+      <SidebarHeader className="flex flex-row items-center justify-between gap-2.5 px-5 pt-4 pb-3">
+        <h2 className="text-[16px] font-semibold tracking-[-0.2px]">Design</h2>
+        <SidebarTrigger aria-label="Close design sidebar" />
+      </SidebarHeader>
+      <Tabs
+        value={tab}
+        onValueChange={(value) => setTab(value as 'layers' | 'parts')}
+        className="min-h-0 flex-1 gap-0"
+      >
+        <TabsList
+          className="mx-4 mb-3 flex w-[calc(100%-32px)] gap-1 rounded-lg border bg-muted p-1"
+          aria-label="Design controls"
         >
-          <Layers3 />
-          Layers
-        </Button>
-        <Button
-          variant="ghost"
-          aria-pressed={tab === 'parts'}
-          onClick={() => setTab('parts')}
-        >
-          <Box />
-          Parts<small>{ir?.parts.length ?? 0}</small>
-        </Button>
-      </div>
-      <div className="navigation-content" hidden={tab !== 'layers'}>
-        <div id="layers">
-          <details className="layer-group" open>
-            <summary>
-              <span>Copper</span>
-              <small>
-                {layers.filter((layer) => layer.category === 'copper').length}
-              </small>
-              <ChevronDown size={14} />
-            </summary>
-            <LayerList
-              items={layers.filter((layer) => layer.category === 'copper')}
-              visibility={visibility}
-              onToggle={onToggle}
-            />
-          </details>
-          <details className="layer-group" open>
-            <summary>
-              <span>Technical</span>
-              <small className="side-legend" title="F: front · B: back">
-                F · B
-              </small>
-              <ChevronDown size={14} />
-            </summary>
-            {[
-              ...new Set(
-                layers
-                  .filter((layer) => layer.category === 'technical')
-                  .map((layer) => layer.group),
-              ),
-            ].map((name) => {
-              const pair = layers.filter(
-                (layer) =>
-                  layer.category === 'technical' && layer.group === name,
-              );
-              if (new Set(pair.map((layer) => layer.side)).size < pair.length)
-                return (
-                  <div className="technical-duplicate-group" key={name}>
-                    <h3>{name}</h3>
-                    <LayerList
-                      items={pair}
-                      visibility={visibility}
-                      onToggle={onToggle}
-                    />
-                  </div>
-                );
-              return (
-                <div className="technical-row" key={name}>
-                  <span
-                    className="technical-swatch"
-                    style={{ background: pair[0]!.color }}
-                  />
-                  <span>{name}</span>
-                  <div className="side-toggles">
-                    {pair.map((layer) => (
-                      <label
-                        className="layer-side"
-                        data-side={layer.side ?? 'shared'}
-                        key={layer.key}
-                        title={`${layer.name} · ${layer.id}`}
-                      >
-                        <input
-                          type="checkbox"
-                          aria-label={layer.name}
-                          checked={visibility[layer.key] ?? layer.visible}
-                          onChange={(event) =>
-                            onToggle(layer.key, event.target.checked)
-                          }
-                        />
-                        <span>
-                          {layer.side === 'front'
-                            ? 'F'
-                            : layer.side === 'back'
-                              ? 'B'
-                              : '•'}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </details>
-          <details className="layer-group overlay-group" open>
-            <summary>
-              <span>Overlays</span>
-              <ChevronDown size={14} />
-            </summary>
-            <LayerList
-              items={layers.filter((layer) => layer.overlay)}
-              visibility={visibility}
-              onToggle={onToggle}
-            />
-          </details>
-        </div>
-        {!layers.length && (
-          <p className="empty-copy">Layers appear after the board compiles.</p>
-        )}
-      </div>
-      <div className="navigation-content" hidden={tab !== 'parts'}>
-        <div className="part-search">
-          <Search size={14} />
-          <Input
-            aria-label="Search parts"
-            placeholder="Search parts…"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-          {query && (
-            <button
-              type="button"
-              aria-label="Clear part search"
-              onClick={() => setQuery('')}
-            >
-              <X size={12} />
-            </button>
-          )}
-        </div>
-        <div className="section-heading">
-          <h2>Parts</h2>
-          <span>
-            {parts.length}
-            {query ? ` / ${ir?.parts.length ?? 0}` : ''}
-          </span>
-        </div>
-        <div id="parts" className="parts-list">
-          {parts.map((item) => {
-            const component = ir!.componentDefinitions[item.component];
-            return (
-              <button
-                type="button"
-                key={item.id}
-                className="part-row"
-                data-part-id={item.id}
-                aria-pressed={selected === item.id}
-                onClick={() => onSelect(item.id)}
+          <TabsTrigger
+            value="layers"
+            className="min-w-0 flex-1 gap-[7px] rounded-[5px] text-muted-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-[0_1px_4px_#242b4010] data-[state=active]:[&>svg]:text-primary dark:data-[state=active]:bg-card"
+          >
+            <Layers3 />
+            Layers
+          </TabsTrigger>
+          <TabsTrigger
+            value="parts"
+            className="min-w-0 flex-1 gap-[7px] rounded-[5px] text-muted-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-[0_1px_4px_#242b4010] data-[state=active]:[&>svg]:text-primary dark:data-[state=active]:bg-card"
+          >
+            <Box />
+            Parts
+            <small className="pl-0.5 font-mono text-[11px] [line-height:normal] text-muted-foreground">
+              {ir?.parts.length ?? 0}
+            </small>
+          </TabsTrigger>
+        </TabsList>
+        <SidebarContent className="gap-0">
+          <TabsContent
+            value="layers"
+            forceMount
+            className="min-h-0 flex-1 px-4 pt-2 pb-4 [scrollbar-width:thin] data-[state=inactive]:hidden"
+          >
+            <div id="layers">
+              <LayerGroup
+                title="Copper"
+                legend={
+                  layers.filter((layer) => layer.category === 'copper').length
+                }
               >
-                <span className="part-reference">{item.reference}</span>
-                <span className="part-label">
-                  {component?.mpn ?? component?.value ?? item.footprint}
-                  <small>
-                    {!item.at
-                      ? 'Unplaced'
-                      : !Object.keys(item.physicalFeatures).length
-                        ? 'No physical geometry'
-                        : `${item.side === 'front' ? 'Front' : 'Back'} side`}
-                  </small>
-                </span>
-                <ChevronRight size={13} />
-              </button>
-            );
-          })}
-          {!parts.length && (
-            <p className="empty-copy">
-              {query ? 'No parts match your search.' : 'No parts declared.'}
-            </p>
-          )}
-        </div>
-      </div>
-      <div className="navigation-footer">
+                <LayerList
+                  items={layers.filter((layer) => layer.category === 'copper')}
+                  visibility={visibility}
+                  onToggle={onToggle}
+                />
+              </LayerGroup>
+              <LayerGroup
+                title="Technical"
+                legend={<span title="F: front · B: back">F · B</span>}
+              >
+                <TechnicalLayers
+                  items={layers.filter(
+                    (layer) => layer.category === 'technical',
+                  )}
+                  visibility={visibility}
+                  onToggle={onToggle}
+                />
+              </LayerGroup>
+              <LayerGroup title="Overlays">
+                <LayerList
+                  items={layers.filter((layer) => layer.overlay)}
+                  visibility={visibility}
+                  onToggle={onToggle}
+                />
+              </LayerGroup>
+            </div>
+            {!layers.length && (
+              <p className="py-2.5 text-[13px] leading-[1.7] text-muted-foreground">
+                Layers appear after the board compiles.
+              </p>
+            )}
+          </TabsContent>
+          <TabsContent
+            value="parts"
+            forceMount
+            className="min-h-0 flex-1 px-4 pt-2 pb-4 [scrollbar-width:thin] data-[state=inactive]:hidden"
+          >
+            <PartsList
+              ir={ir}
+              selected={selected}
+              onSelect={(id) => {
+                setOpenMobile(false);
+                onSelect(id);
+              }}
+            />
+          </TabsContent>
+        </SidebarContent>
+      </Tabs>
+      <SidebarFooter className="flex flex-row items-center justify-center gap-1.5 border-t bg-[color-mix(in_srgb,var(--muted)_35%,var(--card))] px-3.5 py-[15px] text-[12px] text-muted-foreground [&>svg]:size-3.5">
         <CircuitBoard size={14} />
         <span>{ir?.parts.length ?? 0} parts</span>
-        <span className="footer-dot" />
+        <span className="mx-[5px] inline-block size-[3px] rounded-full bg-current" />
         <Network size={13} />
         <span>{ir?.nets.length ?? 0} nets</span>
-      </div>
-    </aside>
+      </SidebarFooter>
+    </Sidebar>
   );
-}
-
-function LayerList({
-  items,
-  visibility,
-  onToggle,
-}: {
-  items: SceneLayer[];
-  visibility: Record<string, boolean>;
-  onToggle: (key: string, value: boolean) => void;
-}) {
-  return items.map((layer) => (
-    <label
-      key={layer.key}
-      className={`layer-row ${layer.overlay ? 'overlay-row' : ''}`}
-      title={layer.id}
-    >
-      <input
-        type="checkbox"
-        aria-label={layer.name}
-        checked={visibility[layer.key] ?? layer.visible}
-        onChange={(event) => onToggle(layer.key, event.target.checked)}
-      />
-      <span className="layer-swatch" style={{ background: layer.color }} />
-      <span className="layer-name">
-        {layer.name}
-        {!layer.overlay && (
-          <small>
-            {layer.category === 'copper'
-              ? layer.detail.charAt(0).toUpperCase() + layer.detail.slice(1)
-              : layer.detail}
-          </small>
-        )}
-      </span>
-    </label>
-  ));
 }

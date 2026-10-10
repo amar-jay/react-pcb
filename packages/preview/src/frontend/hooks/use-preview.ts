@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { PreviewSnapshot } from '../../index.ts';
 
+export type PreviewConnection = 'connecting' | 'connected' | 'disconnected';
+
 function initialSnapshot(): PreviewSnapshot {
   const payload = document.getElementById('preview-data')?.textContent;
   if (payload) {
@@ -21,9 +23,9 @@ function initialSnapshot(): PreviewSnapshot {
 /** One request at a time, canceled when the viewer unmounts or hot reloads. */
 export function usePreview() {
   const [snapshot, setSnapshot] = useState(initialSnapshot);
-  const [connection, setConnection] = useState<
-    'connecting' | 'connected' | 'disconnected'
-  >(snapshot.live ? 'connecting' : 'connected');
+  const [connection, setConnection] = useState<PreviewConnection>(
+    snapshot.live ? 'connecting' : 'connected',
+  );
   useEffect(() => {
     if (!snapshot.live) return;
     const controller = new AbortController();

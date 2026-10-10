@@ -1,37 +1,22 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { CompilerDiagnostic } from '@react-pcb/core';
-import {
-  AlertCircle,
-  AlertTriangle,
-  ArrowDownToLine,
-  ChevronDown,
-  CheckCircle2,
-  CircuitBoard,
-  Code2,
-  FileCode2,
-  Moon,
-  Network,
-  Radio,
-  Sun,
-  X,
-} from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { usePreview } from './hooks/use-preview.ts';
-import { download, sceneLayers } from './lib/scene.ts';
-import { Inspector } from './components/inspector.tsx';
+import { useIsMobile } from './hooks/use-mobile';
+import { sceneLayers } from './lib/scene.ts';
+import { previewFindings } from './lib/findings.ts';
 import { NavigationPanel } from './components/navigation-panel.tsx';
 import { BoardCanvas } from './components/board-canvas.tsx';
-import { IconButton } from './components/icon-button.tsx';
-import { Alert, AlertDescription, AlertTitle } from './components/ui/alert';
-import { Badge } from './components/ui/badge';
-import { Button } from './components/ui/button';
+import { WorkbenchHeader } from './components/workbench-header.tsx';
+import { WorkbenchFooter } from './components/workbench-footer.tsx';
+import { CanvasToolbar } from './components/canvas-toolbar.tsx';
+import { InspectorSheet } from './components/inspector-sheet.tsx';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from './components/ui/dropdown-menu';
+  BuildFailureDialog,
+  DiagnosticsPanel,
+  DiagnosticsTrigger,
+} from './components/diagnostics-panel.tsx';
+import { SidebarProvider } from './components/ui/sidebar';
+import { Button } from './components/ui/button';
 import { TooltipProvider } from './components/ui/tooltip';
 
 export function App() {
@@ -39,6 +24,14 @@ export function App() {
   const ir = snapshot.result?.ir;
   const [selected, setSelected] = useState<string | null>(null);
   const [net, setNet] = useState('');
+  const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
+  const [failureOpen, setFailureOpen] = useState(false);
+  const compactInspector = useIsMobile(1280);
+  const selectPart = (id: string | null) => {
+    setSelected(id);
+    if (id) setInspectorOpen(true);
+  };
   const [visibility, setVisibility] = useState<Record<string, boolean>>({});
   const [theme, setTheme] = useState(() => {
     try {
@@ -59,55 +52,8 @@ export function App() {
     typeof ir?.board.metadata.title === 'string'
       ? ir.board.metadata.title
       : 'Board preview';
-  const filename = snapshot.entry.split(/[\\/]/).pop() || 'Board JSX';
-  const findings: readonly CompilerDiagnostic[] = snapshot.error
-    ? snapshot.buildDiagnostics?.length
-      ? snapshot.buildDiagnostics
-      : [
-          {
-            code: 'PCBPREVIEW003',
-            severity: 'error',
-            message: snapshot.error,
-            entity: null,
-          },
-        ]
-    : [
-        ...(snapshot.result?.diagnostics ?? []),
-        ...(snapshot.projection?.diagnostics ?? []),
-      ];
+  const findings = previewFindings(snapshot);
   const errors = findings.filter((item) => item.severity === 'error').length;
-  const orderedFindings = [...findings].sort((a, b) =>
-    a.severity === b.severity ? 0 : a.severity === 'error' ? -1 : 1,
-  );
-  const firstBuildError = snapshot.buildDiagnostics?.find(
-    (item) => item.severity === 'error',
-  );
-  const buildErrorText = firstBuildError
-    ? `${firstBuildError.code}: ${firstBuildError.message}`
-    : snapshot.error;
-  const warnings = findings.filter(
-    (item) => item.severity === 'warning',
-  ).length;
-  const status =
-    connection === 'disconnected'
-      ? 'Disconnected'
-      : connection === 'connecting'
-        ? 'Connecting…'
-        : snapshot.building
-          ? 'Compiling…'
-          : snapshot.error
-            ? 'Build failed'
-            : ir
-              ? 'Compiled'
-              : 'No board loaded';
-  const buildState =
-    connection === 'disconnected'
-      ? 'error'
-      : snapshot.building
-        ? 'building'
-        : snapshot.error
-          ? 'error'
-          : 'ready';
 
   useEffect(() => {
     document.title = `${title} · react-pcb`;
@@ -126,163 +72,80 @@ export function App() {
     if (net && !ir?.nets.some((item) => item.id === net)) setNet('');
   }, [ir, selected, net]);
 
+  useEffect(() => {
+    setFailureOpen(Boolean(snapshot.error));
+    if (snapshot.error) {
+      setInspectorOpen(false);
+      setDiagnosticsOpen(false);
+    }
+  }, [snapshot.version, snapshot.error]);
+
   return (
     <TooltipProvider delayDuration={350}>
-      <div className="workbench-app">
-        <header className="app-header" aria-label="PCB preview">
-          <div className="brand">
-            <span className="brand-mark">
-              <CircuitBoard size={22} strokeWidth={1.6} />
-            </span>
-            <div className="brand-wordmark">
-              <span>
-                react<span className="brand-pcb">pcb</span>
-              </span>
-              <small>Board preview</small>
-            </div>
-          </div>
-          <div className="header-project">
-            <h1 id="board-title" title={title}>
-              {title}
-            </h1>
-            <div className="header-path">
-              <FileCode2 size={12} />
-              <span id="source">{filename}</span>
-            </div>
-          </div>
-          <div className="header-actions">
-            <Badge
-              id="status"
-              className="build-status"
-              role="status"
-              variant={buildState === 'error' ? 'destructive' : 'secondary'}
-              data-state={buildState}
-            >
-              <span className="status-dot" />
-              {status}
-            </Badge>
-            <span id="mode" className="preview-mode">
-              {snapshot.live ? <Radio size={14} /> : <FileCode2 size={14} />}
-              {snapshot.live ? 'Live preview' : 'Offline preview'}
-            </span>
-            <span className="header-divider" />
-            <IconButton
-              label={
-                theme === 'light'
-                  ? 'Switch to dark theme'
-                  : 'Switch to light theme'
-              }
-              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-            >
-              {theme === 'light' ? <Moon /> : <Sun />}
-            </IconButton>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  size="lg"
-                  className="export-trigger"
-                  disabled={!snapshot.result}
-                >
-                  <ArrowDownToLine />
-                  Export
-                  <ChevronDown />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" sideOffset={8}>
-                <DropdownMenuLabel>Export board</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  id="download-svg"
-                  disabled={!snapshot.projection}
-                  onSelect={() =>
-                    snapshot.projection &&
-                    download(
-                      'board.svg',
-                      snapshot.projection.svg,
-                      'image/svg+xml',
-                    )
-                  }
-                >
-                  <CircuitBoard />
-                  Save SVG
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  id="download-ir"
-                  disabled={!snapshot.result}
-                  onSelect={() =>
-                    snapshot.result &&
-                    download(
-                      'board.json',
-                      JSON.stringify(snapshot.result, null, 2) + '\n',
-                      'application/json',
-                    )
-                  }
-                >
-                  <Code2 />
-                  Save IR
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </header>
+      <div
+        className="group/workbench flex h-dvh min-h-[520px] flex-col"
+        data-inspector-open={inspectorOpen && !compactInspector}
+      >
+        <WorkbenchHeader
+          snapshot={snapshot}
+          connection={connection}
+          title={title}
+          theme={theme}
+          onToggleTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+        />
 
-        <div className="workspace-body">
+        <SidebarProvider className="[--sidebar-width:264px]! relative min-h-0 flex-1 overflow-hidden [&_[data-slot=sidebar-container]]:absolute [&_[data-slot=sidebar-container]]:inset-y-0 [&_[data-slot=sidebar-container]]:h-full [&_[data-slot=sidebar-inner]]:border-r">
           <NavigationPanel
             ir={ir}
+            failed={Boolean(snapshot.error)}
             selected={part?.id ?? null}
             layers={layers}
             visibility={visibility}
-            onSelect={setSelected}
+            onSelect={selectPart}
             onToggle={(key, value) =>
               setVisibility((previous) => ({ ...previous, [key]: value }))
             }
           />
 
-          <main className="canvas-panel">
-            <div className="canvas-toolbar">
-              <div>
-                <CircuitBoard size={15} />
-                <span>Board canvas</span>
-                <Badge variant="outline">2D</Badge>
-              </div>
-              <label className="net-control">
-                <Network size={13} />
-                <select
-                  id="net"
-                  aria-label="Highlight net"
-                  value={activeNet}
-                  onChange={(event) => setNet(event.target.value)}
-                >
-                  <option value="">All nets</option>
-                  {ir?.nets.map((net) => (
-                    <option key={net.id} value={net.id}>
-                      {net.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
+          <main className="mx-4 my-3.5 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border bg-card group-data-[inspector-open=true]/workbench:mr-[422px] max-md:m-2">
+            <CanvasToolbar ir={ir} net={activeNet} onNet={setNet}>
+              <InspectorSheet
+                snapshot={snapshot}
+                part={part}
+                net={activeNet}
+                onNet={setNet}
+                open={inspectorOpen}
+                onOpenChange={setInspectorOpen}
+                compact={compactInspector}
+                onBack={() => setSelected(null)}
+              />
+            </CanvasToolbar>
             {snapshot.error && (
-              <Alert
-                id="build-error"
-                variant="destructive"
-                className="build-error"
-              >
-                <AlertCircle />
-                <AlertTitle>Board compilation failed</AlertTitle>
-                <AlertDescription>
-                  <pre id="error-message">{buildErrorText}</pre>
-                  {ir && (
-                    <p id="stale-label">
-                      Showing the last successful build. Fix the source to
-                      refresh the board.
-                    </p>
-                  )}
-                </AlertDescription>
-              </Alert>
+              <div className="flex items-center justify-between gap-3 border-b bg-[color-mix(in_srgb,var(--destructive)_5%,var(--card))] px-3 py-[5px] max-md:flex-col max-md:items-start max-md:gap-0 max-md:pb-2 [&_button]:gap-2 [&_button]:text-left [&_button]:whitespace-normal [&_button]:text-destructive">
+                <Button
+                  id="build-error"
+                  variant="ghost"
+                  onClick={() => setFailureOpen(true)}
+                >
+                  <AlertCircle size={15} />
+                  {errors} {errors === 1 ? 'error' : 'errors'} · View
+                  compilation failure
+                </Button>
+                {ir && (
+                  <span
+                    id="stale-label"
+                    className="shrink-0 text-[11px] text-muted-foreground max-md:pl-2"
+                  >
+                    Last successful build
+                  </span>
+                )}
+              </div>
             )}
             {connection === 'disconnected' && (
-              <div className="connection-notice" role="status">
+              <div
+                className="bg-secondary px-5 py-3 text-[13px] text-secondary-foreground"
+                role="status"
+              >
                 Preview server disconnected. Reconnecting…
               </div>
             )}
@@ -293,110 +156,32 @@ export function App() {
               visibility={visibility}
               selected={part?.id ?? null}
               net={activeNet}
-              onSelect={setSelected}
+              onSelect={selectPart}
             />
-            <details className="diagnostics">
-              <summary>
-                <span>
-                  {errors ? (
-                    <AlertCircle size={16} />
-                  ) : warnings ? (
-                    <AlertTriangle size={16} />
-                  ) : (
-                    <CheckCircle2 size={16} />
-                  )}
-                  Diagnostics
-                  <Badge id="diagnostic-count" variant="secondary">
-                    {findings.length}
-                  </Badge>
-                </span>
-                <span
-                  className="diagnostics-summary"
-                  data-severity={
-                    errors ? 'error' : warnings ? 'warning' : 'none'
-                  }
-                >
-                  {errors
-                    ? `${errors} errors${warnings ? ` · ${warnings} warnings` : ''}`
-                    : warnings
-                      ? `${warnings} warnings`
-                      : 'No findings'}
-                  <ChevronDown size={14} />
-                </span>
-              </summary>
-              <div id="diagnostic-list" className="diagnostic-list">
-                {!findings.length && (
-                  <p className="empty-copy">No compiler findings.</p>
-                )}
-                {orderedFindings.map((item, index) => (
-                  <div
-                    className="diagnostic"
-                    key={`${item.code}:${item.entity}:${index}`}
-                  >
-                    <Badge
-                      variant={
-                        item.severity === 'error' ? 'destructive' : 'outline'
-                      }
-                    >
-                      {item.severity}
-                    </Badge>
-                    <div>
-                      <strong>
-                        {item.code}
-                        {item.entity ? ` · ${item.entity}` : ''}
-                      </strong>
-                      <p>{item.message}</p>
-                      {item.source?.file && (
-                        <small>
-                          {item.source.file}
-                          {item.source.line ? `:${item.source.line}` : ''}
-                        </small>
-                      )}
-                      {item.help && (
-                        <p className="diagnostic-help">{item.help}</p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </details>
+            <DiagnosticsTrigger
+              findings={findings}
+              onClick={() => setDiagnosticsOpen(true)}
+            />
           </main>
-
-          <aside className="inspection-panel" aria-label="Part inspection">
-            <div className="inspection-heading">
-              <h2>{part ? 'Part inspection' : 'Board overview'}</h2>
-              {part && (
-                <IconButton
-                  label="Clear part selection"
-                  onClick={() => setSelected(null)}
-                >
-                  <X />
-                </IconButton>
-              )}
-            </div>
-            <div id="part-details" data-kind={part ? 'part' : 'board'}>
-              <Inspector
-                snapshot={snapshot}
-                part={part}
-                net={activeNet}
-                onNet={setNet}
-              />
-            </div>
-          </aside>
-        </div>
-        <footer className="app-footer">
-          <span>
-            <span className="status-dot" />
-            {snapshot.live
-              ? 'Changes refresh automatically'
-              : 'Self-contained board preview'}
-          </span>
-          <span>
-            Placement preview
-            <span className="footer-dot" />
-            Routing unresolved
-          </span>
-        </footer>
+        </SidebarProvider>
+        <BuildFailureDialog
+          open={failureOpen}
+          onOpenChange={setFailureOpen}
+          findings={findings}
+          log={snapshot.error}
+          retained={Boolean(ir)}
+          onDiagnostics={() => {
+            setFailureOpen(false);
+            setDiagnosticsOpen(true);
+          }}
+        />
+        <DiagnosticsPanel
+          open={diagnosticsOpen}
+          onOpenChange={setDiagnosticsOpen}
+          findings={findings}
+          failed={Boolean(snapshot.error)}
+        />
+        <WorkbenchFooter live={snapshot.live} />
       </div>
     </TooltipProvider>
   );
