@@ -60,6 +60,13 @@ impl CheckedRect {
             .then_some(Self { min2, max2 })
     }
 
+    pub fn diagnostic_bounds(self) -> crate::OutlineBounds {
+        crate::OutlineBounds {
+            min2: self.min2,
+            max2: self.max2,
+        }
+    }
+
     pub fn xywh2(self) -> [i128; 4] {
         [
             self.min2[0],
@@ -74,6 +81,57 @@ pub(crate) struct CheckedRegions {
     pub declared: BTreeMap<String, CheckedRect>,
     pub on_board: BTreeMap<String, Option<CheckedRect>>,
     pub diagnostics: Vec<Diagnostic>,
+}
+
+fn constraint_label(ir: &BoardIr, owner: &str, waypoint: Option<usize>) -> String {
+    let net_name = |id: &NetId| {
+        ir.nets
+            .iter()
+            .find(|net| net.id == *id)
+            .map_or_else(|| id.0.clone(), |net| net.name.clone())
+    };
+    let label = if let Some(route) = ir.route_constraints.iter().find(|r| r.id == owner) {
+        format!("Route {}", net_name(&route.net))
+    } else if let Some(pair) = ir.differential_pairs.iter().find(|p| p.id == owner) {
+        format!(
+            "Differential pair {} / {}",
+            net_name(&pair.positive),
+            net_name(&pair.negative)
+        )
+    } else if let Some(zone) = ir.zones.iter().find(|z| z.id == owner) {
+        format!("Zone intent · {}", net_name(&zone.net))
+    } else {
+        "Keepout".to_owned()
+    };
+    waypoint.map_or(label.clone(), |index| format!("{label} · waypoint {index}"))
+}
+
+impl CheckedRegions {
+    pub fn diagnostic_geometry(
+        &self,
+        ir: &BoardIr,
+        owner: &str,
+        region: &str,
+        waypoint: Option<usize>,
+    ) -> crate::DiagnosticGeometry {
+        crate::DiagnosticGeometry::ConstraintRegion(Box::new(
+            crate::diagnostic::ConstraintRegionGeometry {
+                label: constraint_label(ir, owner, waypoint),
+                board_bounds: self.declared[&ir.board.outline].diagnostic_bounds(),
+                constraint_id: owner.to_owned(),
+                region_id: region.to_owned(),
+                region_bounds: self.declared[region].diagnostic_bounds(),
+                effective_bounds: self.on_board[region].map(CheckedRect::diagnostic_bounds),
+                waypoint,
+                net: None,
+                part: None,
+                layer: None,
+                feature: None,
+                blockers: Vec::new(),
+                feature_bounds: None,
+            },
+        ))
+    }
 }
 
 /// Validate all stored geometry and all constraint owners/targets, including
@@ -246,7 +304,10 @@ pub(crate) fn check_regions(ir: &BoardIr) -> Result<CheckedRegions, CompileError
             Ok(())
         }
     };
-    let mut region_use = |region: &str, owner: &str, waypoint: bool| -> Result<(), CompileError> {
+    let mut region_use = |region: &str,
+                          owner: &str,
+                          waypoint: Option<usize>|
+     -> Result<(), CompileError> {
         let effective = on_board.get(region).ok_or_else(|| {
             invalid(
                 "PCBIR038",
@@ -257,16 +318,37 @@ pub(crate) fn check_regions(ir: &BoardIr) -> Result<CheckedRegions, CompileError
         if effective.is_none() {
             let message = format!(
                 "{} region {region} of constraint {owner} has no positive-area board intersection",
-                if waypoint { "waypoint" } else { "boundary" }
+                if waypoint.is_some() {
+                    "waypoint"
+                } else {
+                    "boundary"
+                }
             );
             diagnostics.push(
-                if waypoint {
+                if waypoint.is_some() {
                     Diagnostic::error("PCBIR039", message)
                 } else {
                     Diagnostic::warning("PCBIR039", message)
                 }
                 .with_entity(owner)
-                .with_help(if waypoint {
+                .with_geometry(crate::DiagnosticGeometry::ConstraintRegion(Box::new(
+                    crate::diagnostic::ConstraintRegionGeometry {
+                        label: constraint_label(ir, owner, waypoint),
+                        board_bounds: outline.diagnostic_bounds(),
+                        constraint_id: owner.to_owned(),
+                        region_id: region.to_owned(),
+                        region_bounds: declared[region].diagnostic_bounds(),
+                        effective_bounds: None,
+                        waypoint,
+                        net: None,
+                        part: None,
+                        layer: None,
+                        feature: None,
+                        blockers: Vec::new(),
+                        feature_bounds: None,
+                    },
+                )))
+                .with_help(if waypoint.is_some() {
                     "Move the waypoint so it intersects the board."
                 } else {
                     "This declaration has no on-board effect; stored geometry is preserved."
@@ -280,8 +362,8 @@ pub(crate) fn check_regions(ir: &BoardIr) -> Result<CheckedRegions, CompileError
         check_net(&route.net, &route.id)?;
         endpoint(&route.from, &route.net, &route.id)?;
         endpoint(&route.to, &route.net, &route.id)?;
-        for region in &route.through {
-            region_use(region, &route.id, true)?;
+        for (index, region) in route.through.iter().enumerate() {
+            region_use(region, &route.id, Some(index + 1))?;
         }
     }
     for pair in &ir.differential_pairs {
@@ -302,8 +384,8 @@ pub(crate) fn check_regions(ir: &BoardIr) -> Result<CheckedRegions, CompileError
                 endpoint(pin, net, &pair.id)?;
             }
         }
-        for region in &pair.through {
-            region_use(region, &pair.id, true)?;
+        for (index, region) in pair.through.iter().enumerate() {
+            region_use(region, &pair.id, Some(index + 1))?;
         }
     }
     for zone in &ir.zones {
@@ -318,14 +400,14 @@ pub(crate) fn check_regions(ir: &BoardIr) -> Result<CheckedRegions, CompileError
                 "zone layers must be nonempty, unique concrete copper layer IDs",
             ));
         }
-        region_use(&zone.boundary, &zone.id, false)?;
+        region_use(&zone.boundary, &zone.id, None)?;
     }
     for keepout in &ir.keepouts {
         owner(&keepout.id)?;
         for net in &keepout.except {
             check_net(net, &keepout.id)?;
         }
-        region_use(&keepout.region, &keepout.id, false)?;
+        region_use(&keepout.region, &keepout.id, None)?;
     }
     Ok(CheckedRegions {
         declared,

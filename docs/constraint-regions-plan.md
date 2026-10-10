@@ -1,11 +1,11 @@
 # Constraint region implementation plan
 
-Status: phases 1–5 complete and verified. Phases 6–7 are pending.
+Status: phases 1–6 complete and verified. Phase 7 is pending.
 
 ## Progress and resume checkpoint
 
 Work is being completed one phase at a time. This checkpoint records the
-implemented boundary so subsequent work can resume at phase 6.
+implemented boundary so subsequent work can resume at phase 7.
 
 | Phase | Status |
 | --- | --- |
@@ -14,7 +14,7 @@ implemented boundary so subsequent work can resume at phase 6.
 | 3. Make declaration identity predictable | Complete and verified. |
 | 4. Enforce keepouts against available geometry | Complete and verified. |
 | 5. Check route-region feasibility and report coverage | Complete and verified. |
-| 6. Make all constraint types inspectable | Next. |
+| 6. Make all constraint types inspectable | Complete and verified. |
 | 7. Regression fixtures, documentation and completion | Pending; tests are added alongside each completed phase. |
 
 Phase 1 delivers board IR schema 3, declaration protocol 2, typed keepout
@@ -96,16 +96,41 @@ structurally valid saved IR is not certified for keepout satisfaction or routing
 feasibility by migration. Standalone validation still rejects empty waypoints,
 while proven on-board blockage returns a failed report check.
 
-Resume with phase 6 below. Reuse checked authored/effective regions and the shared
-validators. Add zone intent outlines, separate overlay controls, owner metadata,
-selection/highlighting, full scene bounds and current diagnostic geometry for
-failed-build focusing. Keep exports and saved preferences consistent. Do not
-infer ownership from ID spelling, regenerate IDs or rewrite authored geometry.
-Region sharing and repeated ordered visits remain valid in serialized IR.
+Phase 6 draws solid teal zone-intent boundaries, rose dashed keepouts and violet
+dotted ordinary/pair waypoints as independent overlays. Projection metadata
+carries explicit owner/type, region and net IDs, descriptive labels and each
+ordered visit number. Shared regions and repeated references produce independent
+owner/visit entries. Authored bounds extend the full-scene viewport; board fit
+remains outline-only. The inspector shows rules, scope, exceptions, endpoints,
+net names and visit order, with stable IDs in details. Pointer/keyboard region
+selection highlights its owner's regions, and net highlighting includes route
+and zone intent. Board overview lists all region uses and route owners without waypoints for
+selection. Selecting a hidden region reveals its overlay through the saved
+visibility control; routes without waypoints never acquire invented regions.
 
-Known remaining gaps: zone boundaries are not drawn; full constraint inspection,
-separate overlay visibility and current region/violation diagnostic geometry are
-pending phase 6. Realized routing/fills are unavailable and have explicit coverage
+Current structured `constraint-region` diagnostic geometry carries checked
+board/authored/effective bounds, owner/region IDs, descriptive labels and visit
+numbers. Keepout violations include exact current physical features and bounds,
+part and layer/side; blocked visits include net ownership and current blocking
+keepout rectangles. Diagnostic actions focus this geometry independently of
+retained accepted IR and saved visibility, including initial failures. Successful
+rebuilds or clearing the highlight dismiss it. Coverage warnings for keepouts
+also carry their known region geometry. No routing/fill geometry is synthesized.
+
+SVG/PNG presentation shares the distinct unfilled styles and presets. PNG's API
+accepts explicit viewer visibility overrides. Version-1 saved preferences migrate
+`overlay:constraints` to the three independent keys, preserving explicit newer
+choices. Default overlays are visible; Front/Back, Copper only and Fabrication
+presets hide constraint intent while All layers enables it. Exports retain the
+original full-scene physical coordinates, independent of canvas zoom/highlights.
+
+Resume with phase 7 below: consolidate investigation fixtures and coverage,
+review the examples/documentation and complete the final checks and visual audit.
+Do not infer ownership from ID spelling, regenerate IDs or rewrite authored
+geometry. Region sharing and repeated ordered visits remain valid in serialized IR.
+
+Known remaining gaps: final phase-7 regression/coverage review and completion
+audits remain pending. Realized routing/fills are unavailable and have explicit coverage
 warnings. Anonymous repeated declarations require stable keys, with actionable
 diagnostics. The schema records semantics and scope, not full physical approval.
 
@@ -150,6 +175,20 @@ live preview, TypeScript, Rust formatting/checking and Clippy with warnings deni
 Both basic and ESC example builds passed with their new coverage warnings.
 
 Phase 5 changes are local; no commit was created by this phase.
+
+Phase 6 adds five Rust regressions and nine Bun regressions covering zone
+projection/full-scene bounds, explicit custom/shared owners, repeated ordered
+visits, current off-board and physical-violation geometry, both blocked pair legs,
+inspector details, owner/net highlighting, saved-toggle migration and SVG/PNG
+visibility/presentation in both views and themes. The final `bun run check`
+passed **113 Rust tests** and **162 Bun tests**, TypeScript, Rust formatting/checking
+and Clippy with warnings denied. Both basic and ESC example builds passed.
+A live browser audit verified pointer/keyboard selection, all three rule inspectors,
+net/owner highlights, saved visibility and SVG export, both fit actions, current
+039/040/042 geometry over retained scenes and initial mobile failure, live recovery,
+and the overlay presentation in both views and themes. Visual artifacts are in
+`/tmp/react-pcb-ui-browser/phase6-*`; check output is in
+`/tmp/react-pcb-phase6-check.log`. Phase 6 changes are local; no commit was created.
 
 ## Objective
 

@@ -13,7 +13,11 @@ import { projectPoint } from "../lib/ruler.ts";
 import type { CanvasViewport } from "./canvas-measurement.tsx";
 import { Button } from "./ui/button";
 
-function FeatureShape({ feature }: { feature: PhysicalFeature<number> }) {
+export function FeatureShape({
+	feature,
+}: {
+	feature: PhysicalFeature<number>;
+}) {
 	const shape = feature.shape;
 	if (shape.kind === "circle") return <circle r={shape.diameter / 2_000_000} />;
 	const width = shape.size[0] / 1_000_000;

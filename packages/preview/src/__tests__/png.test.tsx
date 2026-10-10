@@ -6,10 +6,15 @@ import {
 	Board,
 	compile,
 	definePhysicalFootprint,
+	Keepout,
 	net,
 	Part,
+	pad,
 	part,
+	Route,
+	RouteThrough,
 	rect,
+	Zone,
 } from "@react-pcb/core";
 import {
 	boardSvg,
@@ -369,3 +374,60 @@ test("CLI exports both PNG views and inferred PNG builds, rejects invalid flags 
 		await rm(directory, { recursive: true, force: true });
 	}
 }, 15000);
+
+test("PNG intent outlines preserve substrate interiors and independent visibility in both themes", async () => {
+	const signal = net("SIG");
+	const a = part("A"),
+		b = part("B");
+	const copper = testLayers.stackup.entries.filter(
+		(layer) => layer.kind === "copper",
+	);
+	const { ir } = await compile(
+		<Board outline={rect(0, 0, 20, 10)} layers={testLayers}>
+			<Part id={a} footprint="TEST" connect={{ P: signal }} />
+			<Part id={b} footprint="TEST" connect={{ P: signal }} />
+			<Route net={signal} from={pad(a, "P")} to={pad(b, "P")}>
+				<RouteThrough region={rect(1, 2, 4, 6)} />
+			</Route>
+			<Keepout region={rect(8, 2, 4, 6)} disallow={["vias"]} />
+			<Zone net={signal} layers={copper} boundary={rect(15, 2, 4, 6)} />
+		</Board>,
+		{ cwd, hideWarnings: true },
+	);
+	const projection = await boardSvg(ir, { cwd });
+	for (const view of ["board", "analysis"] as const)
+		for (const theme of ["light", "dark"] as const) {
+			const all = pixels(
+				renderBoardPng(projection, ir, { width: 440, view, theme }),
+			);
+			const hidden = pixels(
+				renderBoardPng(projection, ir, {
+					width: 440,
+					view,
+					theme,
+					visibility: { "overlay:zones": false },
+				}),
+			);
+			const zoneColor =
+				view === "board" || theme === "dark" ? "5eead4" : "0f766e";
+			expect(all.colors.has(zoneColor)).toBe(true);
+			expect(hidden.colors.has(zoneColor)).toBe(false);
+			expect(hidden.width).toBe(all.width);
+			expect(hidden.height).toBe(all.height);
+			const substrate =
+				view === "analysis"
+					? theme === "dark"
+						? "172033"
+						: "ffffff"
+					: theme === "dark"
+						? "2a5848"
+						: "234e41";
+			for (const x of [80, 220, 360]) {
+				// centers of the three outlines, in a 22 mm viewport
+				const offset = (120 * all.width + x) * 4;
+				expect(all.rgba.subarray(offset, offset + 3).toString("hex")).toBe(
+					substrate,
+				);
+			}
+		}
+});

@@ -1,4 +1,4 @@
-//! Board inspection projection. Only realized physical geometry is drawn.
+//! Board inspection projection: physical realization and explicit constraint intent.
 use crate::svg::{escape, geometry_mm as geometry, identity, mm};
 use crate::{BoardIr, BoardSide, CompileError, Diagnostic, StackupLayer, TechnicalLayer};
 use serde::Serialize;
@@ -14,6 +14,113 @@ fn invalid(message: &str) -> CompileError {
     CompileError::diagnostic(Diagnostic::error("PCBPREVIEW001", message))
 }
 use crate::ir::regions::board_length as nm;
+
+struct IntentRegion<'a> {
+    owner: &'a str,
+    region: &'a str,
+    kind: &'static str,
+    overlay: &'static str,
+    label: String,
+    nets: Vec<&'a str>,
+    waypoint: Option<usize>,
+}
+
+fn intent_regions(ir: &BoardIr) -> Vec<IntentRegion<'_>> {
+    let net_name = |id: &str| {
+        ir.nets
+            .iter()
+            .find(|net| net.id.0 == id)
+            .map_or(id.to_owned(), |net| net.name.clone())
+    };
+    let pin_name = |pin: &crate::PinRef| {
+        format!(
+            "{}.{}",
+            ir.parts
+                .iter()
+                .find(|part| part.id == pin.part)
+                .map_or(pin.part.as_str(), |part| part.reference.as_str()),
+            pin.name
+        )
+    };
+    let mut result = Vec::new();
+    for route in &ir.route_constraints {
+        for (index, region) in route.through.iter().enumerate() {
+            result.push(IntentRegion {
+                owner: &route.id,
+                region,
+                kind: "route",
+                overlay: "waypoints",
+                label: format!(
+                    "Route {}: {} → {} · waypoint {}",
+                    net_name(&route.net.0),
+                    pin_name(&route.from),
+                    pin_name(&route.to),
+                    index + 1
+                ),
+                nets: vec![&route.net.0],
+                waypoint: Some(index + 1),
+            });
+        }
+    }
+    for pair in &ir.differential_pairs {
+        for (index, region) in pair.through.iter().enumerate() {
+            result.push(IntentRegion {
+                owner: &pair.id,
+                region,
+                kind: "differential-pair",
+                overlay: "waypoints",
+                label: format!(
+                    "Differential pair {} / {} · waypoint {}",
+                    net_name(&pair.positive.0),
+                    net_name(&pair.negative.0),
+                    index + 1
+                ),
+                nets: vec![&pair.positive.0, &pair.negative.0],
+                waypoint: Some(index + 1),
+            });
+        }
+    }
+    for keepout in &ir.keepouts {
+        result.push(IntentRegion {
+            owner: &keepout.id,
+            region: &keepout.region,
+            kind: "keepout",
+            overlay: "keepouts",
+            label: format!(
+                "Keepout · {}",
+                keepout
+                    .disallow
+                    .iter()
+                    .map(|r| serde_json::to_value(r)
+                        .unwrap()
+                        .as_str()
+                        .unwrap()
+                        .to_owned())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ),
+            nets: Vec::new(),
+            waypoint: None,
+        });
+    }
+    for zone in &ir.zones {
+        result.push(IntentRegion {
+            owner: &zone.id,
+            region: &zone.boundary,
+            kind: "zone",
+            overlay: "zones",
+            label: format!(
+                "Zone intent · {} · {}",
+                net_name(&zone.net.0),
+                zone.layers.join(", ")
+            ),
+            nets: vec![&zone.net.0],
+            waypoint: None,
+        });
+    }
+    result.sort_by(|a, b| (a.owner, a.waypoint, a.region).cmp(&(b.owner, b.waypoint, b.region)));
+    result
+}
 
 pub fn board_svg(ir: &BoardIr) -> Result<BoardProjection, CompileError> {
     if ir.schema_version != crate::SCHEMA_VERSION {
@@ -79,7 +186,15 @@ pub fn board_svg(ir: &BoardIr) -> Result<BoardProjection, CompileError> {
         let fatal = outside.remove(0);
         return Err(CompileError::diagnostic(fatal).with_diagnostics(outside));
     }
-    // Include assembly reservations/documentation that may extend outside the board.
+    let intents = intent_regions(ir);
+    for intent in &intents {
+        let bounds = checked.declared[intent.region];
+        for axis in 0..2 {
+            min[axis] = min[axis].min(bounds.min2[axis]);
+            max[axis] = max[axis].max(bounds.max2[axis]);
+        }
+    }
+    // Include constraint intent and assembly reservations/documentation that may extend outside the board.
     let pad = (w.max(h) / 25).max(2_000_000);
     let vx = min[0] - pad;
     let vy = min[1] - pad;
@@ -197,19 +312,21 @@ pub fn board_svg(ir: &BoardIr) -> Result<BoardProjection, CompileError> {
             writeln!(svg, "{} id=\"{}\" data-part-id=\"{}\" data-feature-id=\"{}\" data-purpose=\"drill\" transform=\"translate({} {}) rotate({})\" />", geometry(&shape), identity(&part.id,"overlay/drill",&shape.id), escape(&part.id)?, escape(&shape.id)?, mm(i128::from(shape.at[0])*2), mm(i128::from(shape.at[1])*2), shape.rotation).unwrap();
         }
     }
-    svg.push_str("</g>\n<g data-overlay=\"constraints\" fill=\"none\" stroke=\"#ac536d\" stroke-width=\"0.06\" stroke-dasharray=\"0.25 0.15\">\n");
-    let regions: BTreeSet<_> = ir
-        .keepouts
-        .iter()
-        .map(|k| &k.region)
-        .chain(ir.route_constraints.iter().flat_map(|r| r.through.iter()))
-        .chain(ir.differential_pairs.iter().flat_map(|r| r.through.iter()))
-        .collect();
-    for id in regions {
-        let [x, y, w, h] = checked.declared[id].xywh2();
-        writeln!(svg, "<rect data-region-id=\"{}\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\"><title>Constraint region: {}</title></rect>", escape(id)?, mm(x), mm(y), mm(w), mm(h), escape(id)?).unwrap();
-    }
     svg.push_str("</g>\n");
+    for (overlay, color, dash) in [
+        ("zones", "#28988d", ""),
+        ("keepouts", "#ac536d", "0.25 0.15"),
+        ("waypoints", "#8173c5", "0.08 0.12"),
+    ] {
+        writeln!(svg, "<g data-overlay=\"{overlay}\" fill=\"none\" stroke=\"{color}\" stroke-width=\"0.06\" stroke-dasharray=\"{dash}\"> ").unwrap();
+        for intent in intents.iter().filter(|intent| intent.overlay == overlay) {
+            let [x, y, w, h] = checked.declared[intent.region].xywh2();
+            writeln!(svg, "<rect data-constraint-id=\"{}\" data-constraint-type=\"{}\" data-region-id=\"{}\" data-waypoint=\"{}\" data-net-ids=\"{}\" data-label=\"{}\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" tabindex=\"0\" role=\"button\" aria-label=\"{}\"><title>{}</title></rect>",
+                escape(intent.owner)?, intent.kind, escape(intent.region)?, intent.waypoint.map_or(String::new(), |n| n.to_string()),
+                escape(&serde_json::to_string(&intent.nets).unwrap())?, escape(&intent.label)?, mm(x), mm(y), mm(w), mm(h), escape(&intent.label)?, escape(&intent.label)?).unwrap();
+        }
+        svg.push_str("</g>\n");
+    }
     for (side, name) in [(BoardSide::Front, "front"), (BoardSide::Back, "back")] {
         let references: Vec<_> = parts
             .iter()

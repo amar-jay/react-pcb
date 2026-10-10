@@ -8,6 +8,7 @@ import {
 	X,
 } from "lucide-react";
 import { useRef, useState } from "react";
+import { constraintGeometry } from "../lib/constraint-scene.ts";
 import { outlineGeometry } from "../lib/outline-diagnostic.ts";
 import { ComponentIcon } from "./pcb-icons.tsx";
 import {
@@ -69,13 +70,13 @@ function FailureErrors({
 									asChild={Boolean(
 										onFinding &&
 											findings.length === 1 &&
-											outlineGeometry(first),
+											(outlineGeometry(first) || constraintGeometry(first)),
 									)}
 								>
 									{onFinding &&
 									findings.length === 1 &&
 									first &&
-									outlineGeometry(first) ? (
+									(outlineGeometry(first) || constraintGeometry(first)) ? (
 										<button
 											type="button"
 											className="cursor-pointer hover:underline"
@@ -137,18 +138,20 @@ function FailureErrors({
 											/>
 										</button>
 									</CollapsibleTrigger>
-									{onFinding && outlineGeometry(finding) && (
-										<div className="pb-2 pl-11">
-											<Button
-												size="sm"
-												variant="ghost"
-												className="h-7 text-xs text-primary"
-												onClick={() => onFinding(finding)}
-											>
-												Show on board
-											</Button>
-										</div>
-									)}
+									{onFinding &&
+										(outlineGeometry(finding) ||
+											constraintGeometry(finding)) && (
+											<div className="pb-2 pl-11">
+												<Button
+													size="sm"
+													variant="ghost"
+													className="h-7 text-xs text-primary"
+													onClick={() => onFinding(finding)}
+												>
+													Show on board
+												</Button>
+											</div>
+										)}
 									<CollapsibleContent className="px-4 pb-3">
 										<div className="ml-7 rounded-md bg-muted/60 p-3 text-xs leading-relaxed">
 											<p className="font-mono whitespace-pre-wrap wrap-anywhere">

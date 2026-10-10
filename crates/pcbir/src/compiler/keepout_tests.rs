@@ -522,3 +522,50 @@ fn keepout_copper_checks_respect_explicit_round_and_slotted_drill_voids() {
         assert_eq!(error.diagnostic.code, "PCBIR040");
     }
 }
+
+#[test]
+fn keepout_diagnostics_carry_current_physical_feature_and_effective_region() {
+    for restriction in ["copper", "components"] {
+        let error = compile(input(
+            vec![
+                device(vec![
+                    rectangle("land", "pad", "front-copper"),
+                    rectangle("reserve", "courtyard", "front-courtyard"),
+                ]),
+                keepout(json!([restriction]), -1.0, 4.5, 7.0, 1.0),
+            ],
+            false,
+        ))
+        .unwrap_err();
+        let diagnostic = serde_json::to_value(&error.diagnostic).unwrap();
+        let geometry = &diagnostic["geometry"];
+        assert_eq!(geometry["kind"], "constraint-region");
+        assert_eq!(geometry["part"], "U1");
+        assert_eq!(geometry["feature"]["at"], json!([5000000, 5000000]));
+        assert_eq!(
+            geometry["feature"]["id"],
+            if restriction == "copper" {
+                "land"
+            } else {
+                "reserve"
+            }
+        );
+        assert_eq!(
+            geometry["layer"],
+            if restriction == "copper" {
+                "metal:first"
+            } else {
+                "front"
+            }
+        );
+        assert_eq!(geometry["regionBounds"]["min2"][0], -2000000);
+        assert_eq!(geometry["effectiveBounds"]["min2"][0], 0);
+        assert!(
+            error
+                .diagnostics
+                .iter()
+                .filter(|d| d.code == "PCBIR041")
+                .all(|d| d.geometry.is_some())
+        );
+    }
+}

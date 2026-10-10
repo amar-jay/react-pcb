@@ -40,7 +40,7 @@ Bun's standalone HTML bundler, including local fonts.
 
 PNG output supports `--view board|analysis|both` (default Board), `--layers
 front|back|copper|fabrication|all` (default All), `--theme light|dark` (default
-light), and `--width 1..8192` (default 2048 pixels). Height follows the full-board
+light), and `--width 1..8192` (default 2048 pixels). Height follows the full-scene
 aspect ratio; images over 32 million pixels are rejected. The `png` command
 defaults to `dist/board.png`; `build` also recognizes a `.png` output. Both-view
 output adds `.board` and `.analysis` before the PNG extension and compiles once.
@@ -131,8 +131,8 @@ in the source tree. Programmatic callers can set `cwd` for another Rust workspac
 - Layer controls are grouped into copper, technical front/back pairs, and overlays.
   Collapsible groups keep large layer sets manageable. The board overview shows
   dimensions, placement counts, and the ordered material stackup.
-- Zoom with the buttons or wheel, drag to pan, and use **Fit board** to restore the
-  current board/geometry bounds. Inspect a part by clicking it or selecting it from
+- Zoom with the buttons or wheel, drag to pan, and use **Fit board** to fit the outline alone or **Fit scene**
+  to restore the complete board, physical geometry and constraint bounds. Inspect a part by clicking it or selecting it from
   the list. The inspector shows placement, footprint, connections and manufacturing
   check coverage.
   Canvas rulers and cursor coordinates are in millimetres and follow pan, zoom,
@@ -147,14 +147,19 @@ in the source tree. Programmatic callers can set `cwd` for another Rust workspac
 - Highlight a net from the selector or a part's connection list. Highlighting uses
   canonical logical-pin-to-pad bindings and connection IDs; it does not imply a
   routed trace.
-- Show constraint regions as dashed outlines. They describe keepouts and routing
-  corridors, not realized copper. Traces, vias, generated zones, placement synthesis
+- Inspect keepouts (rose dashes), ordered route waypoints (violet dots) and zone
+  intent boundaries (solid teal) with independent overlay controls. Click an
+  outline, or focus it and press Enter/Space, to inspect its rules and stable IDs.
+  Board overview lists the regions, including hidden and off-board intent, and
+  routing owners without waypoints. Selecting a hidden region enables its overlay.
+  Selecting one highlights all regions owned by its constraint; net highlighting
+  includes associated route/pair and zone intent. Traces, vias, generated zones, placement synthesis
   and autorouting remain outside the current compiler's realization scope.
 - Mask openings use solid boundaries and paste openings use dashed boundaries
   in both Board and Analysis views, including both themes. Their interiors stay
   unfilled so enabling All layers preserves the copper layer colors. Outlines
   remain readable when zooming; SVG and PNG exports share this presentation.
-  Board view uses amber courtyard and violet constraint outlines.
+  Board view uses amber courtyard outlines and distinct colors for each constraint kind.
 - Read compiler, manufacturing and preview diagnostics. Unplaced parts and
   footprints without canonical physical geometry stay listed with explicit
   warnings; the preview does not invent pad geometry for them.
@@ -170,9 +175,18 @@ in the source tree. Programmatic callers can set `cwd` for another Rust workspac
   to their opening control when dismissed.
 - Save the compiled result as JSON or the active Board/Analysis view as SVG.
   The saved SVG includes visible layers and their view colors, with original
-  physical dimensions and full-board bounds. Temporary highlighting and zoom
+  physical dimensions and full-scene bounds. Temporary highlighting and zoom
   stay in the viewer; canonical geometry remains unchanged.
   Both downloads are in the **Export** menu.
+
+For region findings (`PCBIR039`), keepout violations/coverage (`PCBIR040`/`PCBIR041`)
+and blocked waypoints (`PCBIR042`), click the code or **Show on board** to focus
+current structured diagnostic geometry. It includes the authored/effective region,
+current outline, and offending feature or blocking keepouts where available.
+The overlay remains visible with hidden layers and uses the latest finding rather
+than retained IR; an initial failure needs no accepted board. **Clear highlight**
+or a new build dismisses it. See the [constraint inspection contract](constraint-regions.md#preview-inspection-and-exports)
+for rule details and migration of the old shared visibility toggle.
 
 ## Geometry and serialization
 
@@ -205,12 +219,12 @@ as compilation and standalone validation. Values finer than one nanometre and
 overflowing derived edges reject during compilation and at serialized-board
 boundaries. Partially off-board rectangles retain their authored geometry;
 empty waypoint intersections reject, while empty keepout/zone intersections
-produce `PCBIR039` warnings. Zone boundaries are validated even though their
-overlay is still pending. Browser pan/zoom uses floating-point view state solely
+produce `PCBIR039` warnings. Zone boundaries are validated and displayed as intent outlines. Browser pan/zoom uses floating-point view state solely
 for inspection.
 
-The viewport includes the board outline and physical feature bounds, with a small
-display margin. Compilation and projection reject resolved pads/copper, drills,
+The full-scene viewport includes the board outline, physical feature bounds and
+authored constraint bounds, with a small display margin. Board fit remains
+independent of off-board overlays. Compilation and projection reject resolved pads/copper, drills,
 mask/paste openings, and fabrication geometry outside the board with `PCBIR031`.
 Courtyard reservations and silkscreen may extend beyond the outline and remain
 visible. Exact edge contact passes; manufacturing edge clearances remain

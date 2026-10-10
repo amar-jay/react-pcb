@@ -18,6 +18,12 @@ import { WorkbenchCommand } from "./components/workbench-command.tsx";
 import { useBoardPreferences } from "./hooks/use-board-preferences.ts";
 import { useIsMobile } from "./hooks/use-mobile";
 import { usePreview } from "./hooks/use-preview.ts";
+import {
+	type ConstraintSelection,
+	constraintEntries,
+	constraintGeometry,
+	sameConstraintRegion,
+} from "./lib/constraint-scene.ts";
 import { previewFindings } from "./lib/findings.ts";
 import {
 	focusOutlineFinding,
@@ -37,6 +43,13 @@ export function App() {
 	const canvas = useRef<CanvasActions>(null);
 	const ir = snapshot.result?.ir;
 	const [selected, setSelected] = useState<string | null>(null);
+	const [constraint, setConstraint] = useState<ConstraintSelection | null>(
+		null,
+	);
+	const [constraintDiagnostic, setConstraintDiagnostic] = useState<{
+		version: number;
+		finding: CompilerDiagnostic;
+	} | null>(null);
 	const [net, setNet] = useState("");
 	const [inspectorOpen, setInspectorOpen] = useState(false);
 	const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
@@ -46,14 +59,19 @@ export function App() {
 		focus: OutlineFocus;
 	} | null>(null);
 	const outlineFocus =
-		snapshot.error && outlineSelection?.version === snapshot.version
+		outlineSelection?.version === snapshot.version
 			? outlineSelection.focus
 			: null;
 	const showFinding = (finding: CompilerDiagnostic) => {
 		const focus = focusOutlineFinding(finding);
-		if (!focus) return;
+		const region = constraintGeometry(finding);
+		if (!focus && !region) return;
+		setConstraintDiagnostic(
+			region ? { version: snapshot.version, finding } : null,
+		);
+		setConstraint(null);
 		toast.dismiss(failureToastId);
-		setOutlineSelection({ version: snapshot.version, focus });
+		setOutlineSelection(focus ? { version: snapshot.version, focus } : null);
 		setDiagnosticsOpen(false);
 		setFailureOpen(false);
 		setSelected(null);
@@ -61,7 +79,33 @@ export function App() {
 		setNet("");
 	};
 	const compactInspector = useIsMobile(1280);
+	const selectConstraint = (selection: ConstraintSelection) => {
+		const entry =
+			ir &&
+			constraintEntries(ir).find((item) =>
+				sameConstraintRegion(selection, item),
+			);
+		if (entry?.regionId) {
+			const overlay =
+				entry.kind === "zone"
+					? "zones"
+					: entry.kind === "keepout"
+						? "keepouts"
+						: "waypoints";
+			const layer = layers.find((layer) => layer.key === `overlay:${overlay}`);
+			if (layer && !(visibility[layer.key] ?? layer.visible))
+				toggleLayer(layer.key, true);
+		}
+		setConstraint(selection);
+		setSelected(null);
+		setInspectorOpen(true);
+		setConstraintDiagnostic(null);
+		setOutlineSelection(null);
+	};
 	const selectPart = (id: string | null) => {
+		setConstraint(null);
+		setConstraintDiagnostic(null);
+		setOutlineSelection(null);
 		setSelected(id);
 		if (id) setInspectorOpen(true);
 	};
@@ -118,10 +162,18 @@ export function App() {
 		}
 	}, [theme]);
 	useEffect(() => {
+		if (
+			constraint &&
+			(!ir ||
+				!constraintEntries(ir).some((item) =>
+					sameConstraintRegion(constraint, item),
+				))
+		)
+			setConstraint(null);
 		if (selected && !ir?.parts.some((part) => part.id === selected))
 			setSelected(null);
 		if (net && !ir?.nets.some((item) => item.id === net)) setNet("");
-	}, [ir, selected, net]);
+	}, [ir, selected, net, constraint]);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: Notify on every failed build, even when its error text is unchanged.
 	useEffect(() => {
@@ -222,6 +274,7 @@ export function App() {
 								onView={setBoardView}
 								onOverview={() => {
 									setSelected(null);
+									setConstraint(null);
 									setInspectorOpen(true);
 								}}
 								onDiagnostics={() => setDiagnosticsOpen(true)}
@@ -230,19 +283,35 @@ export function App() {
 							<InspectorSheet
 								snapshot={snapshot}
 								part={part}
+								constraint={constraint}
+								onConstraint={selectConstraint}
 								net={activeNet}
 								onNet={setNet}
 								open={inspectorOpen}
 								onOpenChange={(open) => {
 									setInspectorOpen(open);
-									if (!open) setSelected(null);
+									if (!open) {
+										setSelected(null);
+										setConstraint(null);
+									}
 								}}
 								compact={compactInspector}
-								onBack={() => setSelected(null)}
+								onBack={() => {
+									setSelected(null);
+									setConstraint(null);
+								}}
 							/>
 						</CanvasToolbar>
 						<BoardCanvas
 							ref={canvas}
+							constraint={constraint}
+							onConstraint={selectConstraint}
+							constraintFinding={
+								constraintDiagnostic?.version === snapshot.version
+									? constraintDiagnostic.finding
+									: null
+							}
+							onDismissConstraint={() => setConstraintDiagnostic(null)}
 							outlineFocus={outlineFocus}
 							onOutlineFeature={(featureId) => {
 								if (outlineFocus)

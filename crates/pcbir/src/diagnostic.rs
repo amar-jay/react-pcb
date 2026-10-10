@@ -22,6 +22,7 @@ pub struct OutlineFeatureViolation {
 #[derive(Debug, Clone, Serialize)]
 #[serde(tag = "kind", rename_all = "kebab-case")]
 pub enum DiagnosticGeometry {
+    ConstraintRegion(Box<ConstraintRegionGeometry>),
     #[serde(rename_all = "camelCase")]
     BoardOutline {
         board_bounds: OutlineBounds,
@@ -31,9 +32,35 @@ pub enum DiagnosticGeometry {
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct ConstraintRegionGeometry {
+    pub label: String,
+    pub board_bounds: OutlineBounds,
+    pub constraint_id: String,
+    pub region_id: String,
+    pub region_bounds: OutlineBounds,
+    pub effective_bounds: Option<OutlineBounds>,
+    pub waypoint: Option<usize>,
+    pub net: Option<String>,
+    pub part: Option<String>,
+    pub layer: Option<String>,
+    pub feature: Option<crate::physical::Feature>,
+    pub blockers: Vec<ConstraintDiagnosticRegion>,
+    pub feature_bounds: Option<crate::physical::Bounds>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct OutlineBounds {
     pub min2: [i128; 2],
     pub max2: [i128; 2],
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ConstraintDiagnosticRegion {
+    pub constraint_id: String,
+    pub region_id: String,
+    pub bounds: OutlineBounds,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -73,6 +100,11 @@ impl Diagnostic {
             source: None,
             geometry: None,
         }
+    }
+
+    pub fn with_geometry(mut self, geometry: DiagnosticGeometry) -> Self {
+        self.geometry = Some(geometry);
+        self
     }
 
     pub fn with_entity(mut self, entity: impl Into<String>) -> Self {

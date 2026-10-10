@@ -15,9 +15,14 @@ export function sceneGroupKey(group: Element) {
 export function boardLayerColor(layer: SceneLayer) {
 	if (layer.overlay)
 		return (
-			{ references: "#e8eddb", drills: "#263e34", constraints: "#c4b5fd" }[
-				layer.id
-			] ?? "#a6adbd"
+			{
+				references: "#e8eddb",
+				drills: "#263e34",
+				constraints: "#c4b5fd",
+				keepouts: "#fb7185",
+				waypoints: "#c4b5fd",
+				zones: "#5eead4",
+			}[layer.id] ?? "#a6adbd"
 		);
 	if (layer.category === "copper")
 		return layer.side === "front" || layer.allSides
@@ -37,6 +42,9 @@ export function analysisLayerColor(layer: SceneLayer, dark: boolean) {
 	if (layer.overlay) {
 		if (layer.id === "references") return dark ? "#f1f5f9" : "#0f172a";
 		if (layer.id === "drills") return dark ? "#020617" : "#ffffff";
+		if (layer.id === "keepouts") return dark ? "#fda4af" : "#9f1239";
+		if (layer.id === "zones") return dark ? "#5eead4" : "#0f766e";
+		if (layer.id === "waypoints") return dark ? "#d8b4fe" : "#7e22ce";
 		if (layer.id === "constraints") return dark ? "#d8b4fe" : "#7e22ce";
 		return dark ? "#f472b6" : "#be185d";
 	}
@@ -99,7 +107,12 @@ export function applyScenePresentation(
 			: "";
 		const overlay = group.getAttribute("data-overlay");
 		const opening = layer?.kind === "solder-mask" || layer?.kind === "paste";
-		group.style.fill = overlay === "constraints" || opening ? "none" : color;
+		group.style.fill =
+			["constraints", "keepouts", "waypoints", "zones"].includes(
+				overlay ?? "",
+			) || opening
+				? "none"
+				: color;
 		group.style.stroke =
 			overlay === "references"
 				? analysis
@@ -130,6 +143,22 @@ export function applyScenePresentation(
 			feature.style.vectorEffect = analysis ? "non-scaling-stroke" : "";
 			feature.style.strokeWidth = analysis ? "1.25px" : "";
 		}
+		if (["keepouts", "waypoints", "zones"].includes(overlay ?? "")) {
+			for (const region of group.querySelectorAll<SVGElement>(
+				"[data-region-id]",
+			)) {
+				region.style.fill = "none";
+				region.style.stroke = color;
+				region.style.vectorEffect = "non-scaling-stroke";
+				region.style.strokeWidth = "2px";
+				region.style.strokeDasharray =
+					overlay === "keepouts"
+						? "6px 3px"
+						: overlay === "waypoints"
+							? "2px 3px"
+							: "";
+			}
+		}
 		// Openings describe process boundaries, not material covering the copper.
 		// Override the projection's filled-shape/stroke="none" presentation only.
 		if (opening) {
@@ -146,7 +175,7 @@ export function applyScenePresentation(
 	}
 }
 
-/** Keep physical dimensions and the original full-board viewBox, never the canvas viewport. */
+/** Keep physical dimensions and the original full-scene viewBox, never the canvas viewport. */
 export function exportBoardSvg(
 	markup: string,
 	layers: SceneLayer[],

@@ -1,4 +1,4 @@
-import type { BoardIr } from "@react-pcb/core";
+import type { BoardIr, CompilerDiagnostic } from "@react-pcb/core";
 import { Crosshair, Maximize, Minus, Plus, Ruler, X } from "lucide-react";
 import {
 	type CSSProperties,
@@ -12,6 +12,15 @@ import {
 	useRef,
 	useState,
 } from "react";
+import {
+	boardFitView,
+	type ConstraintSelection,
+	constraintFocusView,
+	constraintGeometry,
+	highlightConstraintRegions,
+	regionSelection,
+	sameConstraintRegion,
+} from "../lib/constraint-scene.ts";
 import {
 	diagnosticBoardSvg,
 	type OutlineFocus,
@@ -30,6 +39,7 @@ import {
 	applyScenePresentation,
 	type ScenePresentation,
 } from "../lib/scene-presentation.ts";
+import { CanvasConstraintDiagnostic } from "./canvas-constraint-diagnostic.tsx";
 import { CanvasDiagnostic } from "./canvas-diagnostic.tsx";
 import {
 	CanvasMeasurement,
@@ -41,6 +51,7 @@ import { Button } from "./ui/button";
 type View = [number, number, number, number];
 export type CanvasActions = {
 	fit: () => void;
+	fitScene: () => void;
 	zoomIn: () => void;
 	zoomOut: () => void;
 	toggleMeasurement: () => void;
@@ -58,6 +69,10 @@ type Props = {
 	onSelect: (id: string) => void;
 	statusControls: ReactNode;
 	presentation: ScenePresentation;
+	constraint?: ConstraintSelection | null;
+	onConstraint?: (selection: ConstraintSelection) => void;
+	constraintFinding?: CompilerDiagnostic | null;
+	onDismissConstraint?: () => void;
 	outlineFocus?: OutlineFocus | null;
 	onOutlineFeature?: (id: string) => void;
 	onDismissOutline?: () => void;
@@ -74,16 +89,22 @@ export function BoardCanvas({
 	onSelect,
 	statusControls,
 	presentation,
+	constraint = null,
+	onConstraint,
+	constraintFinding = null,
+	onDismissConstraint,
 	outlineFocus = null,
 	onOutlineFeature,
 	onDismissOutline,
 }: Props) {
+	const regionGeometry = constraintGeometry(constraintFinding);
 	const diagnosticGeometry = outlineGeometry(outlineFocus?.finding);
 	const diagnosticFeature = diagnosticGeometry?.features.find(
 		(item) => item.geometry.id === outlineFocus?.featureId,
 	);
+	const focusGeometry = diagnosticGeometry ?? regionGeometry;
 	const markup =
-		svg ?? (diagnosticGeometry ? diagnosticBoardSvg(diagnosticGeometry) : null);
+		svg ?? (focusGeometry ? diagnosticBoardSvg(focusGeometry) : null);
 	const scene = useRef<HTMLElement>(null);
 	const shell = useRef<HTMLDivElement>(null);
 	const viewport = useRef<View | null>(null);
@@ -217,6 +238,11 @@ export function BoardCanvas({
 		[view],
 	);
 	const fit = () => {
+		const svg = getSvg();
+		const bounds = svg && boardFitView(svg);
+		if (bounds) view(bounds);
+	};
+	const fitScene = () => {
 		if (fitted.current) view([...fitted.current]);
 	};
 
@@ -227,12 +253,42 @@ export function BoardCanvas({
 		};
 		return {
 			fit: run(fit),
+			fitScene: run(fitScene),
 			zoomIn: run(() => zoom(1 / 1.25)),
 			zoomOut: run(() => zoom(1.25)),
 			toggleMeasurement: run(toggleMeasurement),
 			clearMeasurement: run(clearMeasurement),
 		};
 	});
+
+	useLayoutEffect(() => {
+		if (!constraint) return;
+		const region = [
+			...(getSvg()?.querySelectorAll<SVGElement>("[data-constraint-id]") ?? []),
+		].find((element) => {
+			const selection = regionSelection(element);
+			return selection && sameConstraintRegion(constraint, selection);
+		});
+		if (!region) return;
+		const x = Number(region.getAttribute("x")),
+			y = Number(region.getAttribute("y"));
+		const w = Number(region.getAttribute("width")),
+			h = Number(region.getAttribute("height"));
+		const margin = Math.max(1, Math.max(w, h) * 0.25);
+		view([x - margin, y - margin, w + margin * 2, h + margin * 2]);
+	}, [constraint, getSvg, view]);
+
+	useLayoutEffect(() => {
+		if (!regionGeometry) return;
+		const bounds = scene.current?.getBoundingClientRect();
+		view(
+			constraintFocusView(
+				regionGeometry,
+				bounds && bounds.height > 0 ? bounds.width / bounds.height : 1,
+			),
+		);
+		scene.current?.focus({ preventScroll: true });
+	}, [regionGeometry, view]);
 
 	useLayoutEffect(() => {
 		const svg = getSvg();
@@ -258,6 +314,7 @@ export function BoardCanvas({
 		const svg = getSvg();
 		if (!markup || !svg || !ir) return;
 		applyScenePresentation(svg, layers, visibility, { view: boardView, theme });
+		highlightConstraintRegions(svg, constraint, net);
 		const parts = new Map(ir.parts.map((part) => [part.id, part]));
 		for (const feature of svg.querySelectorAll<SVGElement>("[data-part-id]")) {
 			const partId = feature.dataset.partId;
@@ -278,7 +335,18 @@ export function BoardCanvas({
 				!!net && !matches && feature.tagName !== "text",
 			);
 		}
-	}, [markup, ir, layers, visibility, selected, net, boardView, theme, getSvg]);
+	}, [
+		markup,
+		ir,
+		layers,
+		visibility,
+		selected,
+		constraint,
+		net,
+		boardView,
+		theme,
+		getSvg,
+	]);
 
 	useEffect(() => {
 		if (!shell.current) return;
@@ -356,6 +424,15 @@ export function BoardCanvas({
 						complete={Boolean(measurementEnd)}
 					/>
 				)}
+				{constraintFinding && regionGeometry && canvasViewport && (
+					<CanvasConstraintDiagnostic
+						finding={constraintFinding}
+						geometry={regionGeometry}
+						viewport={canvasViewport}
+						retained={Boolean(svg)}
+						onDismiss={() => onDismissConstraint?.()}
+					/>
+				)}
 				{outlineFocus &&
 					diagnosticGeometry &&
 					diagnosticFeature &&
@@ -379,12 +456,23 @@ export function BoardCanvas({
 					id="scene"
 					data-view={presentation.view}
 					ref={scene}
-					className="absolute top-16.5 right-10.5 bottom-13.5 left-13.5 touch-none cursor-grab data-[measuring=true]:cursor-crosshair data-[measuring=true]:**:data-part-id:cursor-crosshair data-[dragging=true]:cursor-grabbing focus-visible:rounded-xs focus-visible:outline-offset-[5px] max-[701px]:top-18 max-[701px]:right-3 max-[701px]:bottom-15.5 max-[701px]:left-10 [&_svg]:block [&_svg]:size-full [&_svg]:overflow-visible data-[view=board]:[&_svg]:drop-shadow-[0_9px_12px_#233d3426] **:data-part-id:cursor-pointer [&_.selected:not(text)]:stroke-[color-mix(in_srgb,var(--primary)_55%,var(--muted-foreground))]! [&_.selected:not(text)]:[stroke-width:1px]! [&_.selected:not(text)]:[vector-effect:non-scaling-stroke]! [&_.net-match:not(text)]:stroke-[#b6ab84]! [&_.net-match:not(text)]:[stroke-width:1px]! [&_.net-match:not(text)]:[vector-effect:non-scaling-stroke]! [&_.dimmed]:opacity-[0.19] data-[view=analysis]:[&_.dimmed]:opacity-50"
+					className="absolute top-16.5 right-10.5 bottom-13.5 left-13.5 touch-none cursor-grab data-[measuring=true]:cursor-crosshair data-[measuring=true]:**:data-part-id:cursor-crosshair data-[dragging=true]:cursor-grabbing focus-visible:rounded-xs focus-visible:outline-offset-[5px] max-[701px]:top-18 max-[701px]:right-3 max-[701px]:bottom-15.5 max-[701px]:left-10 [&_svg]:block [&_svg]:size-full [&_svg]:overflow-visible data-[view=board]:[&_svg]:drop-shadow-[0_9px_12px_#233d3426] **:data-part-id:cursor-pointer **:data-region-id:cursor-pointer [&_.selected:not(text)]:stroke-[color-mix(in_srgb,var(--primary)_55%,var(--muted-foreground))]! [&_.selected:not(text)]:[stroke-width:1px]! [&_.selected:not(text)]:[vector-effect:non-scaling-stroke]! [&_.net-match:not(text)]:stroke-[#b6ab84]! [&_.net-match:not(text)]:[stroke-width:1px]! [&_.net-match:not(text)]:[vector-effect:non-scaling-stroke]! [&_.dimmed]:opacity-[0.19] data-[view=analysis]:[&_.dimmed]:opacity-50"
 					data-measuring={measuring}
 					// biome-ignore lint/a11y/noNoninteractiveTabindex: Canvas keyboard controls need focus for panning, zooming and measurement.
 					tabIndex={0}
 					aria-label="Board canvas. Drag to pan, scroll to zoom. Arrow keys pan; plus and minus zoom; F fits the board. R toggles distance measurement; Escape clears it. Alt-drag pans while measuring."
 					onKeyDown={(event) => {
+						if ((event.key === "Enter" || event.key === " ") && !measuring) {
+							const element = (event.target as Element).closest(
+								"[data-constraint-id]",
+							);
+							const selection = element && regionSelection(element);
+							if (selection) {
+								event.preventDefault();
+								onConstraint?.(selection);
+								return;
+							}
+						}
 						if (event.key.toLowerCase() === "r" && markup) {
 							event.preventDefault();
 							toggleMeasurement();
@@ -491,7 +579,9 @@ export function BoardCanvas({
 						if (!active.selecting) return;
 						const item = document
 							.elementFromPoint(event.clientX, event.clientY)
-							?.closest<SVGElement>("[data-part-id]");
+							?.closest<SVGElement>("[data-part-id], [data-constraint-id]");
+						const selection = item && regionSelection(item);
+						if (selection) onConstraint?.(selection);
 						if (item?.dataset.partId) onSelect(item.dataset.partId);
 					}}
 					onPointerCancel={(event) => {
@@ -546,6 +636,16 @@ export function BoardCanvas({
 					>
 						<Maximize />
 						<span className="max-sm:hidden">Fit board</span>
+					</Button>
+					<Button
+						id="fit-scene"
+						aria-label="Fit full scene"
+						variant="ghost"
+						size="lg"
+						onClick={fitScene}
+						disabled={!markup}
+					>
+						Fit scene
 					</Button>
 					<span className="mx-2 h-5 w-px bg-border max-[701px]:mx-1" />
 					<IconButton

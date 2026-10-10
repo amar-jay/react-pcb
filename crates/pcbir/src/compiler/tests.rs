@@ -1944,3 +1944,67 @@ fn multiple_keyed_constraints_and_waypoints_survive_insertion_reordering_and_edi
         assert!(after.regions.contains_key(id));
     }
 }
+
+#[test]
+fn constraint_projection_draws_zone_intent_and_extends_bounds_without_changing_ir() {
+    let mut design = intent_design();
+    design[4]["props"]["boundary"] =
+        json!({"kind": "rect", "x": -12, "y": -3, "width": 30, "height": 20});
+    let ir = compile(transaction(design)).unwrap().ir;
+    let before = serde_json::to_value(&ir).unwrap();
+    let svg = crate::board_svg(&ir).unwrap().svg;
+    assert!(svg.contains("viewBox=\"-13 -4 32 22\""));
+    for overlay in ["keepouts", "waypoints", "zones"] {
+        assert!(svg.contains(&format!("data-overlay=\"{overlay}\" fill=\"none\"")));
+    }
+    assert!(svg.contains(&format!(
+        "data-constraint-id=\"{}\" data-constraint-type=\"zone\"",
+        ir.zones[0].id
+    )));
+    assert!(svg.contains("Zone intent · N · copper/1"));
+    assert!(svg.contains("Route P: U1.P → U2.P · waypoint 1"));
+    assert_eq!(serde_json::to_value(&ir).unwrap(), before);
+}
+
+#[test]
+fn projection_uses_explicit_owners_for_shared_regions_and_repeated_ordered_visits() {
+    let mut ir = compile(transaction(intent_design())).unwrap().ir;
+    let first = ir.route_constraints[0].through[0].clone();
+    let mut region = ir.regions.remove(&first).unwrap();
+    region.id = "shared<&region".into();
+    ir.regions.insert(region.id.clone(), region);
+    ir.route_constraints[0].id = "custom<&owner".into();
+    ir.route_constraints[0].through = vec!["shared<&region".into(), "shared<&region".into()];
+    ir.zones[0].boundary = "shared<&region".into();
+    let svg = crate::board_svg(&ir).unwrap().svg;
+    assert_eq!(
+        svg.matches("data-region-id=\"shared&lt;&amp;region\"")
+            .count(),
+        3
+    );
+    assert_eq!(
+        svg.matches("data-constraint-id=\"custom&lt;&amp;owner\"")
+            .count(),
+        2
+    );
+    assert!(svg.contains("data-waypoint=\"1\""));
+    assert!(svg.contains("data-waypoint=\"2\""));
+    assert!(svg.contains("data-net-ids=\"[&quot;P&quot;]\""));
+}
+
+#[test]
+fn empty_waypoint_diagnostic_carries_current_authored_geometry_and_sequence() {
+    let mut design = intent_design();
+    design[2]["children"][0]["props"]["region"]["x"] = json!(20);
+    let error = compile(transaction(design)).unwrap_err();
+    let diagnostic = serde_json::to_value(&error.diagnostic).unwrap();
+    assert_eq!(diagnostic["code"], "PCBIR039");
+    assert_eq!(diagnostic["geometry"]["kind"], "constraint-region");
+    assert_eq!(
+        diagnostic["geometry"]["regionBounds"],
+        json!({"min2": [40000000, 2000000], "max2": [44000000, 6000000]})
+    );
+    assert_eq!(diagnostic["geometry"]["effectiveBounds"], Value::Null);
+    assert_eq!(diagnostic["geometry"]["waypoint"], 1);
+    assert_eq!(diagnostic["geometry"]["constraintId"], diagnostic["entity"]);
+}

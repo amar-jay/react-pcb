@@ -62,6 +62,9 @@ export function sceneLayers(
 						: "Part references",
 					drills: "Drills",
 					constraints: "Constraint regions",
+					keepouts: "Keepouts",
+					waypoints: "Route waypoints",
+					zones: "Zone intent boundaries",
 				}[id] ?? id)
 			: depth >= 0
 				? depth === 0
@@ -113,7 +116,8 @@ export function sceneLayers(
 				? `${copperLayer.usage} · ${copperLayer.thickness} ${ir.units}`
 				: id,
 			visible: overlay
-				? id === "drills" || (id === "references" && side !== "back")
+				? ["drills", "keepouts", "waypoints", "zones"].includes(id) ||
+					(id === "references" && side !== "back")
 				: depth === 0 ||
 					(technical?.kind === "silkscreen" && technical.side === "front"),
 		};

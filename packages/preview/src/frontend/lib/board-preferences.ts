@@ -39,6 +39,12 @@ export function parseBoardPreferences(value: unknown): BoardPreferences {
 			visibility[`overlay:references:${side}`] ??=
 				visibility["overlay:references"];
 	}
+	// A legacy constraints toggle applies to all intent kinds; explicit new toggles win.
+	if (visibility["overlay:constraints"] !== undefined) {
+		for (const kind of ["keepouts", "waypoints", "zones"])
+			visibility[`overlay:${kind}`] ??= visibility["overlay:constraints"];
+		delete visibility["overlay:constraints"];
+	}
 	return {
 		version: 1,
 		view: data.view === "analysis" ? "analysis" : "board",

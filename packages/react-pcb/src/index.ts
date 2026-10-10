@@ -13,7 +13,10 @@ export const Part = PartComponent;
 export type Part = PartModel;
 export type { BoardProjection } from "./compiler/board-svg.ts";
 export { boardSvg } from "./compiler/board-svg.ts";
-export type { OutlineDiagnosticGeometry } from "./compiler/diagnostics.ts";
+export type {
+	ConstraintDiagnosticGeometry,
+	OutlineDiagnosticGeometry,
+} from "./compiler/diagnostics.ts";
 export type {
 	CompileOptions,
 	CompileResult,

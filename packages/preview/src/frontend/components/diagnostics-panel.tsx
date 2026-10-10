@@ -6,6 +6,7 @@ import {
 	ChevronDown,
 } from "lucide-react";
 import { useRef } from "react";
+import { constraintGeometry } from "../lib/constraint-scene.ts";
 import { outlineGeometry } from "../lib/outline-diagnostic.ts";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -55,9 +56,13 @@ export function DiagnosticList({
 						<div className="flex flex-wrap items-baseline gap-2 font-mono text-[11px] leading-normal text-muted-foreground **:data-[slot=badge]:rounded-sm **:data-[slot=badge]:[font:inherit]">
 							<Badge
 								variant={item.severity === "error" ? "destructive" : "outline"}
-								asChild={Boolean(onFinding && outlineGeometry(item))}
+								asChild={Boolean(
+									onFinding &&
+										(outlineGeometry(item) || constraintGeometry(item)),
+								)}
 							>
-								{onFinding && outlineGeometry(item) ? (
+								{onFinding &&
+								(outlineGeometry(item) || constraintGeometry(item)) ? (
 									<button
 										type="button"
 										className="cursor-pointer hover:underline"

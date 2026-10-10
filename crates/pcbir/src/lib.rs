@@ -11,7 +11,8 @@ mod realization;
 
 pub use compiler::{CompileError, CompileOutput, compile};
 pub use diagnostic::{
-    Diagnostic, DiagnosticGeometry, OutlineBounds, OutlineFeatureViolation, Severity,
+    ConstraintDiagnosticRegion, ConstraintRegionGeometry, Diagnostic, DiagnosticGeometry,
+    OutlineBounds, OutlineFeatureViolation, Severity,
 };
 pub use ir::{
     Board, BoardIr, BoardSide, ComponentDefinition, CopperUsage, DatasheetSource, ElectricalType,

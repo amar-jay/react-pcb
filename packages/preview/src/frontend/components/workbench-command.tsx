@@ -150,6 +150,13 @@ export function WorkbenchCommand({
 						</CommandItem>
 						<CommandItem
 							disabled={!snapshot.projection}
+							onSelect={() => run(() => canvas.current?.fitScene())}
+						>
+							<Maximize />
+							Fit full scene
+						</CommandItem>
+						<CommandItem
+							disabled={!snapshot.projection}
 							onSelect={() => run(() => canvas.current?.zoomIn())}
 						>
 							<Plus />

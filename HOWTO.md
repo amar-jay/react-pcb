@@ -395,6 +395,13 @@ Geometry edits and array positions do not distinguish these identities. See the
 [declaration key contract](docs/constraint-regions.md#declaration-keys) for owner
 namespaces, repeated keepout/zone examples and `PCBIR029` recovery guidance.
 
+In the preview, select a constraint outline (or a region in Board overview) to
+inspect waypoint order and route ownership, zone net/layers/clearance, or keepout
+restrictions/scope/exceptions. The Layers panel has separate overlay toggles.
+**Fit scene** includes off-board intent; **Fit board** fits only the outline.
+Constraint diagnostic codes and **Show on board** focus current region/violation
+geometry even when a failed rebuild retains the previous successful board.
+
 ## 6. Read diagnostics and manufacturing reports
 
 Treat three checks separately: TypeScript/API correctness, compiler structure
@@ -403,7 +410,7 @@ types and compile the board for the latter two. TypeScript alone cannot validate
 the resolved physical layout.
 
 `CompilerDiagnostic` contains `code`, `severity`, `message`, `entity`, and optional
-`help` and `source`. Read stable entity IDs and the help text before changing
+`help`, `source` and current diagnostic `geometry`. Read stable entity IDs and the help text before changing
 geometry. `formatDiagnostic(...)` formats it for people. The tutorial runner
 prints JSON to stdout, diagnostics to stderr, and exits unsuccessfully on failure.
 `hideWarnings: true` suppresses automatic warning printing, while the returned
@@ -597,7 +604,8 @@ in the board's front-coordinate view; it does not flip the camera.
 3. Record suspected problems using stable part/feature IDs. Treat pixels as clues;
    read canonical geometry and reports to confirm dimensions, nets, sides, and
    exact collisions. Constraint regions are not courtyard geometry; courtyards
-   are amber and constraints violet in Board view.
+   are amber; keepouts use rose dashes, waypoints violet dots and zone intent
+   solid teal outlines in Board view.
 4. For a small or obscured package, inspect its standalone SVG and physical JSON.
    Increase PNG width within the limits when needed. The PNG CLI currently exports
    the whole board; it has no crop, zoom, or selected-net flags.

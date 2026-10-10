@@ -117,8 +117,20 @@ pub(crate) fn validate_keepouts(ir: &BoardIr, regions: &CheckedRegions) -> Findi
                             && !inside_drill
                             && !area.separated(solid, 0)
                         {
+                            let mut geometry =
+                                regions.diagnostic_geometry(ir, &keepout.id, &keepout.region, None);
+                            if let crate::DiagnosticGeometry::ConstraintRegion(data) = &mut geometry
+                            {
+                                data.part = Some(part.id.clone());
+                                data.feature = Some(feature.clone());
+                                data.layer = Some(layer.clone());
+                                data.feature_bounds = Some(
+                                    crate::physical::bounds(std::slice::from_ref(feature))
+                                        .expect("verified feature bounds"),
+                                );
+                            }
                             findings.diagnostics.push(Diagnostic::error("PCBIR040", format!("keepout {} region {} prohibits copper feature {} of part {} on layer {}: interior overlap", keepout.id, keepout.region, feature.id, part.id, layer))
-                                .with_entity(&keepout.id)
+                                .with_entity(&keepout.id).with_geometry(geometry)
                                 .with_help("Move the feature or keepout, change the explicit copper layer scope, or exempt its authoritatively bound net. Unknown-net copper remains restricted."));
                         }
                     }
@@ -142,8 +154,20 @@ pub(crate) fn validate_keepouts(ir: &BoardIr, regions: &CheckedRegions) -> Findi
                             } else {
                                 "back"
                             };
+                            let mut geometry =
+                                regions.diagnostic_geometry(ir, &keepout.id, &keepout.region, None);
+                            if let crate::DiagnosticGeometry::ConstraintRegion(data) = &mut geometry
+                            {
+                                data.part = Some(part.id.clone());
+                                data.feature = Some(feature.clone());
+                                data.layer = Some(side.to_owned());
+                                data.feature_bounds = Some(
+                                    crate::physical::bounds(std::slice::from_ref(feature))
+                                        .expect("verified feature bounds"),
+                                );
+                            }
                             findings.diagnostics.push(Diagnostic::error("PCBIR040", format!("keepout {} region {} prohibits courtyard reservation {} of part {} on the {} side: interior overlap", keepout.id, keepout.region, feature.id, part.id, side))
-                                .with_entity(&keepout.id)
+                                .with_entity(&keepout.id).with_geometry(geometry)
                                 .with_help("Move the part or keepout, or change the explicit component side scope. Net exceptions do not exempt component reservations."));
                         }
                     }
@@ -152,6 +176,17 @@ pub(crate) fn validate_keepouts(ir: &BoardIr, regions: &CheckedRegions) -> Findi
             if placement_side_selected && !reserved_sides.contains(&part.side) {
                 findings.unverified(&keepout.id, format!("keepout {} region {}: part {} has no explicit courtyard reservation on its placement side; component enforcement is unverified", keepout.id, keepout.region, part.id));
             }
+        }
+    }
+    for diagnostic in &mut findings.diagnostics {
+        if diagnostic.geometry.is_none()
+            && let Some(keepout) = ir
+                .keepouts
+                .iter()
+                .find(|k| Some(&k.id) == diagnostic.entity.as_ref())
+        {
+            diagnostic.geometry =
+                Some(regions.diagnostic_geometry(ir, &keepout.id, &keepout.region, None));
         }
     }
     findings
@@ -218,6 +253,7 @@ pub(crate) fn validate_route_regions(ir: &BoardIr, regions: &CheckedRegions) -> 
             for net in &nets {
                 findings.evaluated += 1;
                 let mut blockers = Vec::new();
+                let mut blocker_regions = BTreeMap::new();
                 for layer in &layers {
                     let selected: Vec<_> = keepouts
                         .iter()
@@ -239,6 +275,16 @@ pub(crate) fn validate_route_regions(ir: &BoardIr, regions: &CheckedRegions) -> 
                     if !crate::geometry::interiors_cover(target, &rectangles) {
                         break;
                     }
+                    for keepout in &selected {
+                        blocker_regions.insert(
+                            keepout.id.clone(),
+                            crate::diagnostic::ConstraintDiagnosticRegion {
+                                constraint_id: keepout.id.clone(),
+                                region_id: keepout.region.clone(),
+                                bounds: regions.declared[&keepout.region].diagnostic_bounds(),
+                            },
+                        );
+                    }
                     blockers.push(format!(
                         "{}: [{}]",
                         layer,
@@ -250,8 +296,14 @@ pub(crate) fn validate_route_regions(ir: &BoardIr, regions: &CheckedRegions) -> 
                     ));
                 }
                 if blockers.len() == layers.len() {
+                    let mut geometry =
+                        regions.diagnostic_geometry(ir, owner, region, Some(index + 1));
+                    if let crate::DiagnosticGeometry::ConstraintRegion(data) = &mut geometry {
+                        data.net = Some(net.0.clone());
+                        data.blockers = blocker_regions.into_values().collect();
+                    }
                     findings.diagnostics.push(Diagnostic::error("PCBIR042", format!("{kind} constraint {owner} waypoint {} region {region} for net {} is fully blocked by keepout interiors on every eligible copper layer ({})", index + 1, net.0, blockers.join("; ")))
-                        .with_entity(owner)
+                        .with_entity(owner).with_geometry(geometry)
                         .with_help("Move the waypoint or keepout, adjust explicit copper layer scopes, or exempt this net. Every possible visit point, including permitted boundary contact, is excluded on every board copper layer."));
                 }
             }

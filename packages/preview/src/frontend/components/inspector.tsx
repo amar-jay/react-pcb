@@ -7,6 +7,8 @@ import {
 	Crosshair,
 } from "lucide-react";
 import type { PreviewSnapshot } from "../../index.ts";
+import type { ConstraintSelection } from "../lib/constraint-scene.ts";
+import { ConstraintInspector } from "./constraint-inspector.tsx";
 import { DetailRow, InspectorSection } from "./inspector-section.tsx";
 import { LayerStackup } from "./layer-stackup.tsx";
 import { Badge } from "./ui/badge";
@@ -16,11 +18,15 @@ export function Inspector({
 	part,
 	net,
 	onNet,
+	constraint = null,
+	onConstraint,
 }: {
 	snapshot: PreviewSnapshot;
 	part: IrPart | undefined;
 	net: string;
 	onNet: (id: string) => void;
+	constraint?: ConstraintSelection | null;
+	onConstraint?: (selection: ConstraintSelection) => void;
 }) {
 	const ir = snapshot.result?.ir;
 	if (!ir)
@@ -33,6 +39,16 @@ export function Inspector({
 				</p>
 			</div>
 		);
+	if (constraint && onConstraint)
+		return (
+			<ConstraintInspector
+				ir={ir}
+				selection={constraint}
+				onSelect={onConstraint}
+				net={net}
+				onNet={onNet}
+			/>
+		);
 	return part ? (
 		<PartDetails
 			snapshot={snapshot}
@@ -42,7 +58,18 @@ export function Inspector({
 			onNet={onNet}
 		/>
 	) : (
-		<BoardOverview snapshot={snapshot} ir={ir} />
+		<>
+			<BoardOverview snapshot={snapshot} ir={ir} />
+			{onConstraint && (
+				<ConstraintInspector
+					ir={ir}
+					selection={null}
+					onSelect={onConstraint}
+					net={net}
+					onNet={onNet}
+				/>
+			)}
+		</>
 	);
 }
 

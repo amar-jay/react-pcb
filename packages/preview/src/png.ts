@@ -26,6 +26,8 @@ export type PngRenderOptions = {
 	width?: number;
 	theme?: "light" | "dark";
 	layers?: LayerPresetId;
+	/** Explicit viewer toggles override the selected preset. */
+	visibility?: Record<string, boolean>;
 };
 export type PngExportOptions = PreviewBuildOptions &
 	Omit<PngRenderOptions, "view"> & {
@@ -101,7 +103,10 @@ export function renderBoardPng(
 	exportBoardSvg(
 		projection.svg,
 		layers,
-		presetVisibility(layers, options.layers ?? "all"),
+		{
+			...presetVisibility(layers, options.layers ?? "all"),
+			...options.visibility,
+		},
 		{
 			view: options.view ?? "board",
 			theme,

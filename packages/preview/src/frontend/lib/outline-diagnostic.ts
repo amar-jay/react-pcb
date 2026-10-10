@@ -130,7 +130,7 @@ export function overflowSegments(
 
 /** An initial failed build has no accepted scene. Draw only its known outline. */
 export function diagnosticBoardSvg(
-	geometry: OutlineDiagnosticGeometry,
+	geometry: Pick<OutlineDiagnosticGeometry, "boardBounds">,
 ): string {
 	const { min2, max2 } = geometry.boardBounds;
 	const x = mm2(min2[0]);

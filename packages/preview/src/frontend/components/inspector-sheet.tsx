@@ -1,5 +1,6 @@
 import type { IrPart } from "@react-pcb/core";
 import type { PreviewSnapshot } from "../../index.ts";
+import type { ConstraintSelection } from "../lib/constraint-scene.ts";
 import { Inspector } from "./inspector.tsx";
 import { BoardIcon, ComponentIcon } from "./pcb-icons.tsx";
 import { Button } from "./ui/button";
@@ -22,6 +23,8 @@ export function InspectorSheet({
 	onOpenChange,
 	compact,
 	onBack,
+	constraint = null,
+	onConstraint,
 }: {
 	snapshot: PreviewSnapshot;
 	part: IrPart | undefined;
@@ -31,6 +34,8 @@ export function InspectorSheet({
 	onOpenChange: (open: boolean) => void;
 	compact: boolean;
 	onBack: () => void;
+	constraint?: ConstraintSelection | null;
+	onConstraint?: (selection: ConstraintSelection) => void;
 }) {
 	return (
 		<Sheet open={open} onOpenChange={onOpenChange} modal={compact}>
@@ -41,7 +46,13 @@ export function InspectorSheet({
 					className="gap-2 px-3 max-md:px-2 max-md:text-[12px]"
 				>
 					{part ? <ComponentIcon /> : <BoardIcon />}
-					<span>{part ? part.reference : "Board overview"}</span>
+					<span>
+						{constraint
+							? "Constraint inspection"
+							: part
+								? part.reference
+								: "Board overview"}
+					</span>
 				</Button>
 			</SheetTrigger>
 			<SheetContent
@@ -58,11 +69,11 @@ export function InspectorSheet({
 				}}
 			>
 				<SheetHeader
-					data-kind={part ? "part" : "board"}
+					data-kind={constraint ? "constraint" : part ? "part" : "board"}
 					className="border-b py-3.5 pr-11 pl-5"
 				>
 					<div className="flex items-center gap-2">
-						{part && (
+						{(part || constraint) && (
 							<Button
 								variant="ghost"
 								size="icon-sm"
@@ -75,7 +86,11 @@ export function InspectorSheet({
 							</Button>
 						)}
 						<SheetTitle className="text-[18px]">
-							{part ? "Part inspection" : "Board overview"}
+							{constraint
+								? "Constraint inspection"
+								: part
+									? "Part inspection"
+									: "Board overview"}
 						</SheetTitle>
 					</div>
 					<SheetDescription
@@ -92,13 +107,15 @@ export function InspectorSheet({
 					<div
 						id="part-details"
 						className="min-h-0 flex-1 overflow-visible px-5 py-4 scrollbar-thin"
-						data-kind={part ? "part" : "board"}
+						data-kind={constraint ? "constraint" : part ? "part" : "board"}
 					>
 						<Inspector
 							snapshot={snapshot}
 							part={part}
 							net={net}
 							onNet={onNet}
+							constraint={constraint}
+							onConstraint={onConstraint}
 						/>
 					</div>
 				</ScrollArea>

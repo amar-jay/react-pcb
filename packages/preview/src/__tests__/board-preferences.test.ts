@@ -22,7 +22,7 @@ test("board preferences persist per full filepath, including files with the same
 	const a = {
 		...defaultBoardPreferences(),
 		view: "analysis" as const,
-		visibility: { "layer:copper/1": false, "overlay:constraints": true },
+		visibility: { "layer:copper/1": false, "overlay:waypoints": true },
 	};
 	const b = { ...defaultBoardPreferences(), preset: "back" as const };
 	writeBoardPreferences("/project-a/board.tsx", a, storage);

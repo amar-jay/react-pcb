@@ -17,13 +17,34 @@ export type OutlineDiagnosticGeometry = {
 	}[];
 };
 
+export type ConstraintDiagnosticGeometry = {
+	kind: "constraint-region";
+	label: string;
+	boardBounds: PhysicalFootprint["bounds"];
+	constraintId: string;
+	regionId: string;
+	regionBounds: PhysicalFootprint["bounds"];
+	effectiveBounds: PhysicalFootprint["bounds"] | null;
+	waypoint: number | null;
+	net: string | null;
+	part: string | null;
+	layer: string | null;
+	feature: PhysicalFeature<number> | null;
+	featureBounds: PhysicalFootprint["bounds"] | null;
+	blockers: readonly {
+		constraintId: string;
+		regionId: string;
+		bounds: PhysicalFootprint["bounds"];
+	}[];
+};
+
 export type CompilerDiagnostic = {
 	code: string;
 	severity: DiagnosticSeverity;
 	message: string;
 	entity: string | null;
 	help?: string;
-	geometry?: OutlineDiagnosticGeometry;
+	geometry?: OutlineDiagnosticGeometry | ConstraintDiagnosticGeometry;
 	source?: {
 		sourceKey?: string;
 		file?: string;

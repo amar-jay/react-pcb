@@ -16,7 +16,7 @@ the remaining phases.
 | Predictable declaration identity and actionable collision diagnostics | Implemented. Existing IDs are preserved; errors name the declaration and owner and provide a matching key example. |
 | Physical keepout enforcement and incomplete-coverage diagnostics | Implemented for canonical placed pads/copper and explicit courtyard reservations. Missing realization reports incomplete coverage. |
 | Route waypoint feasibility and realized traversal checks | Empty and provably blocked waypoints reject, including joint keepout coverage and both pair legs. Realized traversal remains explicitly unverified. |
-| Zone overlays, region selection and full constraint inspection | Pending phase 6. Current preview draws keepouts and route waypoints as one overlay. |
+| Zone overlays, region selection and full constraint inspection | Implemented with separate keepout, waypoint and zone-intent controls, owner/net highlighting, full-scene bounds and current diagnostic geometry. |
 
 The semantic rules below define constraint intent and the available checks.
 A successful compile rejects proven keepout violations and blocked waypoints but does not establish
@@ -194,7 +194,7 @@ Serialized physical consumers verify the world geometry against its footprint,
 placement and concrete layers and validate logical-pin-to-pad bindings before
 checking exceptions. Decoding and upgrading still check structure rather than
 constraint satisfaction; they can retain a structurally valid design with a
-physical keepout violation for subsequent inspection/validation.
+physical keepout violation for subsequent validation. SVG projection rejects proven violations; diagnostic geometry supports inspection of the failed build.
 
 ## Zones, board intersections and feasibility
 
@@ -250,6 +250,47 @@ warnings once even when a manufacturing profile supplies the same report. Empty
 waypoints retain `PCBIR039`; compiler errors retain other blocked-visit findings,
 region warnings and both keepout/routing coverage warnings.
 
+## Preview inspection and exports
+
+Zone boundaries are solid teal intent outlines with unfilled interiors. Keepouts
+use rose dashed outlines and route waypoints use violet dotted outlines. The
+Layers panel controls these three overlays independently; they are visible by
+default. Front, Back, Copper only and Fabrication presets hide constraint intent;
+All layers enables it. Saved version-1 preferences migrate `overlay:constraints`
+to `overlay:keepouts`, `overlay:waypoints` and `overlay:zones`, retaining any
+explicit newer choices and removing the obsolete shared key.
+
+Click a region outline or focus it and press Enter/Space. The inspector shows
+route endpoints, net names and visit numbers; pair width/gap/impedance intent;
+zone net/layers/clearance; or keepout restrictions, component sides, copper layers
+and net exceptions. Board overview also lists the regions for selection, including
+hidden and off-board intent, plus routing owners without waypoints. Selecting a
+hidden region enables its overlay through the saved visibility control. Routes
+without waypoints remain inspectable without invented geometry. Selecting a region highlights every region referenced
+by that constraint. Net highlighting includes associated route/pair and zone
+intent. Shared regions retain independent owners, and repeated waypoint references
+retain distinct sequence numbers. Stable constraint/region IDs remain available
+in details and SVG metadata; labels resolve net names and endpoint references.
+
+The full scene includes authored constraint bounds and physical feature bounds.
+**Fit scene** restores that viewport; **Fit board** (or `F`) fits the outline alone.
+SVG and PNG exports share overlay colors, outline styles and layer presets without
+changing physical coordinates, authored rectangles, IDs or waypoint order. SVG
+export follows viewer visibility and keeps the original full-scene bounds. PNG CLI
+uses its selected preset; programmatic PNG rendering additionally accepts a
+`visibility` map with the viewer's stable layer/overlay keys.
+
+`PCBIR039`, `PCBIR040`, `PCBIR041` and `PCBIR042` carry current constraint-region
+geometry where applicable: doubled-nm board/authored/effective bounds, stable
+owner and region IDs, visit number, and physical feature or blocking keepout
+rectangles for proven violations. Click the diagnostic code or **Show on board**
+to focus this geometry. It stays independent of saved layer visibility and the
+last successful board retained after a failed rebuild. An initial failure can
+show its known outline and region without an accepted IR. The overlay identifies
+its provenance, uses descriptive labels and puts IDs/full messages in details.
+A new build or **Clear highlight** dismisses it. Unrealized route/fill geometry
+remains explicitly unverified; an intent outline is not realized copper.
+
 ## Saved boards and compatibility
 
 Recompile source declarations with protocol 2 to obtain schema-3 IR. Current
@@ -282,8 +323,8 @@ overwritten. Unsupported versions require a separate migration.
 
 Migration does not compile declarations, move parts, synthesize routing, prove
 physical connectivity or certify constraint satisfaction. Physical consumers
-evaluate available placed geometry and route-region feasibility; full constraint
-inspection remains a later phase.
+evaluate available placed geometry and route-region feasibility; the preview
+inspects declared regions and current structured constraint diagnostics.
 
 `PCBIR035` identifies an invalid keepout scope. `PCBIR036` identifies incompatible
 or malformed board IR at decoding/upgrade boundaries. `PCBIR037` identifies invalid

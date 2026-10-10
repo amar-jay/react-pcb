@@ -11,7 +11,13 @@ canvas, layer/overlay controls, searchable parts, an inspector, diagnostics,
 an export menu, and light/dark themes.
 The workbench groups layers into copper, technical types, and overlays. Each technical type and Part references have a visibility menu for Hidden, Front, Back or Both, limited to the sides present in the board.
 Canvas rulers follow actual millimetre coordinates through pan and zoom; the
-inspector displays board dimensions and stackup or the selected part's details.
+inspector displays board dimensions and stackup, selected part details, or
+constraint rules and ownership. Keepouts, route waypoints and zone intent have
+separate overlay controls. Zone outlines remain unfilled. Selecting an outline
+highlights all regions owned by its constraint; net highlighting includes route
+and zone intent. Board overview lists regions and routes without waypoints for keyboard selection.
+Selecting a hidden region enables its overlay. **Fit board**
+fits the outline alone; **Fit scene** includes authored off-board constraints.
 The design sidebar collapses with its toggle or `Ctrl/Cmd+B`. Board/part details
 dock beside the canvas on large screens and open as a sheet on smaller screens.
 Click the red X in the bottom bar to open compilation failure details; diagnostics have separate
@@ -28,6 +34,13 @@ failed build and is labelled separately from the retained successful board.
 If there is no successful board, only the failed outline and offending features
 are drawn. Clear the highlight with its close button; a completed rebuild also
 clears it. Compilation and exports still reject invalid placements.
+
+For `PCBIR039`, `PCBIR040`, `PCBIR041` and `PCBIR042`, the same diagnostic actions
+focus current region geometry and any offending feature or blocking keepout
+rectangles. They work over a retained board or without an accepted initial board,
+independently of hidden layers. Rule labels use net names and visit numbers;
+stable IDs and full diagnostic messages remain in details. A new build or
+**Clear highlight** dismisses the overlay.
 
 From the repository root:
 
@@ -63,7 +76,7 @@ bun run board:build examples/basic/board.tsx --out dist/analysis.png --view anal
 PNG defaults are Board view, All layers, light theme, 2048 pixels wide, and
 `dist/board.png`. Use `--view board|analysis|both`, `--layers
 front|back|copper|fabrication|all`, `--theme light|dark`, and `--width 1..8192`.
-Height follows the full-board aspect ratio, including the projection margin;
+Height follows the full-scene aspect ratio, including the projection margin;
 outputs exceeding 32 million pixels reject with guidance to reduce width.
 Both views compile the entry once and share the canvas's colors and layer presets.
 Images have opaque backgrounds and include references and drills where the preset
@@ -171,7 +184,8 @@ console.log(preview.url);
 `buildBoardPreview` returns the compiled board, SVG projection, errors, and tracked
 inputs without writing HTML or starting a server. `boardSvg` and `BoardProjection`
 are re-exported from core. `renderBoardPng(projection, ir, options?)` returns PNG
-bytes from an already compiled board for one view; `exportBoardPng` compiles an
+bytes from an already compiled board for one view and accepts an optional
+`visibility` map to override the selected layer preset with viewer toggles; `exportBoardPng` compiles an
 entry, writes one or both views, and returns filenames and diagnostics.
 `buildBoardInspection(entry, options?)` returns the compiled board, unique used
 footprints, local SVGs, and actual reports without writing files.
@@ -190,6 +204,7 @@ Open the shadcn command palette with the toolbar search button or `Ctrl/Cmd+K`. 
 
 The Layers tab includes Front, Back, Copper only, Fabrication and All layers presets, also searchable in the command palette. Front/Back show the selected side's copper, all technical layers and part references, with drills and shared technical layers; Fabrication shows fabrication and courtyard drawings with drills and references from both sides. The Part references dropdown controls Hidden, Front, Back or Both and follows each part's placement side, including through-hole parts. The default canvas shows front references. These filters also apply to SVG and PNG exports. Manual toggles display Custom unless they match a preset. A selected preset is reapplied when the live board rebuilds.
 
-Use the Board view selector (or command palette) to switch between Board and Analysis. Analysis uses a contrasting light/dark substrate, distinct layer colors, readable outlines and labels; both views share layer visibility, selection, measurement and pan/zoom. Mask openings use solid outlines and paste openings use dashed outlines, keeping copper colors visible even with All layers enabled. Board view uses amber courtyards and violet constraint regions. These styles apply to the canvas and SVG/PNG exports. Save SVG exports the active view and visible layers as a standalone full-board drawing at its original physical dimensions. Canvas pan/zoom and temporary selection highlights are excluded.
+Use the Board view selector (or command palette) to switch between Board and Analysis. Analysis uses a contrasting light/dark substrate, distinct layer colors, readable outlines and labels; both views share layer visibility, selection, measurement and pan/zoom. Mask openings use solid outlines and paste openings use dashed outlines, keeping copper colors visible even with All layers enabled. Board view uses amber courtyards, rose dashed keepouts, violet dotted waypoints and solid teal zone intent. These styles apply to the canvas and SVG/PNG exports. Save SVG exports the active view and visible layers as a standalone full-scene drawing at its original physical dimensions. Canvas pan/zoom and temporary selection highlights are excluded.
 
-Board view, layer presets and custom layer visibility are saved in local storage per full source filepath and restored on refresh. Files with the same basename in different directories have separate settings. Unavailable browser storage leaves the controls usable for the current session.
+Board view, layer presets and custom layer visibility are saved in local storage per full source filepath and restored on refresh. The old shared `overlay:constraints` preference migrates to
+the three new overlay keys without overriding explicit choices. Files with the same basename in different directories have separate settings. Unavailable browser storage leaves the controls usable for the current session.

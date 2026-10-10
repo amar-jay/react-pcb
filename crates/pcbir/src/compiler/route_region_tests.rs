@@ -534,3 +534,45 @@ fn exact_nm_route_coverage_is_equivalent_across_board_units_and_one_nm_changes_p
         assert_eq!(result.is_err(), fails);
     }
 }
+
+#[test]
+fn blocked_waypoint_geometry_identifies_each_leg_visit_and_current_blockers() {
+    let error = compile(design(
+        true,
+        vec![rect(2.0, 2.0, 2.0, 2.0), rect(2.0, 2.0, 2.0, 2.0)],
+        vec![keepout(
+            "blocker",
+            rect(1.0, 1.0, 4.0, 4.0),
+            json!(["tracks"]),
+        )],
+        false,
+    ))
+    .unwrap_err();
+    let failures: Vec<_> = std::iter::once(error.diagnostic.as_ref())
+        .chain(error.diagnostics.iter())
+        .filter(|d| d.code == "PCBIR042")
+        .map(|d| serde_json::to_value(d).unwrap())
+        .collect();
+    assert_eq!(failures.len(), 4);
+    for (net, sequence) in [("P", 1), ("N", 1), ("P", 2), ("N", 2)] {
+        let finding = failures
+            .iter()
+            .find(|d| d["geometry"]["net"] == net && d["geometry"]["waypoint"] == sequence)
+            .unwrap();
+        let geometry = &finding["geometry"];
+        assert_eq!(
+            geometry["regionBounds"],
+            json!({"min2": [4000000, 4000000], "max2": [8000000, 8000000]})
+        );
+        assert_eq!(
+            geometry["blockers"][0]["bounds"],
+            json!({"min2": [2000000, 2000000], "max2": [10000000, 10000000]})
+        );
+        assert!(
+            geometry["blockers"][0]["constraintId"]
+                .as_str()
+                .unwrap()
+                .starts_with("keepout/")
+        );
+    }
+}
