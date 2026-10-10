@@ -41,7 +41,7 @@ Layer roles describe footprint-relative front/back copper, mask, paste, silkscre
 
 ## Instances and compatibility
 
-Board IR now emits `schemaVersion: 2`. Each resolved footprint optionally contains `physical`, and each part contains `physicalFeatures`. The physical footprint now has its own `schemaVersion: 2` and `units: 'nm'`. Version-one round-drill physical footprints remain readable; slots require version two. These version namespaces are independent.
+Board IR now emits `schemaVersion: 3`, including the [explicit constraint scope contract](constraint-regions.md). Each resolved footprint optionally contains `physical`, and each part contains `physicalFeatures`. The physical footprint has its own `schemaVersion: 2` and `units: 'nm'`. Version-one round-drill physical footprints remain readable; slots require version two. These version namespaces are independent.
 
 `physical` is authoritative exact geometry. The existing `pads` collection remains a compatibility index for logical-pin bindings and old consumers. Its numeric dimensions are a millimetre bounding-envelope projection; a rounded rectangle projects as a rectangle there. Manufacturing consumers must use `physical` to preserve its radius and additional features. Board coordinates and legacy footprints keep their existing numeric-unit convention during this transition.
 
@@ -57,7 +57,7 @@ provide no containment evidence. SVG projection and standalone board validation
 also reject out-of-board canonical geometry; edge process clearances remain a
 separate, unverified manufacturing concern.
 
-Existing `defineFootprint` calls remain supported. They retain their original geometry and board-bound IDs; they are not silently converted into reusable role-based definitions. Rust's `physical::migrate_footprint` converts a resolved legacy footprint only when the caller provides its original length unit and an explicit map from layer IDs to semantic roles. Migration preserves keys and feature IDs and rejects unsupported precision/rotations. Unresolved footprints need geometry before migration. Schema-one board JSON can still deserialize using default values for the new optional footprint field and instance map; callers must explicitly update the board schema version before publishing a schema-two document.
+Existing `defineFootprint` calls remain supported. They retain their original geometry and board-bound IDs; they are not silently converted into reusable role-based definitions. Rust's `physical::migrate_footprint` converts a resolved legacy footprint only when the caller provides its original length unit and an explicit map from layer IDs to semantic roles. Migration preserves keys and feature IDs and rejects unsupported precision/rotations. Unresolved footprints need geometry before migration. Schema-one board JSON can still deserialize into the Rust data structures using defaults for physical geometry, but current board consumers require schema three. Recompile source boards or explicitly upgrade saved schema-two boards with `upgradeBoardIr`; manually changing the version does not supply missing constraint scope.
 
 TypeScript callers can use `migrateFootprint(legacy, 'mm', {'old-top': 'front-copper'})`. The CLI exposes the same adapter as `pcbir migrate-footprint`, accepting `{footprint, units, layerRoles}`. Every old board-layer target requires a role mapping; the all-copper selector carries its meaning directly.
 
@@ -358,7 +358,8 @@ available to exercise the earlier contracts.
 
 The optional board profile is retained in canonical board IR with nanometre
 thresholds; independently serialized reports retain their profile and scope.
-Neither optional extension changes board/physical schema version two or layout
-protocol version one. Old schema-two boards without a profile remain readable.
-Old compilers do not enforce this new policy field; a consumer must use a compiler
-with Phase six support when enforcing selected manufacturing rules.
+These manufacturing extensions were introduced as additive board schema-two
+fields. Current boards emit schema three for constraint scope; physical schema two
+and footprint layout protocol one remain unchanged. Saved schema-two boards,
+including those without a profile, require the explicit board upgrade. A consumer
+must use a compiler with manufacturing support when enforcing selected rules.

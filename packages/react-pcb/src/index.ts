@@ -29,6 +29,7 @@ export type {
 	BoardProps,
 	DifferentialPairProps,
 	KeepoutProps,
+	KeepoutRestriction,
 	LengthUnit,
 	PartProps,
 	RouteProps,
@@ -111,6 +112,7 @@ export type {
 	IrZone,
 } from "./ir/index.ts";
 export { PCB_IR_SCHEMA_VERSION } from "./ir/index.ts";
+export { upgradeBoardIr } from "./ir/upgrade.ts";
 export type {
 	BoardSide,
 	CopperLayer,

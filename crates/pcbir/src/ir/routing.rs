@@ -16,11 +16,13 @@ pub struct PinRef {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct RouteConstraint {
     pub id: String,
     pub net: NetId,
     pub from: PinRef,
     pub to: PinRef,
     pub width: Option<f64>,
+    /// Ordered centerline waypoint region IDs; coordinates are global to the board.
     pub through: Vec<String>,
 }

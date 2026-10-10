@@ -6,6 +6,7 @@ mod component;
 mod constraints;
 mod footprint;
 mod geometry;
+mod migrate;
 mod routing;
 
 pub use board::{
@@ -16,20 +17,25 @@ pub use component::{
     ComponentDefinition, DatasheetSource, ElectricalType, PartInstance, PinDefinition,
     PinoutCoverage,
 };
-pub use constraints::{DifferentialPairConstraint, KeepoutConstraint, ZoneConstraint};
+pub use constraints::{
+    DifferentialPairConstraint, KeepoutConstraint, KeepoutRestriction, ZoneConstraint,
+};
+pub(crate) use constraints::{validate_constraint_scopes, validate_keepout_scope};
 pub use footprint::{
     CopperLayerSelector, FootprintDefinition, FootprintPad, PadDrill, PadLayer, PadShape,
 };
 pub use geometry::{Rect, RegionDefinition};
+pub(crate) use migrate::deserialize_board_ir;
+pub use migrate::{decode_board_ir, upgrade_board_ir};
 pub use routing::{NetDefinition, NetId, PinRef, RouteConstraint};
 
-pub const SCHEMA_VERSION: u32 = 2;
+pub const SCHEMA_VERSION: u32 = 3;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Revision(pub u64);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct BoardIr {
     pub schema_version: u32,
     pub revision: Revision,

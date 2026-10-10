@@ -21,7 +21,10 @@ pub use ir::{
 };
 pub use protocol::{DeclarationNode, DeclarationTransaction, DeclarationTree, PROTOCOL_VERSION};
 
-pub use ir::{DifferentialPairConstraint, KeepoutConstraint, RegionDefinition, ZoneConstraint};
+pub use ir::{
+    DifferentialPairConstraint, KeepoutConstraint, KeepoutRestriction, RegionDefinition,
+    ZoneConstraint, decode_board_ir, upgrade_board_ir,
+};
 
 pub mod svg;
 pub use svg::footprint_svg;

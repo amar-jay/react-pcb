@@ -604,7 +604,7 @@ test("basic example is a required end-to-end check with physical geometry and ex
 	]);
 	expect(code, stderr || stdout).toBe(0);
 	const result = JSON.parse(stdout) as Awaited<ReturnType<typeof compile>>;
-	expect(result.ir.schemaVersion).toBe(2);
+	expect(result.ir.schemaVersion).toBe(3);
 	expect(Object.keys(result.manufacturingReports)).toHaveLength(3);
 	expect(
 		Object.values(result.ir.footprintDefinitions).every(

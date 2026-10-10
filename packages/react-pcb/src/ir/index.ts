@@ -7,7 +7,9 @@ import type {
 import type { BoardSide, CopperUsage } from "../layers/index.ts";
 import type { DatasheetSource, ElectricalType } from "../parts/index.tsx";
 
-export const PCB_IR_SCHEMA_VERSION = 2 as const;
+export const PCB_IR_SCHEMA_VERSION = 3 as const;
+
+export type KeepoutRestriction = "components" | "copper" | "tracks" | "vias";
 
 export type IrStackupLayer =
 	| Readonly<{
@@ -112,6 +114,7 @@ export type IrRouteConstraint = Readonly<{
 	from: IrPinRef;
 	to: IrPinRef;
 	width: number | null;
+	/** Ordered centerline waypoint region IDs in global board coordinates. */
 	through: readonly string[];
 }>;
 export type IrDifferentialPair = Readonly<{
@@ -123,6 +126,7 @@ export type IrDifferentialPair = Readonly<{
 	width: number | null;
 	gap: number | null;
 	targetImpedance: number | null;
+	/** Ordered centerline waypoint region IDs, shared by both legs. */
 	through: readonly string[];
 }>;
 export type IrZone = Readonly<{
@@ -135,7 +139,11 @@ export type IrZone = Readonly<{
 export type IrKeepout = Readonly<{
 	id: string;
 	region: string;
-	disallow: readonly string[];
+	disallow: readonly KeepoutRestriction[];
+	/** Explicit scope; empty only when components are not restricted. */
+	componentSides: readonly BoardSide[];
+	/** Concrete board IDs; empty only when no electrical objects are restricted. */
+	copperLayers: readonly string[];
 	except: readonly string[];
 }>;
 

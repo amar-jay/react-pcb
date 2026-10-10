@@ -1,14 +1,14 @@
 use super::{
     CompileError,
     parse::{
-        parse_net, parse_pin, parse_rect, require_name, string, validate_keepout, validate_zone,
-        value_number,
+        parse_net, parse_pin, parse_rect, require_name, string, validate_keepout,
+        validate_properties, validate_zone, value_number,
     },
 };
 use crate::Diagnostic;
 use crate::ir::{
-    DifferentialPairConstraint, KeepoutConstraint, LayerSet, NetDefinition, NetId, PinRef,
-    RegionDefinition, RouteConstraint, StackupLayer, ZoneConstraint,
+    BoardSide, DifferentialPairConstraint, KeepoutConstraint, KeepoutRestriction, LayerSet,
+    NetDefinition, NetId, PinRef, RegionDefinition, RouteConstraint, StackupLayer, ZoneConstraint,
 };
 use crate::protocol::DeclarationNode;
 use serde_json::{Value, json};
@@ -109,6 +109,12 @@ impl Constraints {
                         "routing constraints may only contain route-through declarations",
                     ));
                 }
+                validate_properties(&child.props, &["region"], "route-through", "PCBIR020")?;
+                if !child.children.is_empty() {
+                    return Err(CompileError::invalid(
+                        "route-through declarations must not contain children",
+                    ));
+                }
                 let id = self.identity("region", Some(owner), child, Value::Null)?;
                 self.region(id, property(&child.props, "region")?)
             })
@@ -119,6 +125,12 @@ impl Constraints {
         node: &DeclarationNode,
         scope: Option<&str>,
     ) -> Result<(), CompileError> {
+        validate_properties(
+            &node.props,
+            &["net", "from", "to", "width"],
+            "route",
+            "PCBIR020",
+        )?;
         let net = self.net(property(&node.props, "net")?)?;
         let from = parse_pin(property(&node.props, "from")?)?;
         let to = parse_pin(property(&node.props, "to")?)?;
@@ -141,6 +153,20 @@ impl Constraints {
         node: &DeclarationNode,
         scope: Option<&str>,
     ) -> Result<(), CompileError> {
+        validate_properties(
+            &node.props,
+            &[
+                "positive",
+                "negative",
+                "from",
+                "to",
+                "width",
+                "gap",
+                "targetImpedance",
+            ],
+            "differential pair",
+            "PCBIR020",
+        )?;
         let positive_net = self.net(property(&node.props, "positive")?)?;
         let negative = self.net(property(&node.props, "negative")?)?;
         if positive_net == negative {
@@ -233,6 +259,7 @@ impl Constraints {
         &mut self,
         node: &DeclarationNode,
         scope: Option<&str>,
+        board_layers: &LayerSet,
     ) -> Result<(), CompileError> {
         validate_keepout(&node.props)?;
         let id = self.identity("keepout", scope, node, Value::Null)?;
@@ -240,13 +267,78 @@ impl Constraints {
             format!("region/{id}/boundary"),
             property(&node.props, "region")?,
         )?;
-        let mut disallow: Vec<_> = property(&node.props, "disallow")?
-            .as_array()
-            .unwrap()
-            .iter()
-            .map(|value| value.as_str().unwrap().to_owned())
-            .collect();
+        let mut disallow: Vec<KeepoutRestriction> = serde_json::from_value(
+            property(&node.props, "disallow")?.clone(),
+        )
+        .map_err(|error| CompileError::invalid(format!("invalid keepout restrictions: {error}")))?;
         disallow.sort();
+        let components = disallow.contains(&KeepoutRestriction::Components);
+        let electrical = disallow.iter().any(|r| r.is_electrical());
+        let scope_error = |message: String| {
+            CompileError::diagnostic(
+            Diagnostic::error("PCBIR035", message).with_entity(&id)
+                .with_help("componentSides requires components; copperLayers requires copper, tracks or vias. Select nonempty, unique board sides and copper layers."),
+        )
+        };
+        let mut component_sides = match node.props.get("componentSides") {
+            Some(value) => {
+                if !components {
+                    return Err(scope_error(
+                        "componentSides requires a components restriction".to_owned(),
+                    ));
+                }
+                serde_json::from_value::<Vec<BoardSide>>(value.clone())
+                    .map_err(|error| scope_error(format!("invalid componentSides: {error}")))?
+            }
+            None if components => vec![BoardSide::Front, BoardSide::Back],
+            None => Vec::new(),
+        };
+        component_sides.sort();
+        let mut copper_layers = match node.props.get("copperLayers") {
+            Some(value) => {
+                if !electrical {
+                    return Err(scope_error(
+                        "copperLayers requires an electrical restriction".to_owned(),
+                    ));
+                }
+                let values = value
+                    .as_array()
+                    .ok_or_else(|| scope_error("copperLayers must be an array".to_owned()))?;
+                values
+                    .iter()
+                    .map(|layer| {
+                        if layer
+                            .get("kind")
+                            .is_some_and(|kind| kind.as_str() != Some("copper"))
+                        {
+                            return Err(scope_error(
+                                "copperLayers accepts only copper layers".to_owned(),
+                            ));
+                        }
+                        layer
+                            .as_str()
+                            .or_else(|| layer.get("id").and_then(Value::as_str))
+                            .map(str::to_owned)
+                            .ok_or_else(|| {
+                                scope_error(
+                                    "copperLayers requires a board copper layer ID".to_owned(),
+                                )
+                            })
+                    })
+                    .collect::<Result<Vec<_>, CompileError>>()?
+            }
+            None if electrical => board_layers
+                .stackup
+                .entries
+                .iter()
+                .filter_map(|layer| match layer {
+                    StackupLayer::Copper { id, .. } => Some(id.clone()),
+                    _ => None,
+                })
+                .collect(),
+            None => Vec::new(),
+        };
+        copper_layers.sort();
         let mut except = Vec::new();
         if let Some(values) = node.props.get("except") {
             for value in values
@@ -257,12 +349,16 @@ impl Constraints {
             }
         }
         except.sort();
-        self.keepouts.push(KeepoutConstraint {
+        let keepout = KeepoutConstraint {
             id,
             region,
             disallow,
+            component_sides,
+            copper_layers,
             except,
-        });
+        };
+        crate::ir::validate_keepout_scope(&keepout, board_layers)?;
+        self.keepouts.push(keepout);
         Ok(())
     }
     pub fn endpoint_routes(&self) -> Vec<RouteConstraint> {

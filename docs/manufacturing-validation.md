@@ -110,10 +110,12 @@ shows these failed-build diagnostics while retaining its last valid scene.
 The canonical board retains the selected profile as
 `board.manufacturingProfile`, including its stable `key`, schema version and
 exact nanometre limits. Reports retain that same normalized policy. Optional
-board profiles and compiler reports are additive schema-two fields; physical
-schema version two and layout protocol version one remain unchanged. New policy
-fields require a compiler that implements Phase six; older compilers must not be
-used to enforce them.
+board profiles and compiler reports were introduced as additive schema-two fields.
+Current board IR emits schema three for [constraint scope](constraint-regions.md);
+physical schema version two and footprint layout protocol version one remain
+unchanged. Saved schema-two boards require an explicit upgrade. Policy fields
+require a compiler with manufacturing support; older compilers must not be used
+to enforce them.
 
 ## Profile contract
 

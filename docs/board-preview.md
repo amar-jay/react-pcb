@@ -176,7 +176,9 @@ in the source tree. Programmatic callers can set `cwd` for another Rust workspac
 
 ## Geometry and serialization
 
-The new Rust `board_svg` projection consumes schema-two board IR. It verifies
+The Rust `board_svg` projection consumes schema-three board IR. Saved schema-two
+boards require the explicit [board upgrade](constraint-regions.md#saved-boards-and-compatibility).
+It validates keepout scope before projection and verifies
 stored placed features against the physical definition, instance transform and
 board-layer bindings before drawing them. It reuses the footprint projection's
 shape construction, escaping, decimal formatting and stable hex ID encoding.

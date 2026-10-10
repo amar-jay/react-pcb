@@ -38,6 +38,7 @@ pub fn board_svg(ir: &BoardIr) -> Result<BoardProjection, CompileError> {
     if ir.schema_version != crate::SCHEMA_VERSION {
         return Err(invalid("unsupported board IR version for preview"));
     }
+    crate::ir::validate_constraint_scopes(ir)?;
     let outline = ir
         .regions
         .get(&ir.board.outline)

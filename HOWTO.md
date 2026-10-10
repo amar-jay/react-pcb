@@ -65,6 +65,13 @@ Keep electrical definitions, reusable footprints, and placed instances separate:
 | `Board` | Outline, stackup, technical layers, metadata, and optional manufacturing policy. |
 | Route/zone/keepout declarations | Requirements retained for downstream physical realization. |
 
+Board compilation emits schema-3 IR using declaration protocol 2. Keepouts can
+select `componentSides` and `copperLayers`; omitted scopes expand to both sides
+and all board copper layers as applicable. Scope validation is implemented, while
+physical constraint enforcement remains pending. See the
+[constraint region contract](docs/constraint-regions.md) for semantics and the
+explicit `upgradeBoardIr()` path for saved schema-2 boards.
+
 Build incrementally: establish one physical part, inspect its definition and
 binding, then add parts and constraints in small groups. Compilation cannot find
 an omitted circuit block or a pin mapping that is structurally valid but wrong

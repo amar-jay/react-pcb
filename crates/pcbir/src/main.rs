@@ -13,10 +13,11 @@ fn main() {
                 | "validate-footprint"
                 | "validate-board"
                 | "board-svg"
+                | "upgrade-board"
         )
     ) {
         eprintln!(
-            "usage: pcbir compile|footprint|migrate-footprint|footprint-svg|validate-footprint|validate-board|board-svg < input.json"
+            "usage: pcbir compile|footprint|migrate-footprint|footprint-svg|validate-footprint|validate-board|board-svg|upgrade-board < input.json"
         );
         std::process::exit(2);
     }
@@ -24,9 +25,20 @@ fn main() {
     if let Err(error) = io::stdin().read_to_string(&mut input) {
         fail(format!("failed to read declarations: {error}"));
     }
+    if command.as_deref() == Some("upgrade-board") {
+        let value = serde_json::from_str(&input)
+            .unwrap_or_else(|e| fail(format!("invalid board JSON: {e}")));
+        let ir = pcbir::upgrade_board_ir(value).unwrap_or_else(|e| fail_compile(e));
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&ir).expect("upgraded IR is serializable")
+        );
+        return;
+    }
     if command.as_deref() == Some("board-svg") {
-        let ir =
+        let value =
             serde_json::from_str(&input).unwrap_or_else(|e| fail(format!("invalid board IR: {e}")));
+        let ir = pcbir::decode_board_ir(value).unwrap_or_else(|e| fail_compile(e));
         let projection = pcbir::board_svg(&ir).unwrap_or_else(|e| fail_compile(e));
         println!(
             "{}",

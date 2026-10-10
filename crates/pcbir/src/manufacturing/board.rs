@@ -11,6 +11,7 @@ use std::collections::{BTreeMap, BTreeSet};
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct BoardValidationInput {
+    #[serde(deserialize_with = "crate::ir::deserialize_board_ir")]
     pub board: BoardIr,
     pub profile: ProfileInput,
 }
@@ -45,6 +46,7 @@ fn validate_realization(ir: &BoardIr) -> Result<(), CompileError> {
             "board checks require current canonical board IR and a nonempty board ID",
         ));
     }
+    crate::ir::validate_constraint_scopes(ir)?;
     let mut layers = BTreeSet::new();
     for id in ir
         .board

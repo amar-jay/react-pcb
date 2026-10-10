@@ -12,6 +12,8 @@ export function Route({ children, ...props }: RouteProps) {
 	return React.createElement("pcb-route", props, children);
 }
 
+/** Global board-coordinate waypoint visited in child order by the route centerline.
+ * Separate waypoints may have gaps; this does not confine the entire route. */
 export type RouteThroughProps = { region: Region };
 export function RouteThrough(props: RouteThroughProps) {
 	return React.createElement("pcb-route-through", props);

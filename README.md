@@ -63,6 +63,12 @@ only declared or mapped logical pins; they do not invent missing pinouts or chec
 physical copper continuity. A net handle never used in a declaration is absent
 from the IR and cannot be checked.
 
+Constraint declarations use [the schema-3 region contract](docs/constraint-regions.md).
+Keepouts support `componentSides` and `copperLayers`; the compiler stores explicit
+scope and rejects invalid or unsupported scope selections. Physical enforcement
+is pending the [remaining implementation phases](docs/constraint-regions-plan.md).
+Saved schema-2 boards can be upgraded explicitly with `upgradeBoardIr()`.
+
 `bun run --cwd packages/preview build` builds the React site shell into `dist/`.
 
 **Illustrative JSX API**

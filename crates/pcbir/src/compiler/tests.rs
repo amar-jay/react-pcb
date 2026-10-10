@@ -5,7 +5,7 @@ use crate::protocol::DeclarationTransaction;
 
 fn transaction(children: Vec<Value>) -> DeclarationTransaction {
     serde_json::from_value(json!({
-        "protocolVersion": 1,
+        "protocolVersion": crate::PROTOCOL_VERSION,
         "declarations": {"kind": "react-pcb-declarations", "children": [{
             "type": "pcb-board",
             "props": {
@@ -183,6 +183,240 @@ fn connectivity_uses_stable_net_and_part_ids_instead_of_display_names() {
 fn differential_pair_legs_connect_endpoints_without_duplicate_route_declarations() {
     let output = compile(transaction(intent_design())).unwrap();
     assert!(connectivity_warnings(&output).is_empty());
+}
+
+fn scoped_keepout(props: Value) -> Value {
+    let mut node = json!({"type": "pcb-keepout", "props": {
+        "region": {"kind": "rect", "x": 1, "y": 1, "width": 2, "height": 2},
+        "disallow": ["components", "copper"]
+    }});
+    node["props"]
+        .as_object_mut()
+        .unwrap()
+        .extend(props.as_object().unwrap().clone());
+    node
+}
+
+#[test]
+fn keepout_scope_defaults_and_selections_are_explicit_in_current_ir() {
+    let compile_scope = |props| {
+        compile(transaction(vec![scoped_keepout(props)]))
+            .unwrap()
+            .ir
+    };
+    let ir = compile_scope(json!({}));
+    assert_eq!(ir.schema_version, 3);
+    let encoded = serde_json::to_value(&ir).unwrap();
+    assert_eq!(
+        encoded["keepouts"][0]["componentSides"],
+        json!(["front", "back"])
+    );
+    assert_eq!(encoded["keepouts"][0]["copperLayers"], json!(["copper/1"]));
+    let selected = compile_scope(
+        json!({"componentSides": ["back"], "copperLayers": [{"id": "copper/1", "kind": "copper"}]}),
+    );
+    assert_eq!(
+        selected.keepouts[0].component_sides,
+        vec![crate::BoardSide::Back]
+    );
+    assert_eq!(selected.keepouts[0].copper_layers, vec!["copper/1"]);
+    assert_eq!(selected.keepouts[0].id, ir.keepouts[0].id);
+    assert_eq!(selected.keepouts[0].region, ir.keepouts[0].region);
+    let components = compile_scope(json!({"disallow": ["components"]}));
+    assert!(components.keepouts[0].copper_layers.is_empty());
+    let tracks = compile_scope(json!({"disallow": ["tracks", "vias"]}));
+    assert!(tracks.keepouts[0].component_sides.is_empty());
+    assert_eq!(tracks.keepouts[0].copper_layers, vec!["copper/1"]);
+    assert_eq!(
+        serde_json::to_value(crate::decode_board_ir(encoded.clone()).unwrap()).unwrap(),
+        encoded
+    );
+}
+
+#[test]
+fn keepout_scope_rejects_invalid_duplicate_and_inapplicable_selections() {
+    for props in [
+        json!({"componentSides": []}),
+        json!({"componentSides": ["front", "front"]}),
+        json!({"componentSides": ["middle"]}),
+        json!({"componentSides": null}),
+        json!({"copperLayers": []}),
+        json!({"copperLayers": ["copper/1", {"id": "copper/1"}]}),
+        json!({"copperLayers": ["missing"]}),
+        json!({"copperLayers": ["solder-mask/front"]}),
+        json!({"copperLayers": [{"id": "copper/1", "kind": "dielectric"}]}),
+        json!({"copperLayers": null}),
+        json!({"disallow": ["components"], "copperLayers": ["copper/1"]}),
+        json!({"disallow": ["copper"], "componentSides": ["front"]}),
+        json!({"disallow": ["components"], "except": [{"id": "GND"}]}),
+        json!({"componentSide": "front"}),
+        json!({"layers": ["copper/1"]}),
+    ] {
+        let error = compile(transaction(vec![scoped_keepout(props.clone())])).unwrap_err();
+        assert_eq!(error.diagnostic.code, "PCBIR035", "{props}");
+    }
+    for props in [json!({"except": {}}), json!({"except": null})] {
+        assert_eq!(
+            compile(transaction(vec![scoped_keepout(props)]))
+                .unwrap_err()
+                .diagnostic
+                .code,
+            "PCBIR021"
+        );
+    }
+}
+
+#[test]
+fn constraint_properties_cannot_silently_ignore_unsupported_scope() {
+    let mut design = intent_design();
+    design[2]["props"]["layers"] = json!(["copper/1"]);
+    assert_eq!(
+        compile(transaction(design)).unwrap_err().diagnostic.code,
+        "PCBIR020"
+    );
+    let mut design = intent_design();
+    design[3]["props"]["side"] = json!("front");
+    assert_eq!(
+        compile(transaction(design)).unwrap_err().diagnostic.code,
+        "PCBIR020"
+    );
+    let mut design = intent_design();
+    design[2]["children"][0]["props"]["copperLayers"] = json!(["copper/1"]);
+    assert_eq!(
+        compile(transaction(design)).unwrap_err().diagnostic.code,
+        "PCBIR020"
+    );
+    let mut design = intent_design();
+    design[4]["props"]["side"] = json!("front");
+    assert_eq!(
+        compile(transaction(design)).unwrap_err().diagnostic.code,
+        "PCBIR021"
+    );
+}
+
+#[test]
+fn schema_two_upgrade_preserves_every_existing_field_and_requires_explicit_opt_in() {
+    let ir = compile(transaction(intent_design())).unwrap().ir;
+    let expected = serde_json::to_value(&ir).unwrap();
+    let mut legacy = expected.clone();
+    legacy["schemaVersion"] = json!(2);
+    for keepout in legacy["keepouts"].as_array_mut().unwrap() {
+        keepout.as_object_mut().unwrap().remove("componentSides");
+        keepout.as_object_mut().unwrap().remove("copperLayers");
+    }
+    assert_eq!(
+        crate::decode_board_ir(legacy.clone())
+            .unwrap_err()
+            .diagnostic
+            .code,
+        "PCBIR036"
+    );
+    let upgraded = crate::upgrade_board_ir(legacy.clone()).unwrap();
+    assert_eq!(serde_json::to_value(&upgraded).unwrap(), expected);
+    assert_eq!(
+        serde_json::to_value(crate::upgrade_board_ir(expected.clone()).unwrap()).unwrap(),
+        expected
+    );
+    assert!(crate::board_svg(&upgraded).is_ok());
+    for version in [0, 1, 4, 99] {
+        let mut input = legacy.clone();
+        input["schemaVersion"] = json!(version);
+        assert_eq!(
+            crate::upgrade_board_ir(input).unwrap_err().diagnostic.code,
+            "PCBIR036"
+        );
+    }
+    legacy["keepouts"][0]["copperLayers"] = json!(["copper/1"]);
+    assert_eq!(
+        crate::upgrade_board_ir(legacy).unwrap_err().diagnostic.code,
+        "PCBIR036"
+    );
+}
+
+#[test]
+fn schema_two_upgrade_sets_global_defaults_only_for_applicable_restrictions() {
+    for restrictions in [
+        json!(["components"]),
+        json!(["copper", "tracks", "vias"]),
+        json!(["components", "tracks"]),
+    ] {
+        let current = compile(transaction(vec![scoped_keepout(
+            json!({"disallow": restrictions}),
+        )]))
+        .unwrap()
+        .ir;
+        let expected = serde_json::to_value(&current).unwrap();
+        let mut legacy = expected.clone();
+        legacy["schemaVersion"] = json!(2);
+        legacy["keepouts"][0]
+            .as_object_mut()
+            .unwrap()
+            .remove("componentSides");
+        legacy["keepouts"][0]
+            .as_object_mut()
+            .unwrap()
+            .remove("copperLayers");
+        assert_eq!(
+            serde_json::to_value(crate::upgrade_board_ir(legacy).unwrap()).unwrap(),
+            expected
+        );
+    }
+}
+
+#[test]
+fn current_serialized_scope_is_validated_by_every_board_consumer() {
+    let ir = compile(transaction(vec![scoped_keepout(json!({}))]))
+        .unwrap()
+        .ir;
+    let mut value = serde_json::to_value(&ir).unwrap();
+    value["keepouts"][0]["componentSide"] = json!("front");
+    assert_eq!(
+        crate::decode_board_ir(value).unwrap_err().diagnostic.code,
+        "PCBIR036"
+    );
+    let mut value = serde_json::to_value(&ir).unwrap();
+    value["keepouts"][0]
+        .as_object_mut()
+        .unwrap()
+        .remove("componentSides");
+    assert_eq!(
+        crate::decode_board_ir(value).unwrap_err().diagnostic.code,
+        "PCBIR036"
+    );
+    let mut forged = ir;
+    forged.keepouts[0].copper_layers = vec!["solder-mask/front".to_owned()];
+    assert_eq!(
+        crate::decode_board_ir(serde_json::to_value(&forged).unwrap())
+            .unwrap_err()
+            .diagnostic
+            .code,
+        "PCBIR035"
+    );
+    assert_eq!(
+        crate::board_svg(&forged).unwrap_err().diagnostic.code,
+        "PCBIR035"
+    );
+    let profile = serde_json::from_value::<crate::manufacturing::ProfileInput>(json!({
+        "schemaVersion": 1, "key": "scope-test", "minCopperFeature": "1nm", "minCopperSpacing": "1nm",
+        "minDrillDiameter": "1nm", "minAnnularRing": "0nm"
+    })).unwrap().compile().unwrap();
+    assert_eq!(
+        crate::manufacturing::validate_board(&forged, &profile)
+            .unwrap_err()
+            .diagnostic
+            .code,
+        "PCBIR035"
+    );
+}
+
+#[test]
+fn compiler_rejects_old_protocols_that_cannot_express_current_constraint_scope() {
+    for version in [0, 1, 3, 99] {
+        let mut input = transaction(vec![]);
+        input.protocol_version = version;
+        let error = compile(input).unwrap_err();
+        assert!(error.diagnostic.message.contains("expected 2"));
+    }
 }
 
 #[test]

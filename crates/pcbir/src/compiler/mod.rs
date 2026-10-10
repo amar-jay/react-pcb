@@ -471,7 +471,7 @@ impl CompileContext {
                     if child.node_type == "pcb-zone" {
                         self.physical.zone(child, parent_scope, board_layers)?;
                     } else {
-                        self.physical.keepout(child, parent_scope)?;
+                        self.physical.keepout(child, parent_scope, board_layers)?;
                     }
                 }
                 "pcb-differential-pair" => self.physical.pair(child, parent_scope)?,

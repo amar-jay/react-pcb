@@ -372,6 +372,23 @@ pub fn constraint_key(node: &DeclarationNode) -> Result<String, CompileError> {
                         .cmp(&right.get("id").and_then(Value::as_str))
                 });
             }
+            if let Some(sides) = props
+                .get_mut("componentSides")
+                .and_then(Value::as_array_mut)
+            {
+                sides.sort_by(|a, b| a.as_str().cmp(&b.as_str()));
+            }
+            if let Some(layers) = props.get_mut("copperLayers").and_then(Value::as_array_mut) {
+                layers.sort_by(|a, b| {
+                    let id = |v: &Value| {
+                        v.as_str()
+                            .or_else(|| v.get("id").and_then(Value::as_str))
+                            .unwrap_or_default()
+                            .to_owned()
+                    };
+                    id(a).cmp(&id(b))
+                });
+            }
         }
         _ => unreachable!("constraint_key only accepts physical constraints"),
     }
@@ -383,6 +400,12 @@ pub fn constraint_key(node: &DeclarationNode) -> Result<String, CompileError> {
 }
 
 pub(super) fn validate_zone(props: &Value) -> Result<(), CompileError> {
+    validate_properties(
+        props,
+        &["net", "layers", "boundary", "clearance"],
+        "zone",
+        "PCBIR021",
+    )?;
     let net = props
         .get("net")
         .and_then(|net| net.get("id"))
@@ -420,6 +443,18 @@ pub(super) fn validate_zone(props: &Value) -> Result<(), CompileError> {
 }
 
 pub(super) fn validate_keepout(props: &Value) -> Result<(), CompileError> {
+    validate_properties(
+        props,
+        &[
+            "region",
+            "disallow",
+            "except",
+            "componentSides",
+            "copperLayers",
+        ],
+        "keepout",
+        "PCBIR035",
+    )?;
     let disallow = props.get("disallow").and_then(Value::as_array);
     if disallow.is_none_or(Vec::is_empty) {
         return Err(semantic_error(
@@ -447,7 +482,14 @@ pub(super) fn validate_keepout(props: &Value) -> Result<(), CompileError> {
             "List each restriction once.",
         ));
     }
-    if let Some(exceptions) = props.get("except").and_then(Value::as_array) {
+    if let Some(value) = props.get("except") {
+        let exceptions = value.as_array().ok_or_else(|| {
+            semantic_error(
+                "PCBIR021",
+                "keepout exceptions must be an array",
+                "List net handles in except.",
+            )
+        })?;
         let mut ids = BTreeSet::new();
         for exception in exceptions {
             let id = exception
@@ -465,6 +507,25 @@ pub(super) fn validate_keepout(props: &Value) -> Result<(), CompileError> {
         }
     }
     validate_boundary(props.get("region"), "keepout region")
+}
+
+pub(super) fn validate_properties(
+    props: &Value,
+    allowed: &[&str],
+    label: &str,
+    code: &'static str,
+) -> Result<(), CompileError> {
+    let object = props
+        .as_object()
+        .ok_or_else(|| CompileError::invalid(format!("{label} properties must be an object")))?;
+    if let Some(name) = object.keys().find(|name| !allowed.contains(&name.as_str())) {
+        return Err(semantic_error(
+            code,
+            format!("{label} contains unsupported property {name}"),
+            format!("Supported properties: {}.", allowed.join(", ")),
+        ));
+    }
+    Ok(())
 }
 
 fn has_duplicate_values<'a>(mut values: impl Iterator<Item = &'a Value>) -> bool {

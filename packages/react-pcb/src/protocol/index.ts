@@ -1,6 +1,6 @@
 import type { DeclarationTree } from "../renderer/types.ts";
 
-export const PROTOCOL_VERSION = 1 as const;
+export const PROTOCOL_VERSION = 2 as const;
 
 export type DeclarationTransaction = {
 	protocolVersion: typeof PROTOCOL_VERSION;
