@@ -8,6 +8,9 @@ See the [physical/layout contract](docs/physical-footprints.md),
 [completion audit](docs/plan-completion.md) for the supported behavior and evidence.
 The broader routing and fabrication synthesis described above remains future work.
 
+Start with [HOWTO.md](HOWTO.md) for a runnable board tutorial, datasheet-backed
+footprints, diagnostics, manufacturing checks, and PNG-based debugging.
+
 ```sh
 bun install --frozen-lockfile
 bun run check
