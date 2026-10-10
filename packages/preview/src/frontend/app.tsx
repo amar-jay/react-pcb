@@ -233,7 +233,10 @@ export function App() {
 								net={activeNet}
 								onNet={setNet}
 								open={inspectorOpen}
-								onOpenChange={setInspectorOpen}
+								onOpenChange={(open) => {
+									setInspectorOpen(open);
+									if (!open) setSelected(null);
+								}}
 								compact={compactInspector}
 								onBack={() => setSelected(null)}
 							/>
