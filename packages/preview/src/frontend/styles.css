@@ -43,6 +43,10 @@
 	--color-sidebar: var(--sidebar);
 }
 
+[data-sonner-toast] {
+	box-shadow: none;
+}
+
 :root {
 	color-scheme: light;
 	--background: #f3f4f7;

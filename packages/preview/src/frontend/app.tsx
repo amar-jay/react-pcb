@@ -25,6 +25,7 @@ import {
 } from "./lib/scene-presentation.ts";
 
 const failureToastId = "compilation-failure";
+const connectionToastId = "preview-connection";
 
 export function App() {
 	const { snapshot, connection } = usePreview();
@@ -125,6 +126,21 @@ export function App() {
 		[],
 	);
 
+	useEffect(() => {
+		if (connection !== "disconnected") {
+			toast.dismiss(connectionToastId);
+			return;
+		}
+		toast.warning("Preview server disconnected", {
+			id: connectionToastId,
+			duration: Number.POSITIVE_INFINITY,
+			description: "Reconnecting…",
+		});
+		return () => {
+			toast.dismiss(connectionToastId);
+		};
+	}, [connection]);
+
 	return (
 		<TooltipProvider delayDuration={350}>
 			<div
@@ -198,14 +214,6 @@ export function App() {
 								onBack={() => setSelected(null)}
 							/>
 						</CanvasToolbar>
-						{connection === "disconnected" && (
-							<div
-								className="bg-secondary px-5 py-3 text-[13px] text-secondary-foreground"
-								role="status"
-							>
-								Preview server disconnected. Reconnecting…
-							</div>
-						)}
 						<BoardCanvas
 							ref={canvas}
 							presentation={{ view: boardView, theme }}

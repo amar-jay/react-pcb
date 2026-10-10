@@ -23,6 +23,7 @@ type PhaseProps = {
 	ground: Net;
 	phase: Net;
 	at: readonly [number, number];
+	padAt: readonly [number, number];
 	gateHigh?: Net;
 	gateLow?: Net;
 	driver?: PartProps["id"];
@@ -34,6 +35,7 @@ function InverterPhase({
 	ground,
 	phase,
 	at,
+	padAt,
 	gateHigh,
 	gateLow,
 	driver,
@@ -50,15 +52,15 @@ function InverterPhase({
 		<>
 			<Mosfet
 				id={high}
-				at={[x, y + 4]}
+				at={[x, y - 4]}
 				connect={{ G: highNet, D: vbat, S: phase }}
 			/>
 			<Mosfet
 				id={low}
-				at={[x, y - 4]}
+				at={[x, y + 4]}
 				connect={{ G: lowNet, D: phase, S: ground }}
 			/>
-			<PhasePad id={output} at={[x, 32]} connect={{ P: phase }} />
+			<PhasePad id={output} at={padAt} connect={{ P: phase }} />
 			{driver ? (
 				<>
 					<Route
@@ -101,21 +103,24 @@ function InverterParts(props: InverterProps) {
 				gateHigh={props.gateHigh}
 				gateLow={props.gateLow}
 				driver={props.driver}
-				at={[18, 20]}
+				at={[15.6, 21.3]}
+				padAt={[22.6, 33.2]}
 			/>
 			<InverterPhase
 				name="B"
 				vbat={props.vbat}
 				ground={props.ground}
 				phase={props.phaseB}
-				at={[24, 20]}
+				at={[22.2, 21.3]}
+				padAt={[26.9, 33.2]}
 			/>
 			<InverterPhase
 				name="C"
 				vbat={props.vbat}
 				ground={props.ground}
 				phase={props.phaseC}
-				at={[30, 20]}
+				at={[28.8, 21.3]}
+				padAt={[31.2, 33.2]}
 			/>
 		</>
 	);

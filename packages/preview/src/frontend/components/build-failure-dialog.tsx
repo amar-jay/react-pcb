@@ -8,7 +8,7 @@ import {
 	X,
 } from "lucide-react";
 import { useState } from "react";
-import { BoardIcon, ComponentIcon } from "./pcb-icons.tsx";
+import { ComponentIcon } from "./pcb-icons.tsx";
 import {
 	AlertDialog,
 	AlertDialogCancel,
@@ -202,7 +202,7 @@ export function BuildFailureDialog({
 	return (
 		<AlertDialog open={open} onOpenChange={onOpenChange}>
 			<AlertDialogContent
-				className="flex max-h-[calc(100dvh-32px)] w-[calc(100vw-32px)] max-w-180 flex-col gap-0 overflow-hidden rounded-xl p-0 animate-panel-fade data-[size=default]:sm:max-w-180 max-sm:max-h-[calc(100dvh-24px)] max-sm:w-[calc(100vw-24px)]"
+				className="flex max-h-[calc(100dvh-48px)] w-[calc(100vw-48px)] max-w-256 flex-col gap-0 overflow-hidden rounded-xl p-0 animate-panel-fade data-[size=default]:sm:max-w-256 max-sm:max-h-[calc(100dvh-24px)] max-sm:w-[calc(100vw-24px)]"
 				onCloseAutoFocus={(event) => {
 					event.preventDefault();
 					(
@@ -211,55 +211,38 @@ export function BuildFailureDialog({
 					)?.focus();
 				}}
 			>
-				<header className="shrink-0 border-b px-6 pt-5 pb-4 max-sm:px-4">
-					<div className="flex items-start gap-3">
-						<span className="grid size-10 shrink-0 place-items-center rounded-lg bg-destructive/10 text-destructive">
-							<AlertCircle className="size-5" aria-hidden="true" />
-						</span>
-						<div className="min-w-0 flex-1">
-							<AlertDialogTitle className="text-xl tracking-tight">
-								Compilation failed
-							</AlertDialogTitle>
-							<AlertDialogDescription className="mt-1 text-[13px] leading-relaxed">
-								{retained
-									? "Fix the errors below to update the preview."
-									: "Fix the errors below to display your board."}
-							</AlertDialogDescription>
-						</div>
-						<AlertDialogCancel
-							variant="ghost"
-							size="icon"
-							className="-mt-1 -mr-2 shrink-0 text-muted-foreground"
-							aria-label="Close compilation failure"
-						>
-							<X className="size-4" />
-						</AlertDialogCancel>
-					</div>
-					<div className="mt-4 flex flex-wrap items-center justify-between gap-2">
-						<span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-							<BoardIcon size={14} />
-							{retained
-								? "Last successful build shown"
-								: "No board preview available"}
-						</span>
-						<div className="flex items-center gap-2">
-							<Badge variant="destructive" className="text-[11px]">
-								{errors.length} {errors.length === 1 ? "error" : "errors"}
-							</Badge>
-							{!!warnings && (
-								<span className="text-xs text-muted-foreground">
-									{warnings} {warnings === 1 ? "warning" : "warnings"}
-								</span>
-							)}
-						</div>
-					</div>
-				</header>
 				<Tabs
 					defaultValue="errors"
-					className="min-h-0 flex-1 gap-3 overflow-hidden px-6 py-4 max-sm:px-4"
+					className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden"
 				>
-					<div className="flex shrink-0 flex-wrap items-center justify-between gap-2">
-						<TabsList aria-label="Compilation failure details" className="h-8!">
+					<header className="flex shrink-0 items-start gap-3 border-b px-6 py-4 max-sm:px-4">
+						<span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-md bg-destructive/10 text-destructive">
+							<AlertCircle className="size-4" aria-hidden="true" />
+						</span>
+						<div className="min-w-0 flex-1">
+							<div className="flex flex-wrap items-center gap-2">
+								<AlertDialogTitle className="text-[15px] leading-none font-semibold tracking-tight">
+									Compilation failed
+								</AlertDialogTitle>
+								<Badge variant="destructive" className="text-[11px]">
+									{errors.length} {errors.length === 1 ? "error" : "errors"}
+								</Badge>
+								{!!warnings && (
+									<span className="text-[11px] text-muted-foreground">
+										{warnings} {warnings === 1 ? "warning" : "warnings"}
+									</span>
+								)}
+							</div>
+							<AlertDialogDescription className="mt-1.5 text-[13px] leading-relaxed">
+								{retained
+									? "The canvas is still showing the last successful build. Fix the errors below to update it."
+									: "No board is on the canvas yet. Fix the errors below to display it."}
+							</AlertDialogDescription>
+						</div>
+						<TabsList
+							aria-label="Compilation failure details"
+							className="h-8! shrink-0"
+						>
 							<TabsTrigger value="errors" className="text-xs">
 								Errors
 							</TabsTrigger>
@@ -269,20 +252,25 @@ export function BuildFailureDialog({
 								</TabsTrigger>
 							)}
 						</TabsList>
-						<span className="text-[11px] text-muted-foreground max-sm:hidden">
-							Select an error for details
-						</span>
-					</div>
+						<AlertDialogCancel
+							variant="ghost"
+							size="icon"
+							className="-mt-1 shrink-0 text-muted-foreground"
+							aria-label="Close compilation failure"
+						>
+							<X className="size-4" />
+						</AlertDialogCancel>
+					</header>
 					<TabsContent
 						value="errors"
-						className="h-[min(360px,44dvh)] min-h-0 flex-auto overflow-y-auto pr-1 scrollbar-thin"
+						className="h-[min(640px,68dvh)] min-h-0 flex-auto overflow-y-auto px-6 py-4 scrollbar-thin max-sm:px-4"
 					>
 						<FailureErrors errors={errors} />
 					</TabsContent>
 					{log && (
 						<TabsContent
 							value="output"
-							className="h-[min(360px,44dvh)] min-h-0 flex-auto"
+							className="h-[min(640px,68dvh)] min-h-0 flex-auto px-6 py-4 max-sm:px-4"
 						>
 							<CompilerOutput key={log} log={log} />
 						</TabsContent>

@@ -32,7 +32,7 @@ export default function Esc() {
 
 	return (
 		<Board
-			outline={rect(0, 0, 16, 36)}
+			outline={rect(0, 0, 35, 36)}
 			layers={boardLayers}
 			metadata={{
 				title: "ESC footprint study",
@@ -78,8 +78,8 @@ export default function Esc() {
 				from={[pad(powerShunt, "1"), pad(powerShunt, "2")]}
 				to={[pad(controller, "PA0"), pad(controller, "PA1")]}
 			>
-				<RouteThrough key="shunt-kelvin" region={rect(8, 6, 8, 6)} />
-				<RouteThrough key="mcu-sense" region={rect(24, 3, 8, 5)} />
+				<RouteThrough key="shunt-kelvin" region={rect(1.2, 22, 3.2, 8)} />
+				<RouteThrough key="mcu-sense" region={rect(1.2, 12, 3.2, 6)} />
 			</DifferentialPair>
 
 			<Route
@@ -88,7 +88,7 @@ export default function Esc() {
 				to={pad(gateDriver, "VS")}
 				width={0.8}
 			>
-				<RouteThrough region={rect(16, 8, 6, 12)} />
+				<RouteThrough region={rect(16, 20.4, 16, 2.2)} />
 			</Route>
 
 			<Zone
@@ -103,7 +103,7 @@ export default function Esc() {
 				boundary={rect(2, 2, 32, 32)}
 				clearance={0.3}
 			/>
-			<Keepout region={rect(12, 8, 2, 2)} disallow={["vias", "copper"]} />
+			<Keepout region={rect(12.4, 10, 2, 2)} disallow={["vias", "copper"]} />
 		</Board>
 	);
 }

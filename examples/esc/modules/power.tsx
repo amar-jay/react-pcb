@@ -19,12 +19,11 @@ function PowerParts({ vbat, ground, shuntN }: PowerProps) {
 	const shunt = usePart("R1");
 	return (
 		<>
-			<Battery id={battery} at={[6, 13]} connect={{ "+": vbat, "-": ground }} />
-			<BulkCapacitor id={bulk} at={[9, 21]} connect={{ 1: vbat, 2: ground }} />
+			<Battery id={battery} at={[6.0, 32.4]} connect={{ "+": vbat, "-": ground }} />
+			<BulkCapacitor id={bulk} at={[6.4, 26.2]} connect={{ 1: vbat, 2: ground }} />
 			<Shunt
 				id={shunt}
-				at={[6, 4.5]}
-				rotation={90}
+				at={[16.2, 32.2]}
 				connect={{ 1: ground, 2: shuntN }}
 			/>
 		</>

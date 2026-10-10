@@ -20,7 +20,7 @@ function ControlParts(props: ControlProps) {
 		<>
 			<Controller
 				id={mcu}
-				at={[29, 6]}
+				at={[7.2, 7.2]}
 				connect={{
 					"VDD/VDDA": props.logic,
 					VDDIO2: props.logic,
@@ -36,7 +36,7 @@ function ControlParts(props: ControlProps) {
 			/>
 			<Capacitor
 				id={logicCap}
-				at={[32, 5]}
+				at={[4.2, 13.5]}
 				side="back"
 				connect={{ 1: props.logic, 2: props.ground }}
 			/>
