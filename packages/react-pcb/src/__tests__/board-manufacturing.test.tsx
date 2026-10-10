@@ -22,8 +22,8 @@ import {
 	type ManufacturingProfileInput,
 	type FeatureInput,
 } from "../index.ts";
-import { LQFP48Footprint } from "../../../../examples/footprints/LQFP48.tsx";
-import { ManufacturingPassive } from "../../../../examples/footprints/manufacturing.tsx";
+import { LQFP48Footprint } from "../../../../examples/basic/footprints/LQFP48.tsx";
+import { ManufacturingPassive } from "../../../../examples/basic/footprints/manufacturing.tsx";
 import { testLayers } from "./fixtures.ts";
 
 const options = { cwd: import.meta.dir + "/../../../..", hideWarnings: true };

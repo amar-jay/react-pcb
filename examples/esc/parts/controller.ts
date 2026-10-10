@@ -1,6 +1,6 @@
 import React from "react";
 import { definePart, renderFootprintDeclarations } from "@react-pcb/core";
-import { LQFP48Footprint } from "../../footprints/LQFP48.tsx";
+import { LQFP48Footprint } from "../../basic/footprints/LQFP48.tsx";
 
 const footprint = await renderFootprintDeclarations(
 	React.createElement(LQFP48Footprint),

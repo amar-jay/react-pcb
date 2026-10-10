@@ -1,4 +1,4 @@
-import { LQFP48Footprint } from "../../footprints/LQFP48.tsx";
+import { LQFP48Footprint } from "../../basic/footprints/LQFP48.tsx";
 import {
 	Capacitor0402Footprint,
 	Capacitor1210Footprint,

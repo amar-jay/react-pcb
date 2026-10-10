@@ -19,8 +19,8 @@ import {
 import {
 	ManufacturingPassive,
 	inspectionProfile,
-} from "../../../../examples/footprints/manufacturing.tsx";
-import { GridPinHeader } from "../../../../examples/footprints/grid.tsx";
+} from "../../../../examples/basic/footprints/manufacturing.tsx";
+import { GridPinHeader } from "../../../../examples/basic/footprints/grid.tsx";
 import { testLayers } from "./fixtures.ts";
 
 const options = { cwd: import.meta.dir + "/../../../..", hideWarnings: true };

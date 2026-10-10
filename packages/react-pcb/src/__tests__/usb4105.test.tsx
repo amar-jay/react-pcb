@@ -16,7 +16,7 @@ import {
 import {
 	USB4105Footprint,
 	USB4105_FOOTPRINT_KEY,
-} from "../../../../examples/footprints/USB4105.tsx";
+} from "../../../../examples/basic/footprints/USB4105.tsx";
 import { USB4105GFA } from "../../../../examples/parts/USB4105GFA.ts";
 import { testLayers } from "./fixtures.ts";
 

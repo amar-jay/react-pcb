@@ -15,7 +15,7 @@ import {
 import {
 	LQFP48Footprint,
 	LQFP48_FOOTPRINT_KEY,
-} from "../../../../examples/footprints/LQFP48.tsx";
+} from "../../../../examples/basic/footprints/LQFP48.tsx";
 import { STM32G0B1CBT6 } from "../../../../examples/parts/STM32G0B1CBT6.ts";
 import { testLayers } from "./fixtures.ts";
 

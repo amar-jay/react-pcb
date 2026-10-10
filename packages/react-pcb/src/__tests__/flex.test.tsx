@@ -21,7 +21,7 @@ import {
 import {
 	Flex0402,
 	FlexSoicRow,
-} from "../../../../examples/footprints/flex.tsx";
+} from "../../../../examples/basic/footprints/flex.tsx";
 import { testLayers } from "./fixtures.ts";
 
 const options = { cwd: import.meta.dir + "/../../../..", hideWarnings: true };
