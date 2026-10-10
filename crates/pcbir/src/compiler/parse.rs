@@ -288,20 +288,34 @@ type ParsedComponent = (String, ComponentDefinition, BTreeMap<String, Vec<String
 
 fn component_definition(props: &Value) -> Result<ParsedComponent, CompileError> {
     if let Some(definition) = props.get("definition") {
-        let mpn = string(definition, "mpn")?;
-        require_name(&mpn, "component MPN", "PCBIR019")?;
+        let mpn = definition
+            .get("mpn")
+            .map(|_| string(definition, "mpn"))
+            .transpose()?;
+        if let Some(mpn) = &mpn {
+            require_name(mpn, "component MPN", "PCBIR019")?;
+        }
         let manufacturer = definition.get("manufacturer").and_then(Value::as_str);
         if let Some(manufacturer) = manufacturer {
             require_name(manufacturer, "component manufacturer", "PCBIR019")?;
         }
-        let component = definition
+        let explicit_key = definition
             .get("key")
             .and_then(Value::as_str)
-            .map(str::to_owned)
-            .unwrap_or_else(|| match manufacturer {
+            .map(str::to_owned);
+        let component = match (explicit_key, mpn.as_ref()) {
+            (Some(key), _) => key,
+            (None, Some(mpn)) => match manufacturer {
                 Some(manufacturer) => format!("part:{}", json!([manufacturer, mpn])),
                 None => mpn.clone(),
-            });
+            },
+            (None, None) => {
+                return Err(CompileError::invalid(
+                    "component definition needs an explicit key or MPN",
+                ));
+            }
+        };
+        require_name(&component, "component key", "PCBIR019")?;
         let mut value = definition.clone();
         let object = value
             .as_object_mut()

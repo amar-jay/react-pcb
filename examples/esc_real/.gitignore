@@ -1,0 +1,5 @@
+# Large compiler artifacts are reproducible. Keep the compact review/BOM/drawings.
+generated/board.ir.json
+generated/compiler-diagnostics.json
+generated/netlist.json
+generated/pinout.md

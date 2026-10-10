@@ -3,6 +3,20 @@ The proposal is a declarative, constraint-driven PCB design framework in which e
 Start with [HOWTO.md](HOWTO.md) for a runnable board tutorial, datasheet-backed
 footprints, diagnostics, manufacturing checks, and PNG-based debugging.
 
+The Rust CLI reads JSON from stdin and writes results to stdout. Use Clap's
+generated help to discover commands and their descriptions:
+
+```sh
+cargo run -p pcbir -- --help
+cargo run -p pcbir -- compile --help
+cargo run --quiet -p pcbir -- compile < declarations.json > board.json
+```
+
+CLI definitions live in `crates/pcbir/src/cli.rs`; command handlers live in
+`crates/pcbir/src/commands.rs`. Add new commands to the typed `Command` enum and
+its exhaustive dispatch match. Usage errors exit with status 2; input and command
+errors exit with status 1, with compiler diagnostics emitted as JSON on stderr.
+
 ```sh
 bun install --frozen-lockfile
 bun run check

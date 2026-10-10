@@ -444,6 +444,41 @@ fn compiles_declarations_into_canonical_ir() {
 }
 
 #[test]
+fn explicitly_keyed_component_requirements_do_not_invent_an_mpn() {
+    let mut resistor = part("R1", "unresolved/0603", json!({"1": {"id": "signal"}}));
+    resistor["props"]["definition"] = json!({
+        "key": "requirements/resistor/10k", "value": "10k 1%", "package": "0603",
+        "pinoutCoverage": "complete", "pins": {"1": {"electricalType": "passive", "pad": "1"}}
+    });
+    let output = compile(transaction(vec![resistor])).unwrap();
+    let component = &output.ir.component_definitions["requirements/resistor/10k"];
+    assert!(component.mpn.is_none());
+    assert!(component.manufacturer.is_none());
+    assert_eq!(component.value.as_deref(), Some("10k 1%"));
+    assert_eq!(output.ir.parts[0].component, "requirements/resistor/10k");
+    let encoded = serde_json::to_value(&output.ir).unwrap();
+    assert!(
+        encoded["componentDefinitions"]["requirements/resistor/10k"]
+            .get("mpn")
+            .is_none()
+    );
+}
+
+#[test]
+fn component_requirements_still_need_valid_identity_and_mpn_types() {
+    for definition in [
+        json!({"value": "10k"}),
+        json!({"key": ""}),
+        json!({"key": "requirements/resistor", "mpn": 42}),
+        json!({"key": "requirements/resistor", "mpn": ""}),
+    ] {
+        let mut resistor = part("R1", "TEST", json!({}));
+        resistor["props"]["definition"] = definition;
+        assert!(compile(transaction(vec![resistor])).is_err());
+    }
+}
+
+#[test]
 fn canonical_ir_round_trips_through_json() {
     let original = compile(transaction(vec![part(
         "U1",

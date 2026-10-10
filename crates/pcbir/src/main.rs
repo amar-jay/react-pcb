@@ -1,161 +1,31 @@
-use pcbir::{CompileError, DeclarationTransaction, compile};
-use std::io::{self, Read};
+mod cli;
+mod commands;
 
-fn main() {
-    let command = std::env::args().nth(1);
-    if !matches!(
-        command.as_deref(),
-        Some(
-            "compile"
-                | "footprint"
-                | "migrate-footprint"
-                | "footprint-svg"
-                | "validate-footprint"
-                | "validate-board"
-                | "board-svg"
-                | "upgrade-board"
-        )
-    ) {
-        eprintln!(
-            "usage: pcbir compile|footprint|migrate-footprint|footprint-svg|validate-footprint|validate-board|board-svg|upgrade-board < input.json"
-        );
-        std::process::exit(2);
+use clap::Parser;
+use cli::Cli;
+use commands::CliError;
+use std::io::{self, Read, Write};
+use std::process::ExitCode;
+
+fn main() -> ExitCode {
+    let cli = Cli::parse();
+    match run(cli) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(error) => {
+            eprintln!("{error}");
+            ExitCode::FAILURE
+        }
     }
+}
+
+fn run(cli: Cli) -> Result<(), CliError> {
     let mut input = String::new();
-    if let Err(error) = io::stdin().read_to_string(&mut input) {
-        fail(format!("failed to read declarations: {error}"));
-    }
-    if command.as_deref() == Some("upgrade-board") {
-        let value = serde_json::from_str(&input)
-            .unwrap_or_else(|e| fail(format!("invalid board JSON: {e}")));
-        let ir = pcbir::upgrade_board_ir(value).unwrap_or_else(|e| fail_compile(e));
-        println!(
-            "{}",
-            serde_json::to_string_pretty(&ir).expect("upgraded IR is serializable")
-        );
-        return;
-    }
-    if command.as_deref() == Some("board-svg") {
-        let value =
-            serde_json::from_str(&input).unwrap_or_else(|e| fail(format!("invalid board IR: {e}")));
-        let ir = pcbir::decode_board_ir(value).unwrap_or_else(|e| fail_compile(e));
-        let projection = pcbir::board_svg(&ir).unwrap_or_else(|e| fail_compile(e));
-        println!(
-            "{}",
-            serde_json::to_string(&projection).expect("projection is serializable")
-        );
-        return;
-    }
-    if command.as_deref() == Some("validate-footprint") {
-        let input: pcbir::manufacturing::ValidationInput = serde_json::from_str(&input)
-            .unwrap_or_else(|e| {
-                fail_compile(CompileError::diagnostic(pcbir::Diagnostic::error(
-                    "PCBMFG001",
-                    format!("invalid manufacturing input: {e}"),
-                )))
-            });
-        let profile = input.profile.compile().unwrap_or_else(|e| fail_compile(e));
-        let report = pcbir::manufacturing::validate(&input.footprint, &profile)
-            .unwrap_or_else(|e| fail_compile(e));
-        println!(
-            "{}",
-            serde_json::to_string_pretty(&report).expect("report is serializable")
-        );
-        return;
-    }
-    if command.as_deref() == Some("validate-board") {
-        #[derive(serde::Deserialize)]
-        #[serde(deny_unknown_fields)]
-        struct BoardInput {
-            board: serde_json::Value,
-            profile: pcbir::manufacturing::ProfileInput,
-        }
-        let input: BoardInput = serde_json::from_str(&input).unwrap_or_else(|e| {
-            fail_compile(CompileError::diagnostic(pcbir::Diagnostic::error(
-                "PCBMFG001",
-                format!("invalid board manufacturing input: {e}"),
-            )))
-        });
-        let board = pcbir::decode_board_ir(input.board).unwrap_or_else(|e| fail_compile(e));
-        let profile = input.profile.compile().unwrap_or_else(|e| fail_compile(e));
-        let report = pcbir::manufacturing::validate_board(&board, &profile)
-            .unwrap_or_else(|e| fail_compile(e));
-        println!(
-            "{}",
-            serde_json::to_string_pretty(&report).expect("board report is serializable")
-        );
-        return;
-    }
-    if command.as_deref() == Some("footprint-svg") {
-        let footprint = serde_json::from_str(&input)
-            .unwrap_or_else(|e| fail(format!("invalid compiled footprint: {e}")));
-        let svg = pcbir::footprint_svg(&footprint).unwrap_or_else(|e| fail_compile(e));
-        print!("{svg}");
-        return;
-    }
-    if command.as_deref() == Some("migrate-footprint") {
-        let migration: pcbir::physical::MigrationInput = serde_json::from_str(&input)
-            .unwrap_or_else(|e| fail(format!("invalid migration: {e}")));
-        let footprint = pcbir::physical::migrate_footprint(
-            &migration.footprint,
-            migration.units,
-            &migration.layer_roles,
-        )
-        .unwrap_or_else(|e| fail_compile(e));
-        println!(
-            "{}",
-            serde_json::to_string_pretty(&footprint).expect("footprint is serializable")
-        );
-        return;
-    }
-    if command.as_deref() == Some("footprint") {
-        let definition: serde_json::Value = serde_json::from_str(&input)
-            .unwrap_or_else(|e| fail(format!("invalid footprint declaration: {e}")));
-        let footprint = if definition.get("kind").is_some() {
-            let declaration = serde_json::from_value(definition).unwrap_or_else(|e| {
-                fail_compile(CompileError::invalid(format!(
-                    "invalid footprint declarations: {e}"
-                )))
-            });
-            pcbir::layout::compile_layout(declaration)
-        } else {
-            let declaration = serde_json::from_value(definition).unwrap_or_else(|e| {
-                fail_compile(CompileError::invalid(format!(
-                    "invalid footprint declaration: {e}"
-                )))
-            });
-            pcbir::physical::compile_footprint(declaration)
-        }
-        .unwrap_or_else(|e| fail_compile(e));
-        println!(
-            "{}",
-            serde_json::to_string_pretty(&footprint).expect("footprint is serializable")
-        );
-        return;
-    }
-    let transaction: DeclarationTransaction = match serde_json::from_str(&input) {
-        Ok(transaction) => transaction,
-        Err(error) => fail(format!("invalid declaration transaction: {error}")),
-    };
-    let output = match compile(transaction) {
-        Ok(output) => output,
-        Err(error) => fail_compile(error),
-    };
-    println!(
-        "{}",
-        serde_json::to_string_pretty(&output).expect("compile output is serializable")
-    );
-}
-
-fn fail_compile(error: CompileError) -> ! {
-    eprintln!(
-        "{}",
-        serde_json::to_string(&error).expect("compile errors are serializable")
-    );
-    std::process::exit(1);
-}
-
-fn fail(message: String) -> ! {
-    eprintln!("pcbir: {message}");
-    std::process::exit(1);
+    io::stdin()
+        .read_to_string(&mut input)
+        .map_err(|error| CliError::Message(format!("failed to read declarations: {error}")))?;
+    let output = commands::run(cli.command, &input)?;
+    io::stdout()
+        .lock()
+        .write_all(output.as_bytes())
+        .map_err(|error| CliError::Message(format!("failed to write output: {error}")))
 }
