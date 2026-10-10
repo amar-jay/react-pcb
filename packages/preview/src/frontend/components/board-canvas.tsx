@@ -5,15 +5,9 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
 } from 'react';
-import {
-  Crosshair,
-  Layers3,
-  Maximize,
-  Minus,
-  Plus,
-  MousePointer2,
-} from 'lucide-react';
+import { Crosshair, Maximize, Minus, Plus } from 'lucide-react';
 import type { BoardIr } from '@react-pcb/core';
 import type { SceneLayer } from '../lib/scene.ts';
 import { boardSize } from '../lib/scene.ts';
@@ -30,6 +24,7 @@ type Props = {
   selected: string | null;
   net: string;
   onSelect: (id: string) => void;
+  statusControls: ReactNode;
 };
 
 export function BoardCanvas({
@@ -40,6 +35,7 @@ export function BoardCanvas({
   selected,
   net,
   onSelect,
+  statusControls,
 }: Props) {
   const scene = useRef<HTMLDivElement>(null);
   const shell = useRef<HTMLDivElement>(null);
@@ -64,7 +60,7 @@ export function BoardCanvas({
     if (!matrix || !bounds) return;
     setRulers({
       x: rulerTicks(matrix.a, matrix.e - bounds.left, bounds.width),
-      y: rulerTicks(matrix.d, matrix.f - bounds.top, bounds.height - 36),
+      y: rulerTicks(matrix.d, matrix.f - bounds.top, bounds.height),
     });
   }, []);
   const fitView = useMemo(() => {
@@ -184,193 +180,206 @@ export function BoardCanvas({
   }, [zoom]);
 
   return (
-    <div
-      className="relative min-h-[340px] flex-1 overflow-hidden bg-canvas bg-[radial-gradient(var(--canvas-dot)_0.7px,transparent_0.7px)] bg-size-[24px_24px] max-[701px]:min-h-[400px]"
-      ref={shell}
-    >
+    <>
       <div
-        className="absolute top-0 left-0 z-2 grid size-7 place-items-center border-r border-b bg-card font-mono text-[10px] leading-normal text-muted-foreground"
-        aria-hidden="true"
+        className="relative min-h-[340px] flex-1 overflow-hidden bg-canvas bg-[radial-gradient(var(--canvas-dot)_0.7px,transparent_0.7px)] bg-size-[24px_24px] max-[701px]:min-h-[400px]"
+        ref={shell}
       >
-        mm
-      </div>
-      <div
-        className="pointer-events-none absolute z-1 overflow-hidden bg-[color-mix(in_srgb,var(--card)_75%,var(--canvas))] font-mono text-[10px] leading-normal text-muted-foreground inset-x-0 top-0 h-7 border-b [&>span]:absolute [&>span]:inset-y-0 [&>span]:flex [&>span]:items-center [&>span]:border-l [&>span]:border-muted-foreground/30 [&>span]:pl-[5px]"
-        aria-hidden="true"
-      >
-        {rulers.x.map((tick) => (
-          <span key={tick.value} style={{ left: tick.position }}>
-            {tick.label}
-          </span>
-        ))}
-      </div>
-      <div
-        className="pointer-events-none absolute z-1 overflow-hidden bg-[color-mix(in_srgb,var(--card)_75%,var(--canvas))] font-mono text-[10px] leading-normal text-muted-foreground top-0 bottom-9 left-0 w-7 border-r [&>span]:absolute [&>span]:inset-x-0 [&>span]:border-t [&>span]:border-muted-foreground/30 [&>span]:pt-1 [&>span]:pl-[3px] [&>span]:text-[9px]"
-        aria-hidden="true"
-      >
-        {rulers.y.map((tick) => (
-          <span key={tick.value} style={{ top: tick.position }}>
-            {tick.label}
-          </span>
-        ))}
-      </div>
-      <div className="absolute top-[45px] left-[49px] flex items-center gap-[7px] text-[12px] text-canvas-text max-[701px]:left-[42px] [&>svg]:text-muted-foreground">
-        <Layers3 size={14} />
-        Front view
-      </div>
-      {ir && (
-        <div className="absolute top-[45px] right-[38px] font-mono text-[11px] leading-normal text-canvas-text max-[1401px]:hidden">
-          {boardSize(ir)}
+        <div
+          className="absolute top-0 left-0 z-2 grid size-7 place-items-center border-r border-b bg-card font-mono text-[10px] leading-normal text-muted-foreground"
+          aria-hidden="true"
+        >
+          mm
         </div>
-      )}
-      <div
-        id="scene"
-        ref={scene}
-        className="absolute top-[66px] right-[42px] bottom-[90px] left-[54px] touch-none cursor-grab data-[dragging=true]:cursor-grabbing focus-visible:rounded-[2px] focus-visible:outline-offset-[5px] max-[701px]:top-[72px] max-[701px]:right-3 max-[701px]:bottom-[98px] max-[701px]:left-10 [&_svg]:block [&_svg]:size-full [&_svg]:overflow-visible [&_svg]:drop-shadow-[0_9px_12px_#233d3426] [&_svg>rect]:fill-[#234e41] [&_svg>rect]:stroke-[#527560] dark:[&_svg>rect]:fill-[#2a5848] dark:[&_svg>rect]:stroke-[#49816b] [&_g[data-overlay=references]]:stroke-none! [&_g[data-overlay=references]_text]:font-mono [&_g[data-overlay=references]_text]:text-[1px] [&_g[data-overlay=drills]]:stroke-none! [&_[data-part-id]]:cursor-pointer [&_.selected]:[filter:drop-shadow(0_0_0.18px_#c6e6ff)_drop-shadow(0_0_0.28px_#8fc3ef)] [&_.net-match]:drop-shadow-[0_0_0.4px_#fff0af] [&_.dimmed]:opacity-[0.19]"
-        tabIndex={0}
-        role="region"
-        aria-label="Board canvas. Drag to pan, scroll to zoom. Arrow keys pan; plus and minus zoom; F fits the board."
-        onKeyDown={(event) => {
-          if (!viewport.current) return;
-          const [x, y, w, h] = viewport.current;
-          const moves: Record<string, View> = {
-            ArrowLeft: [x - w / 20, y, w, h],
-            ArrowRight: [x + w / 20, y, w, h],
-            ArrowUp: [x, y - h / 20, w, h],
-            ArrowDown: [x, y + h / 20, w, h],
-          };
-          if (moves[event.key]) {
-            event.preventDefault();
-            view(moves[event.key]!);
-          } else if (['+', '=', '-'].includes(event.key)) {
-            event.preventDefault();
-            zoom(event.key === '-' ? 1.25 : 1 / 1.25);
-          } else if (event.key.toLowerCase() === 'f') {
-            event.preventDefault();
-            fit();
-          }
-        }}
-        onPointerDown={(event) => {
-          if (event.button !== 0 || !viewport.current) return;
-          const matrix = getSvg()?.getScreenCTM();
-          if (!matrix) return;
-          scene.current?.focus({ preventScroll: true });
-          drag.current = {
-            x: event.clientX,
-            y: event.clientY,
-            view: [...viewport.current],
-            inverse: matrix.inverse(),
-            moved: false,
-          };
-          event.currentTarget.setPointerCapture(event.pointerId);
-          event.currentTarget.dataset.dragging = 'true';
-        }}
-        onPointerMove={(event) => {
-          const matrix = getSvg()?.getScreenCTM();
-          if (matrix) {
-            const point = new DOMPoint(
+        <div
+          className="pointer-events-none absolute z-1 overflow-hidden bg-[color-mix(in_srgb,var(--card)_75%,var(--canvas))] font-mono text-[10px] leading-normal text-muted-foreground inset-x-0 top-0 h-7 border-b [&>span]:absolute [&>span]:inset-y-0 [&>span]:flex [&>span]:items-center [&>span]:border-l [&>span]:border-muted-foreground/30 [&>span]:pl-[5px]"
+          aria-hidden="true"
+        >
+          {rulers.x.map((tick) => (
+            <span key={tick.value} style={{ left: tick.position }}>
+              {tick.label}
+            </span>
+          ))}
+        </div>
+        <div
+          className="pointer-events-none absolute z-1 overflow-hidden bg-[color-mix(in_srgb,var(--card)_75%,var(--canvas))] font-mono text-[10px] leading-normal text-muted-foreground top-0 bottom-0 left-0 w-7 border-r [&>span]:absolute [&>span]:inset-x-0 [&>span]:border-t [&>span]:border-muted-foreground/30 [&>span]:pt-1 [&>span]:pl-[3px] [&>span]:text-[9px]"
+          aria-hidden="true"
+        >
+          {rulers.y.map((tick) => (
+            <span key={tick.value} style={{ top: tick.position }}>
+              {tick.label}
+            </span>
+          ))}
+        </div>
+        {ir && (
+          <div className="absolute top-[45px] right-[38px] font-mono text-[11px] leading-normal text-canvas-text max-[1401px]:hidden">
+            {boardSize(ir)}
+          </div>
+        )}
+        <div
+          id="scene"
+          ref={scene}
+          className="absolute top-[66px] right-[42px] bottom-[54px] left-[54px] touch-none cursor-grab data-[dragging=true]:cursor-grabbing focus-visible:rounded-[2px] focus-visible:outline-offset-[5px] max-[701px]:top-[72px] max-[701px]:right-3 max-[701px]:bottom-[62px] max-[701px]:left-10 [&_svg]:block [&_svg]:size-full [&_svg]:overflow-visible [&_svg]:drop-shadow-[0_9px_12px_#233d3426] [&_svg>rect]:fill-[#234e41] [&_svg>rect]:stroke-[#527560] dark:[&_svg>rect]:fill-[#2a5848] dark:[&_svg>rect]:stroke-[#49816b] [&_g[data-overlay=references]]:stroke-none! [&_g[data-overlay=references]_text]:font-mono [&_g[data-overlay=references]_text]:text-[1px] [&_g[data-overlay=drills]]:stroke-none! [&_[data-part-id]]:cursor-pointer [&_.selected]:[filter:drop-shadow(0_0_0.18px_#c6e6ff)_drop-shadow(0_0_0.28px_#8fc3ef)] [&_.net-match]:drop-shadow-[0_0_0.4px_#fff0af] [&_.dimmed]:opacity-[0.19]"
+          tabIndex={0}
+          role="region"
+          aria-label="Board canvas. Drag to pan, scroll to zoom. Arrow keys pan; plus and minus zoom; F fits the board."
+          onKeyDown={(event) => {
+            if (!viewport.current) return;
+            const [x, y, w, h] = viewport.current;
+            const moves: Record<string, View> = {
+              ArrowLeft: [x - w / 20, y, w, h],
+              ArrowRight: [x + w / 20, y, w, h],
+              ArrowUp: [x, y - h / 20, w, h],
+              ArrowDown: [x, y + h / 20, w, h],
+            };
+            if (moves[event.key]) {
+              event.preventDefault();
+              view(moves[event.key]!);
+            } else if (['+', '=', '-'].includes(event.key)) {
+              event.preventDefault();
+              zoom(event.key === '-' ? 1.25 : 1 / 1.25);
+            } else if (event.key.toLowerCase() === 'f') {
+              event.preventDefault();
+              fit();
+            }
+          }}
+          onPointerDown={(event) => {
+            if (event.button !== 0 || !viewport.current) return;
+            const matrix = getSvg()?.getScreenCTM();
+            if (!matrix) return;
+            scene.current?.focus({ preventScroll: true });
+            drag.current = {
+              x: event.clientX,
+              y: event.clientY,
+              view: [...viewport.current],
+              inverse: matrix.inverse(),
+              moved: false,
+            };
+            event.currentTarget.setPointerCapture(event.pointerId);
+            event.currentTarget.dataset.dragging = 'true';
+          }}
+          onPointerMove={(event) => {
+            const matrix = getSvg()?.getScreenCTM();
+            if (matrix) {
+              const point = new DOMPoint(
+                event.clientX,
+                event.clientY,
+              ).matrixTransform(matrix.inverse());
+              setCursor({ x: point.x, y: point.y });
+            }
+            const active = drag.current;
+            if (!active) return;
+            const start = new DOMPoint(active.x, active.y).matrixTransform(
+              active.inverse,
+            );
+            const end = new DOMPoint(
               event.clientX,
               event.clientY,
-            ).matrixTransform(matrix.inverse());
-            setCursor({ x: point.x, y: point.y });
-          }
-          const active = drag.current;
-          if (!active) return;
-          const start = new DOMPoint(active.x, active.y).matrixTransform(
-            active.inverse,
-          );
-          const end = new DOMPoint(
-            event.clientX,
-            event.clientY,
-          ).matrixTransform(active.inverse);
-          if (
-            Math.abs(event.clientX - active.x) +
-              Math.abs(event.clientY - active.y) >
-            4
-          )
-            active.moved = true;
-          view([
-            active.view[0] + start.x - end.x,
-            active.view[1] + start.y - end.y,
-            active.view[2],
-            active.view[3],
-          ]);
-        }}
-        onPointerUp={(event) => {
-          const active = drag.current;
-          drag.current = null;
-          delete event.currentTarget.dataset.dragging;
-          if (event.currentTarget.hasPointerCapture(event.pointerId))
-            event.currentTarget.releasePointerCapture(event.pointerId);
-          if (!active || active.moved) return;
-          const item = document
-            .elementFromPoint(event.clientX, event.clientY)
-            ?.closest<SVGElement>('[data-part-id]');
-          if (item?.dataset.partId) onSelect(item.dataset.partId);
-        }}
-        onPointerCancel={(event) => {
-          drag.current = null;
-          delete event.currentTarget.dataset.dragging;
-        }}
-        onPointerLeave={() => setCursor(null)}
-        dangerouslySetInnerHTML={{ __html: markup ?? '' }}
-      />
-      {!markup && (
-        <div className="pointer-events-none absolute top-[38%] right-[15%] left-[15%] text-center text-canvas-text [&>svg]:mx-auto [&>svg]:mb-4 [&>svg]:text-primary [&_h2]:text-[18px] [&_h2]:font-medium [&_h2]:text-foreground [&_p]:mt-2 [&_p]:text-[13px]">
-          <Crosshair size={32} strokeWidth={1} />
-          <h2>No board loaded</h2>
-          <p>A compiled board will appear here.</p>
+            ).matrixTransform(active.inverse);
+            if (
+              Math.abs(event.clientX - active.x) +
+                Math.abs(event.clientY - active.y) >
+              4
+            )
+              active.moved = true;
+            view([
+              active.view[0] + start.x - end.x,
+              active.view[1] + start.y - end.y,
+              active.view[2],
+              active.view[3],
+            ]);
+          }}
+          onPointerUp={(event) => {
+            const active = drag.current;
+            drag.current = null;
+            delete event.currentTarget.dataset.dragging;
+            if (event.currentTarget.hasPointerCapture(event.pointerId))
+              event.currentTarget.releasePointerCapture(event.pointerId);
+            if (!active || active.moved) return;
+            const item = document
+              .elementFromPoint(event.clientX, event.clientY)
+              ?.closest<SVGElement>('[data-part-id]');
+            if (item?.dataset.partId) onSelect(item.dataset.partId);
+          }}
+          onPointerCancel={(event) => {
+            drag.current = null;
+            delete event.currentTarget.dataset.dragging;
+          }}
+          onPointerLeave={() => setCursor(null)}
+          dangerouslySetInnerHTML={{ __html: markup ?? '' }}
+        />
+        {!markup && (
+          <div className="pointer-events-none absolute top-[38%] right-[15%] left-[15%] text-center text-canvas-text [&>svg]:mx-auto [&>svg]:mb-4 [&>svg]:text-primary [&_h2]:text-[18px] [&_h2]:font-medium [&_h2]:text-foreground [&_p]:mt-2 [&_p]:text-[13px]">
+            <Crosshair size={32} strokeWidth={1} />
+            <h2>No board loaded</h2>
+            <p>A compiled board will appear here.</p>
+          </div>
+        )}
+        <div
+          className="absolute bottom-[19px] left-1/2 z-3 flex -translate-x-1/2 items-center rounded-[9px] border bg-card px-1.5 py-[5px] whitespace-nowrap shadow-[0_4px_12px_#202c3f16] max-[701px]:bottom-[17px] max-[701px]:p-1 [&_[data-slot=button]]:gap-2 [&_[data-slot=button]]:text-[12px]"
+          aria-label="Canvas controls"
+        >
+          <IconButton
+            id="zoom-out"
+            label="Zoom out"
+            onClick={() => zoom(1.25)}
+            disabled={!markup}
+          >
+            <Minus />
+          </IconButton>
+          <span
+            id="zoom-level"
+            className="min-w-[58px] px-[5px] text-center font-mono text-[12px] leading-normal max-[701px]:min-w-[50px]"
+          >
+            {zoomLevel}%
+          </span>
+          <IconButton
+            id="zoom-in"
+            label="Zoom in"
+            onClick={() => zoom(1 / 1.25)}
+            disabled={!markup}
+          >
+            <Plus />
+          </IconButton>
+          <span className="mx-2.5 h-5 w-px bg-border max-[701px]:mx-[5px]" />
+          <Button
+            id="fit"
+            variant="ghost"
+            size="lg"
+            onClick={fit}
+            disabled={!markup}
+          >
+            <Maximize />
+            Fit board
+          </Button>
         </div>
-      )}
+      </div>
       <div
-        className="absolute bottom-[55px] left-1/2 z-3 flex -translate-x-1/2 items-center rounded-[9px] border bg-card px-1.5 py-[5px] whitespace-nowrap shadow-[0_4px_12px_#202c3f16] max-[701px]:bottom-[53px] max-[701px]:p-1 [&_[data-slot=button]]:gap-2 [&_[data-slot=button]]:text-[12px]"
-        aria-label="Canvas controls"
+        id="canvas-status-bar"
+        className="flex min-h-11 shrink-0 items-center gap-2 border-t px-3"
       >
-        <IconButton
-          id="zoom-out"
-          label="Zoom out"
-          onClick={() => zoom(1.25)}
-          disabled={!markup}
+        {statusControls}
+        <output
+          aria-label="Cursor coordinates"
+          className="flex shrink-0 items-center gap-1.5 font-mono text-[10px] text-muted-foreground max-sm:gap-1"
         >
-          <Minus />
-        </IconButton>
-        <span
-          id="zoom-level"
-          className="min-w-[58px] px-[5px] text-center font-mono text-[12px] leading-normal max-[701px]:min-w-[50px]"
-        >
-          {zoomLevel}%
-        </span>
-        <IconButton
-          id="zoom-in"
-          label="Zoom in"
-          onClick={() => zoom(1 / 1.25)}
-          disabled={!markup}
-        >
-          <Plus />
-        </IconButton>
-        <span className="mx-2.5 h-5 w-px bg-border max-[701px]:mx-[5px]" />
-        <Button
-          id="fit"
-          variant="ghost"
-          size="lg"
-          onClick={fit}
-          disabled={!markup}
-        >
-          <Maximize />
-          Fit board
-        </Button>
+          X{' '}
+          <span
+            className="min-w-[29px] max-w-[64px] truncate text-foreground max-sm:min-w-5 max-sm:max-w-10"
+            title={cursor?.x.toFixed(2)}
+          >
+            {cursor ? cursor.x.toFixed(2) : '—'}
+          </span>
+          <span className="mx-0.5 h-[11px] w-px bg-border" />Y{' '}
+          <span
+            className="min-w-[29px] max-w-[64px] truncate text-foreground max-sm:min-w-5 max-sm:max-w-10"
+            title={cursor?.y.toFixed(2)}
+          >
+            {cursor ? cursor.y.toFixed(2) : '—'}
+          </span>
+          <span className="max-sm:hidden">mm</span>
+        </output>
       </div>
-      <div className="absolute inset-x-0 bottom-0 flex h-9 items-center justify-between gap-2.5 border-t bg-[color-mix(in_srgb,var(--card)_75%,var(--canvas))] px-3.5 text-[11px] text-canvas-text max-[701px]:justify-center [&>span:first-child]:flex [&>span:first-child]:items-center [&>span:first-child]:gap-[7px] max-[1401px]:[&>span:first-child>span]:hidden max-[701px]:[&>span:first-child]:hidden">
-        <span>
-          <MousePointer2 size={12} />
-          <span>Drag to pan · scroll to zoom</span>
-        </span>
-        <span className="flex items-center gap-[7px] font-mono text-[10px] leading-normal [&_b]:min-w-[29px] [&_b]:font-normal [&_b]:text-foreground [&>span]:mx-0.5 [&>span]:h-[11px] [&>span]:w-px [&>span]:bg-border [&_small]:text-[10px]">
-          X <b>{cursor ? cursor.x.toFixed(2) : '—'}</b>
-          <span />Y <b>{cursor ? cursor.y.toFixed(2) : '—'}</b>
-          <small>mm</small>
-        </span>
-      </div>
-    </div>
+    </>
   );
 }

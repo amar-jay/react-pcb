@@ -249,10 +249,10 @@ export function DiagnosticsTrigger({
     <Button
       id="diagnostics-trigger"
       variant="ghost"
-      className="flex h-11 w-full justify-between rounded-none border-t border-t-border px-4 [&>span]:flex [&>span]:items-center [&>span]:gap-2"
+      className="flex h-11 min-w-0 flex-1 justify-between rounded-none px-2"
       onClick={onClick}
     >
-      <span>
+      <span className="flex items-center gap-2">
         {errors ? (
           <AlertCircle size={15} />
         ) : warnings ? (
@@ -260,7 +260,7 @@ export function DiagnosticsTrigger({
         ) : (
           <CheckCircle2 size={15} />
         )}
-        Diagnostics
+        <span className="max-sm:sr-only">Diagnostics</span>
         <Badge
           id="diagnostic-count"
           className="px-1.5 py-px text-[11px]"
@@ -270,7 +270,7 @@ export function DiagnosticsTrigger({
         </Badge>
       </span>
       <span
-        className="text-[12px] font-normal text-muted-foreground data-[severity=warning]:text-[#997032] dark:data-[severity=warning]:text-[#d1ae73] data-[severity=error]:text-destructive max-md:text-[11px]"
+        className="flex items-center gap-2 text-[12px] font-normal text-muted-foreground data-[severity=warning]:text-[#997032] dark:data-[severity=warning]:text-[#d1ae73] data-[severity=error]:text-destructive max-md:text-[11px] max-sm:hidden"
         data-severity={errors ? 'error' : warnings ? 'warning' : 'none'}
       >
         {errors

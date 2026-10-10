@@ -6,8 +6,7 @@ import { sceneLayers } from './lib/scene.ts';
 import { previewFindings } from './lib/findings.ts';
 import { NavigationPanel } from './components/navigation-panel.tsx';
 import { BoardCanvas } from './components/board-canvas.tsx';
-import { WorkbenchHeader } from './components/workbench-header.tsx';
-import { WorkbenchFooter } from './components/workbench-footer.tsx';
+import { PreviewStatus } from './components/preview-status.tsx';
 import { CanvasToolbar } from './components/canvas-toolbar.tsx';
 import { InspectorSheet } from './components/inspector-sheet.tsx';
 import {
@@ -86,17 +85,12 @@ export function App() {
         className="group/workbench flex h-dvh min-h-[520px] flex-col"
         data-inspector-open={inspectorOpen && !compactInspector}
       >
-        <WorkbenchHeader
-          snapshot={snapshot}
-          connection={connection}
-          title={title}
-          theme={theme}
-          onToggleTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-        />
-
         <SidebarProvider className="[--sidebar-width:264px]! relative min-h-0 flex-1 overflow-hidden [&_[data-slot=sidebar-container]]:absolute [&_[data-slot=sidebar-container]]:inset-y-0 [&_[data-slot=sidebar-container]]:h-full [&_[data-slot=sidebar-inner]]:border-r">
           <NavigationPanel
             ir={ir}
+            snapshot={snapshot}
+            theme={theme}
+            onToggleTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')}
             failed={Boolean(snapshot.error)}
             selected={part?.id ?? null}
             layers={layers}
@@ -108,7 +102,13 @@ export function App() {
           />
 
           <main className="mx-4 my-3.5 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border bg-card group-data-[inspector-open=true]/workbench:mr-[422px] max-md:m-2">
-            <CanvasToolbar ir={ir} net={activeNet} onNet={setNet}>
+            <CanvasToolbar
+              ir={ir}
+              title={title}
+              entry={snapshot.entry}
+              net={activeNet}
+              onNet={setNet}
+            >
               <InspectorSheet
                 snapshot={snapshot}
                 part={part}
@@ -157,10 +157,15 @@ export function App() {
               selected={part?.id ?? null}
               net={activeNet}
               onSelect={selectPart}
-            />
-            <DiagnosticsTrigger
-              findings={findings}
-              onClick={() => setDiagnosticsOpen(true)}
+              statusControls={
+                <>
+                  <PreviewStatus snapshot={snapshot} connection={connection} />
+                  <DiagnosticsTrigger
+                    findings={findings}
+                    onClick={() => setDiagnosticsOpen(true)}
+                  />
+                </>
+              }
             />
           </main>
         </SidebarProvider>
@@ -181,7 +186,6 @@ export function App() {
           findings={findings}
           failed={Boolean(snapshot.error)}
         />
-        <WorkbenchFooter live={snapshot.live} />
       </div>
     </TooltipProvider>
   );

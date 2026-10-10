@@ -61,8 +61,10 @@ asset directory or CDN is needed.
 lives in `src/frontend/components/ui`; workbench components and hooks live
 alongside it. Workbench layout and styling use Tailwind utilities in the components.
 `styles.css` holds shared light/dark theme tokens, base styles, and animation definitions.
-The header, canvas toolbar, inspector sheet, diagnostics, parts list, layer controls,
-and stackup are separate components.
+The canvas toolbar, inspector sheet, diagnostics, parts list, layer controls,
+export menu, build status, and stackup are separate components. Board identity lives
+in the canvas toolbar, build status sits beside diagnostics, and the design sidebar
+contains export and theme controls.
 Add controls from the package directory:
 
 ```sh

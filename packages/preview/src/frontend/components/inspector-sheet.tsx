@@ -45,7 +45,7 @@ export function InspectorSheet({
         </Button>
       </SheetTrigger>
       <SheetContent
-        className="w-[min(100vw,390px)] max-w-[390px] gap-0 animate-panel-right sm:max-w-[390px] data-[docked=true]:top-[86px] data-[docked=true]:right-4 data-[docked=true]:bottom-[50px] data-[docked=true]:h-auto data-[docked=true]:rounded-lg data-[docked=true]:border data-[docked=true]:shadow-[0_2px_3px_#171d3004]"
+        className="w-[min(100vw,390px)] max-w-[390px] gap-0 animate-panel-right sm:max-w-[390px] data-[docked=true]:top-[14px] data-[docked=true]:right-4 data-[docked=true]:bottom-[14px] data-[docked=true]:h-auto data-[docked=true]:rounded-lg data-[docked=true]:border data-[docked=true]:shadow-[0_2px_3px_#171d3004]"
         data-docked={!compact}
         onInteractOutside={(event) => {
           if (!compact) event.preventDefault();

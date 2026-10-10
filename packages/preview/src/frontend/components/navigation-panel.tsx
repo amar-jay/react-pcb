@@ -1,6 +1,9 @@
+import type { PreviewSnapshot } from '../../index.ts';
+import { ExportMenu } from './export-menu.tsx';
+import { IconButton } from './icon-button.tsx';
 import { LayerList, TechnicalLayers } from './layer-controls.tsx';
 import { useEffect, useState } from 'react';
-import { Box, CircuitBoard, Layers3, Network } from 'lucide-react';
+import { Box, Layers3, Moon, Sun } from 'lucide-react';
 import type { BoardIr } from '@react-pcb/core';
 import type { SceneLayer } from '../lib/scene.ts';
 import { PartsList } from './parts-list.tsx';
@@ -17,6 +20,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 
 type Props = {
   ir: BoardIr | undefined;
+  snapshot: PreviewSnapshot;
+  theme: string;
+  onToggleTheme: () => void;
   failed: boolean;
   selected: string | null;
   layers: SceneLayer[];
@@ -27,6 +33,9 @@ type Props = {
 
 export function NavigationPanel({
   ir,
+  snapshot,
+  theme,
+  onToggleTheme,
   failed,
   selected,
   layers,
@@ -133,12 +142,20 @@ export function NavigationPanel({
           </TabsContent>
         </SidebarContent>
       </Tabs>
-      <SidebarFooter className="flex flex-row items-center justify-center gap-1.5 border-t bg-[color-mix(in_srgb,var(--muted)_35%,var(--card))] px-3.5 py-[15px] text-[12px] text-muted-foreground [&>svg]:size-3.5">
-        <CircuitBoard size={14} />
-        <span>{ir?.parts.length ?? 0} parts</span>
-        <span className="mx-[5px] inline-block size-[3px] rounded-full bg-current" />
-        <Network size={13} />
-        <span>{ir?.nets.length ?? 0} nets</span>
+      <SidebarFooter className="gap-3 border-t px-4 py-3">
+        <div className="flex items-center gap-2">
+          <ExportMenu snapshot={snapshot} />
+          <IconButton
+            label={
+              theme === 'light'
+                ? 'Switch to dark theme'
+                : 'Switch to light theme'
+            }
+            onClick={onToggleTheme}
+          >
+            {theme === 'light' ? <Moon /> : <Sun />}
+          </IconButton>
+        </div>
       </SidebarFooter>
     </Sidebar>
   );
