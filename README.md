@@ -1,13 +1,5 @@
 The proposal is a declarative, constraint-driven PCB design framework in which engineers describe the electrical and physical intent of a board (components, nets, placement, stackup, differential pairs, impedance targets, keepouts, copper zones, routing corridors, clearances, and other constraints) using a composable JSX/TypeScript API, rather than manually drawing the final PCB geometry. Components and nets are first-class objects, while constructs such as DifferentialPair, RouteThrough, and Keepout specify requirements that a placement-and-routing engine must satisfy. The underlying compiler would resolve these constraints into concrete component positions, traces, vias, copper geometry, and ultimately manufacturing outputs such as Gerbers, effectively treating PCB design more like physical synthesis: the engineer specifies what the board must satisfy, and the system determines how to realize it.
 
-Declarative footprint authoring is implemented through all six planned phases.
-Footprints support exact physical units, absolute positioning, fixed Flexbox and
-Grid layouts, deterministic SVG inspection, and explicit manufacturing profiles.
-See the [physical/layout contract](docs/physical-footprints.md),
-[manufacturing checks and coverage](docs/manufacturing-validation.md), and
-[completion audit](docs/plan-completion.md) for the supported behavior and evidence.
-The broader routing and fabrication synthesis described above remains future work.
-
 Start with [HOWTO.md](HOWTO.md) for a runnable board tutorial, datasheet-backed
 footprints, diagnostics, manufacturing checks, and PNG-based debugging.
 
@@ -23,10 +15,8 @@ footprint and board manufacturing reports. Board checks enforce placed copper
 spacing and same-side inter-part courtyard reservations using the selected profile.
 The inspection command derives unique footprints directly from the compiled board,
 writes their canonical JSON and SVG alongside the board-selected manufacturing
-reports, and generates a small static `index.html` with SVG images and artifact links.
+reports, and generates `index.html` with SVG images and artifact links.
 The HTML has no JavaScript or embedded IR; agents can use `manifest.json` directly.
-Examples need no separate inspection script or footprint list.
-Illustrative dimensions and limits do not establish fabrication approval.
 
 The [ESC footprint example](examples/esc/README.md) adds real component identities,
 eight physical footprint definitions. Run `bun run example:esc` or generate its
@@ -41,35 +31,6 @@ To view board JSX in a browser or export one offline HTML file:
 bun run board:dev examples/basic/board.tsx
 bun run board:build examples/basic/board.tsx --out dist/index.html
 ```
-
-The [`@react-pcb/preview` package](packages/preview/README.md) owns the board viewer,
-HTML export, and local preview server. It includes layer toggles, zoom/pan, part
-inspection, searchable parts, net highlighting, and compiler/manufacturing
-diagnostics in a responsive React UI with light/dark themes and Amarjay shadcn
-controls. Dev mode uses Bun's HTML bundler for UI HMR and reloads imported footprint changes
-and shows compile errors while keeping the last valid board. See the
-[board preview guide](docs/board-preview.md) for entry exports, watch options and
-the programmatic API.
-
-Compilation also warns about unconnected declared or mapped pins (`PCBIR032`),
-nets with zero or one logical endpoint (`PCBIR033`), and net endpoints that form
-disconnected groups in routing intent (`PCBIR034`). `Route` declarations and both
-legs of a `DifferentialPair` connect these groups; a copper zone does not imply
-resolved connectivity. These warnings appear in `compile()` diagnostics, CLI output,
-and the preview. `hideWarnings: true` silences console output while retaining the
-diagnostics. Required pins and invalid route references remain errors. The checks
-use stable part and net IDs, count a pin mapped to multiple pads once, and cover
-only declared or mapped logical pins; they do not invent missing pinouts or check
-physical copper continuity. A net handle never used in a declaration is absent
-from the IR and cannot be checked.
-
-Constraint declarations use [the schema-3 region contract](docs/constraint-regions.md).
-Keepouts support `componentSides` and `copperLayers`; the compiler stores explicit
-scope and rejects invalid or unsupported scope selections. Physical enforcement
-is pending the [remaining implementation phases](docs/constraint-regions-plan.md).
-Saved schema-2 boards can be upgraded explicitly with `upgradeBoardIr()`.
-
-`bun run --cwd packages/preview build` builds the React site shell into `dist/`.
 
 **Illustrative JSX API**
 
