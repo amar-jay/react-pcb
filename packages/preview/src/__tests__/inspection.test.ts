@@ -132,7 +132,7 @@ test("all-side footprint copper retains its meaning in both side presets and sha
 	for (const side of ["front", "back"] as const) {
 		expect(presetVisibility([copper, mask, drill], side)).toEqual({
 			[copper.key]: true,
-			[mask.key]: false,
+			[mask.key]: true,
 			[drill.key]: true,
 		});
 	}

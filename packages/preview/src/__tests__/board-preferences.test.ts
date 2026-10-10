@@ -68,6 +68,23 @@ test("saved preferences validate view, preset and stable-key boolean visibility 
 	);
 	expect(parseBoardPreferences(null)).toEqual(defaultBoardPreferences());
 });
+test("saved shared reference visibility migrates without overriding side-specific toggles", () => {
+	for (const visible of [false, true]) {
+		const preferences = parseBoardPreferences({
+			version: 1,
+			visibility: {
+				"overlay:references": visible,
+				"overlay:references:back": !visible,
+			},
+		});
+		expect(preferences.visibility).toEqual({
+			"overlay:references": visible,
+			"overlay:references:front": visible,
+			"overlay:references:back": !visible,
+		});
+	}
+});
+
 test("corrupt, blocked or full storage does not prevent normal board viewing", () => {
 	const storage = memoryStorage();
 	storage.setItem(boardPreferencesKey("/board.tsx"), "{invalid");

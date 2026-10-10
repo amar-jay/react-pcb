@@ -4,12 +4,14 @@ export const layerPresets = [
 	{
 		id: "front",
 		label: "Front",
-		description: "Front copper and silkscreen, drills and part references",
+		description:
+			"Front copper, technical layers and part references, with drills",
 	},
 	{
 		id: "back",
 		label: "Back",
-		description: "Back copper and silkscreen, drills and part references",
+		description:
+			"Back copper, technical layers and part references, with drills",
 	},
 	{
 		id: "copper",
@@ -46,9 +48,12 @@ export function presetVisibility(
 							(layer.category === "technical" &&
 								layer.kind === "mechanical" &&
 								["fabrication", "courtyard"].includes(layer.purpose ?? ""))
-						: referenceOverlay ||
-							((layer.side === preset || layer.allSides === true) &&
-								(layer.category === "copper" || layer.kind === "silkscreen")));
+						: (referenceOverlay && (!layer.side || layer.side === preset)) ||
+							((layer.category === "copper" ||
+								layer.category === "technical") &&
+								(layer.side === preset ||
+									layer.allSides === true ||
+									(layer.category === "technical" && layer.side === null))));
 			return [layer.key, visible];
 		}),
 	);

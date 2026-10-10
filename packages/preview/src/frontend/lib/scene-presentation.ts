@@ -3,6 +3,15 @@ import type { SceneLayer } from "./scene.ts";
 export type BoardView = "board" | "analysis";
 export type ScenePresentation = { view: BoardView; theme: string };
 
+/** Side-specific reference overlays retain separate visibility identities. */
+export function sceneGroupKey(group: Element) {
+	const layer = group.getAttribute("data-layer-id");
+	if (layer !== null) return `layer:${layer}`;
+	const overlay = group.getAttribute("data-overlay");
+	const side = group.getAttribute("data-side");
+	return `overlay:${overlay}${overlay === "references" && (side === "front" || side === "back") ? `:${side}` : ""}`;
+}
+
 export function boardLayerColor(layer: SceneLayer) {
 	if (layer.overlay)
 		return (
@@ -79,9 +88,7 @@ export function applyScenePresentation(
 	for (const group of svg.querySelectorAll<SVGGElement>(
 		"g[data-layer-id],g[data-overlay]",
 	)) {
-		const key = group.hasAttribute("data-layer-id")
-			? `layer:${group.getAttribute("data-layer-id")}`
-			: `overlay:${group.getAttribute("data-overlay")}`;
+		const key = sceneGroupKey(group);
 		const layer = byKey.get(key);
 		group.style.display =
 			(visibility[key] ?? layer?.visible ?? false) ? "" : "none";

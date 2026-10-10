@@ -554,8 +554,10 @@ bun run preview build examples/my-board/board.tsx \
 | `--width` | Integer 1–8192 pixels; default 2048. Height follows the board aspect ratio; maximum 32 million pixels. |
 | `--out` | PNG destination; `preview png` defaults to `dist/board.png`. With `both`, adds `.board` and `.analysis` before `.png`. |
 
-Front/back presets show that side's copper and silkscreen, plus references and
-drills; they omit mask, paste, fabrication, and courtyard. Copper omits overlays.
+Front/back presets show that side's copper, all technical layers (including mask,
+paste, silkscreen, fabrication and courtyard), and part references, plus drills.
+Shared technical layers are visible in both presets. Reference labels follow the
+part's placement side, including through-hole parts. Copper omits overlays.
 Fabrication omits copper and mask/paste. All includes constraint regions. Export
 both front and back when reviewing opposite-side placements; all layers together
 can hide the distinction between sides. The Back preset selects back-side layers

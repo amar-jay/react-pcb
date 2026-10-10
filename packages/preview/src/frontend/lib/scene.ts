@@ -1,5 +1,5 @@
 import type { BoardIr } from "@react-pcb/core";
-import { boardLayerColor } from "./scene-presentation.ts";
+import { boardLayerColor, sceneGroupKey } from "./scene-presentation.ts";
 
 export type SceneLayer = {
 	key: string;
@@ -49,9 +49,17 @@ export function sceneLayers(
 		);
 		const depth = copper.findIndex((layer) => layer.id === id);
 		const copperLayer = copper[depth];
+		const referenceSide =
+			overlay &&
+			id === "references" &&
+			(group.dataset.side === "front" || group.dataset.side === "back")
+				? group.dataset.side
+				: null;
 		const name = overlay
 			? ({
-					references: "Part references",
+					references: referenceSide
+						? `${referenceSide === "front" ? "Front" : "Back"} part references`
+						: "Part references",
 					drills: "Drills",
 					constraints: "Constraint regions",
 				}[id] ?? id)
@@ -64,8 +72,9 @@ export function sceneLayers(
 				: technical
 					? `${technical.side ? (technical.side === "front" ? "Front " : "Back ") : ""}${technical.kind === "mechanical" ? technical.purpose : technical.kind.replace("-", " ")}`
 					: id;
-		const side =
-			depth === 0
+		const side = overlay
+			? referenceSide
+			: depth === 0
 				? "front"
 				: depth > 0 && depth === copper.length - 1
 					? "back"
@@ -79,7 +88,7 @@ export function sceneLayers(
 			? technicalName.charAt(0).toUpperCase() + technicalName.slice(1)
 			: id;
 		const layer: SceneLayer = {
-			key: `${overlay ? "overlay" : "layer"}:${id}`,
+			key: sceneGroupKey(group),
 			id,
 			name,
 			kind: overlay
@@ -96,13 +105,15 @@ export function sceneLayers(
 					? groupName
 					: category === "copper"
 						? "Copper"
-						: "Overlays",
+						: id === "references"
+							? "Part references"
+							: "Overlays",
 			side,
 			detail: copperLayer
 				? `${copperLayer.usage} · ${copperLayer.thickness} ${ir.units}`
 				: id,
 			visible: overlay
-				? ["references", "drills"].includes(id)
+				? id === "drills" || (id === "references" && side !== "back")
 				: depth === 0 ||
 					(technical?.kind === "silkscreen" && technical.side === "front"),
 		};

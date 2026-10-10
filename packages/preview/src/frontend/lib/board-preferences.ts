@@ -21,23 +21,30 @@ export function parseBoardPreferences(value: unknown): BoardPreferences {
 		return fallback;
 	const data = value as Record<string, unknown>;
 	if (data.version !== 1) return fallback;
+	const visibility: Record<string, boolean> =
+		data.visibility &&
+		typeof data.visibility === "object" &&
+		!Array.isArray(data.visibility)
+			? Object.fromEntries(
+					Object.entries(data.visibility).filter(
+						([key, visible]) =>
+							(key.startsWith("layer:") || key.startsWith("overlay:")) &&
+							typeof visible === "boolean",
+					),
+				)
+			: {};
+	// Keep saved reference toggles when upgrading from the shared overlay.
+	if (visibility["overlay:references"] !== undefined) {
+		for (const side of ["front", "back"])
+			visibility[`overlay:references:${side}`] ??=
+				visibility["overlay:references"];
+	}
 	return {
 		version: 1,
 		view: data.view === "analysis" ? "analysis" : "board",
 		preset:
 			layerPresets.find((preset) => preset.id === data.preset)?.id ?? null,
-		visibility:
-			data.visibility &&
-			typeof data.visibility === "object" &&
-			!Array.isArray(data.visibility)
-				? Object.fromEntries(
-						Object.entries(data.visibility).filter(
-							([key, visible]) =>
-								(key.startsWith("layer:") || key.startsWith("overlay:")) &&
-								typeof visible === "boolean",
-						),
-					)
-				: {},
+		visibility,
 	};
 }
 export function readBoardPreferences(

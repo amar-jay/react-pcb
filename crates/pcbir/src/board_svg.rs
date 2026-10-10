@@ -249,9 +249,18 @@ pub fn board_svg(ir: &BoardIr) -> Result<BoardProjection, CompileError> {
         let [x, y, w, h] = rect(&region.geometry, ir.units)?;
         writeln!(svg, "<rect data-region-id=\"{}\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\"><title>Constraint region: {}</title></rect>", escape(id)?, mm(x), mm(y), mm(w), mm(h), escape(id)?).unwrap();
     }
-    svg.push_str("</g>\n<g data-overlay=\"references\" font-family=\"monospace\" font-size=\"0.8\" fill=\"#1a3546\" stroke=\"#f9fbfd\" stroke-width=\"0.05\" paint-order=\"stroke\" text-anchor=\"middle\">\n");
-    for part in &parts {
-        if let Some(at) = part.at {
+    svg.push_str("</g>\n");
+    for (side, name) in [(BoardSide::Front, "front"), (BoardSide::Back, "back")] {
+        let references: Vec<_> = parts
+            .iter()
+            .filter(|part| part.side == side && part.at.is_some())
+            .collect();
+        if references.is_empty() {
+            continue;
+        }
+        writeln!(svg, "<g data-overlay=\"references\" data-side=\"{name}\" font-family=\"monospace\" font-size=\"0.8\" fill=\"#1a3546\" stroke=\"#f9fbfd\" stroke-width=\"0.05\" paint-order=\"stroke\" text-anchor=\"middle\">").unwrap();
+        for part in references {
+            let at = part.at.unwrap();
             writeln!(
                 svg,
                 "<text data-part-id=\"{}\" x=\"{}\" y=\"{}\">{}</text>",
@@ -262,7 +271,8 @@ pub fn board_svg(ir: &BoardIr) -> Result<BoardProjection, CompileError> {
             )
             .unwrap();
         }
+        svg.push_str("</g>\n");
     }
-    svg.push_str("</g>\n</svg>\n");
+    svg.push_str("</svg>\n");
     Ok(BoardProjection { svg, diagnostics })
 }

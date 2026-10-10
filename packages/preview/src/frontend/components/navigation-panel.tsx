@@ -6,7 +6,7 @@ import type { LayerPresetId } from "../lib/layer-presets.ts";
 import type { SceneLayer } from "../lib/scene.ts";
 import { ExportMenu } from "./export-menu.tsx";
 import { IconButton } from "./icon-button.tsx";
-import { LayerList, TechnicalLayers } from "./layer-controls.tsx";
+import { LayerList, SideLayerGroups } from "./layer-controls.tsx";
 import { LayerGroup } from "./layer-group.tsx";
 import { LayerPresetSelect } from "./layer-preset-select.tsx";
 import { PartsList } from "./parts-list.tsx";
@@ -115,7 +115,7 @@ export function NavigationPanel({
 								/>
 							</LayerGroup>
 							<LayerGroup title="Technical">
-								<TechnicalLayers
+								<SideLayerGroups
 									items={layers.filter(
 										(layer) => layer.category === "technical",
 									)}
@@ -124,8 +124,17 @@ export function NavigationPanel({
 								/>
 							</LayerGroup>
 							<LayerGroup title="Overlays">
+								<SideLayerGroups
+									items={layers.filter(
+										(layer) => layer.overlay && layer.id === "references",
+									)}
+									visibility={visibility}
+									onToggle={onToggle}
+								/>
 								<LayerList
-									items={layers.filter((layer) => layer.overlay)}
+									items={layers.filter(
+										(layer) => layer.overlay && layer.id !== "references",
+									)}
 									visibility={visibility}
 									onToggle={onToggle}
 								/>

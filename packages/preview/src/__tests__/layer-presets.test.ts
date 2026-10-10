@@ -14,7 +14,7 @@ const layer = (
 	purpose?: string,
 ): SceneLayer => ({
 	id,
-	key: `${category === "overlay" ? "overlay" : "layer"}:${id}`,
+	key: `${category === "overlay" ? "overlay" : "layer"}:${id}${category === "overlay" && id === "references" && side ? `:${side}` : ""}`,
 	category,
 	kind,
 	side,
@@ -33,12 +33,18 @@ const layers = [
 	layer("legend-a", "technical", "silkscreen", "front"),
 	layer("legend-b", "technical", "silkscreen", "back"),
 	layer("mask-a", "technical", "solder-mask", "front"),
+	layer("mask-b", "technical", "solder-mask", "back"),
+	layer("paste-a", "technical", "paste", "front"),
+	layer("paste-b", "technical", "paste", "back"),
 	layer("drawing-a", "technical", "mechanical", "front", "fabrication"),
 	layer("drawing-b", "technical", "mechanical", "back", "fabrication"),
 	layer("assembly", "technical", "mechanical", "front", "assembly"),
+	layer("assembly-b", "technical", "mechanical", "back", "assembly"),
 	layer("courtyard", "technical", "mechanical", "front", "courtyard"),
+	layer("courtyard-b", "technical", "mechanical", "back", "courtyard"),
 	layer("refs", "technical", "silkscreen", "front"),
-	layer("references", "overlay", "references"),
+	layer("references", "overlay", "references", "front"),
+	layer("references", "overlay", "references", "back"),
 	layer("drills", "overlay", "drills"),
 	layer("constraints", "overlay", "constraints"),
 ];
@@ -46,18 +52,28 @@ const shown = (preset: Parameters<typeof presetVisibility>[1]) =>
 	Object.entries(presetVisibility(layers, preset))
 		.filter(([, visible]) => visible)
 		.map(([key]) => key);
-test("front/back presets use side metadata and include readable reference overlays", () => {
+test("front/back presets show every technical type and references on the selected side", () => {
 	expect(shown("front")).toEqual([
 		"layer:outer-a",
 		"layer:legend-a",
+		"layer:mask-a",
+		"layer:paste-a",
+		"layer:drawing-a",
+		"layer:assembly",
+		"layer:courtyard",
 		"layer:refs",
-		"overlay:references",
+		"overlay:references:front",
 		"overlay:drills",
 	]);
 	expect(shown("back")).toEqual([
 		"layer:outer-b",
 		"layer:legend-b",
-		"overlay:references",
+		"layer:mask-b",
+		"layer:paste-b",
+		"layer:drawing-b",
+		"layer:assembly-b",
+		"layer:courtyard-b",
+		"overlay:references:back",
 		"overlay:drills",
 	]);
 });
@@ -71,7 +87,9 @@ test("copper and fabrication presets use physical types instead of display names
 		"layer:drawing-a",
 		"layer:drawing-b",
 		"layer:courtyard",
-		"overlay:references",
+		"layer:courtyard-b",
+		"overlay:references:front",
+		"overlay:references:back",
 		"overlay:drills",
 	]);
 	expect(shown("all")).toEqual(layers.map((layer) => layer.key));
@@ -79,7 +97,7 @@ test("copper and fabrication presets use physical types instead of display names
 test("manual visibility changes are detected without letting stale or colliding keys affect presets", () => {
 	const front = presetVisibility(layers, "front");
 	expect(matchingLayerPreset(layers, front)).toBe("front");
-	expect(matchingLayerPreset(layers, { ...front, "layer:mask-a": true })).toBe(
+	expect(matchingLayerPreset(layers, { ...front, "layer:mask-a": false })).toBe(
 		"custom",
 	);
 	expect(matchingLayerPreset(layers, { ...front, "layer:deleted": true })).toBe(
@@ -93,6 +111,23 @@ test("manual visibility changes are detected without letting stale or colliding 
 		"layer:drills": true,
 		"overlay:drills": false,
 	});
+});
+test("front/back include shared technical layers without enabling inner copper", () => {
+	const shared = layer("shared", "technical", "mechanical", null, "assembly");
+	const allMask = {
+		...layer("all-mask", "technical", "solder-mask"),
+		allSides: true,
+	};
+	for (const preset of ["front", "back"] as const) {
+		expect(
+			presetVisibility([...layers, shared, allMask], preset),
+		).toMatchObject({
+			"layer:shared": true,
+			"layer:all-mask": true,
+			"layer:middle": false,
+			"overlay:constraints": false,
+		});
+	}
 });
 test("presets include newly added layers and never invent unavailable sides", () => {
 	const added = layer("new-inner", "copper", "copper");

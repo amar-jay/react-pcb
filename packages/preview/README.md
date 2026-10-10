@@ -9,7 +9,7 @@ The UI uses React, Bun's HTML bundler, Tailwind CSS, shadcn sidebar/sheet/dialog
 primitives, and controls from the `@amarjay-ui` registry. It includes a board
 canvas, layer/overlay controls, searchable parts, an inspector, diagnostics,
 an export menu, and light/dark themes.
-The workbench groups layers into copper, technical types, and overlays. Each technical type has a visibility menu for Hidden, Front, Back or Both, limited to the sides present in the board.
+The workbench groups layers into copper, technical types, and overlays. Each technical type and Part references have a visibility menu for Hidden, Front, Back or Both, limited to the sides present in the board.
 Canvas rulers follow actual millimetre coordinates through pan and zoom; the
 inspector displays board dimensions and stackup or the selected part's details.
 The design sidebar collapses with its toggle or `Ctrl/Cmd+B`. Board/part details
@@ -176,7 +176,7 @@ The canvas uses a dotted background. Use the ruler button (or press `R` while th
 
 Open the shadcn command palette with the toolbar search button or `Ctrl/Cmd+K`. Search canvas actions, parts, nets, layers, diagnostics, theme settings and exports; use arrow keys and Enter to run a command, or Escape to close it.
 
-The Layers tab includes Front, Back, Copper only, Fabrication and All layers presets, also searchable in the command palette. Front/Back show the corresponding copper and silkscreen with drills and references; Fabrication shows fabrication and courtyard drawings with drills and references. Manual toggles display Custom unless they match a preset. A selected preset is reapplied when the live board rebuilds.
+The Layers tab includes Front, Back, Copper only, Fabrication and All layers presets, also searchable in the command palette. Front/Back show the selected side's copper, all technical layers and part references, with drills and shared technical layers; Fabrication shows fabrication and courtyard drawings with drills and references from both sides. The Part references dropdown controls Hidden, Front, Back or Both and follows each part's placement side, including through-hole parts. The default canvas shows front references. These filters also apply to SVG and PNG exports. Manual toggles display Custom unless they match a preset. A selected preset is reapplied when the live board rebuilds.
 
 Use the Board view selector (or command palette) to switch between Board and Analysis. Analysis uses a contrasting light/dark substrate, distinct layer colors, readable outlines and labels; both views share layer visibility, selection, measurement and pan/zoom. Mask openings use solid outlines and paste openings use dashed outlines, keeping copper colors visible even with All layers enabled. Board view uses amber courtyards and violet constraint regions. These styles apply to the canvas and SVG/PNG exports. Save SVG exports the active view and visible layers as a standalone full-board drawing at its original physical dimensions. Canvas pan/zoom and temporary selection highlights are excluded.
 

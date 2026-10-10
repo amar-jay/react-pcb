@@ -1,12 +1,103 @@
 import { expect, test } from "bun:test";
 import { DOMParser } from "linkedom";
-import type { SceneLayer } from "../frontend/lib/scene.ts";
+import { buildBoardPreview } from "../build.ts";
+import { presetVisibility } from "../frontend/lib/layer-presets.ts";
+import { type SceneLayer, sceneLayers } from "../frontend/lib/scene.ts";
 import {
 	analysisLayerColor,
 	applyScenePresentation,
 	exportBoardSvg,
 } from "../frontend/lib/scene-presentation.ts";
 import { assertDefined } from "./fixtures.ts";
+
+test("front/back presets filter actual ESC references in canvas and exports", async () => {
+	const build = await buildBoardPreview(
+		`${import.meta.dir}/../../../../examples/esc/index.tsx`,
+	);
+	expect(build.error).toBeNull();
+	const markup = assertDefined(build.projection).svg;
+	const parse = () =>
+		new DOMParser().parseFromString(
+			markup,
+			"image/svg+xml",
+		) as unknown as Document;
+	const document = parse();
+	const svg = document.documentElement as unknown as SVGSVGElement;
+	const layers = sceneLayers(markup, assertDefined(build.result).ir, document);
+	const referenceIds = (root: Element, visibleOnly = false) =>
+		[...root.querySelectorAll<SVGGElement>('g[data-overlay="references"]')]
+			.filter((group) => !visibleOnly || group.style.display !== "none")
+			.flatMap((group) =>
+				[...group.querySelectorAll("text")].map((text) =>
+					text.getAttribute("data-part-id"),
+				),
+			)
+			.sort();
+	const front = [
+		"control/C2",
+		"control/U2",
+		"inverter/J2",
+		"inverter/J3",
+		"inverter/J4",
+		"inverter/QAH",
+		"inverter/QAL",
+		"inverter/QBH",
+		"inverter/QBL",
+		"inverter/QCH",
+		"inverter/QCL",
+		"power/C1",
+		"power/J1",
+		"power/R1",
+	];
+	const back = ["drive/C3", "drive/C4", "drive/U1"];
+	expect(
+		layers
+			.filter((layer) => layer.id === "references")
+			.map((layer) => layer.key),
+	).toEqual(["overlay:references:front", "overlay:references:back"]);
+	for (const view of ["board", "analysis"] as const) {
+		applyScenePresentation(svg, layers, {}, { view, theme: "light" });
+		expect(referenceIds(svg, true)).toEqual(front);
+		for (const preset of [
+			"front",
+			"back",
+			"all",
+			"copper",
+			"fabrication",
+		] as const) {
+			const visibility = presetVisibility(layers, preset);
+			const expected =
+				preset === "front"
+					? front
+					: preset === "back"
+						? back
+						: preset === "copper"
+							? []
+							: [...front, ...back].sort();
+			applyScenePresentation(svg, layers, visibility, { view, theme: "light" });
+			expect(referenceIds(svg, true)).toEqual(expected);
+			const exported = parse();
+			exportBoardSvg(
+				markup,
+				layers,
+				visibility,
+				{ view, theme: "light" },
+				exported,
+			);
+			expect(referenceIds(exported.documentElement)).toEqual(expected);
+		}
+	}
+	applyScenePresentation(
+		svg,
+		layers,
+		{
+			...presetVisibility(layers, "all"),
+			"overlay:references:front": false,
+		},
+		{ view: "analysis", theme: "dark" },
+	);
+	expect(referenceIds(svg, true)).toEqual(back);
+});
 
 const layer = (
 	kind: string,

@@ -48,7 +48,7 @@ export function LayerList({ items, visibility, onToggle }: LayerControlsProps) {
 	));
 }
 
-export function TechnicalLayers({
+export function SideLayerGroups({
 	items,
 	visibility,
 	onToggle,

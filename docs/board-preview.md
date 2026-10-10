@@ -121,8 +121,13 @@ in the source tree. Programmatic callers can set `cwd` for another Rust workspac
 
 - Toggle concrete board copper and technical layers independently. IDs come from
   the board layer set; their spelling does not determine side or purpose. Front
-  copper/front silkscreen, drills and references start visible. Inner/back copper
-  and other technical layers start hidden.
+  copper/front silkscreen, drills and front part references start visible.
+  Inner/back copper, back references and other technical layers start hidden.
+  The Front/Back View presets enable all copper and technical layers on the
+  selected side, shared technical layers, drills and that side's references.
+  Part references use a Hidden/Front/Back/Both dropdown like technical layers.
+  Through-hole geometry appears on both copper sides, with references on the
+  placement side.
 - Layer controls are grouped into copper, technical front/back pairs, and overlays.
   Collapsible groups keep large layer sets manageable. The board overview shows
   dimensions, placement counts, and the ordered material stackup.
