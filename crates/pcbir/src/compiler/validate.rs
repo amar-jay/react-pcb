@@ -2,10 +2,75 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::diagnostic::Diagnostic;
 use crate::ir::{
-    ComponentDefinition, FootprintDefinition, PartInstance, PinRef, PinoutCoverage, RouteConstraint,
+    ComponentDefinition, FootprintDefinition, LengthUnit, PartInstance, PinRef, PinoutCoverage,
+    Rect, RouteConstraint,
 };
 
 use super::CompileError;
+
+/// Structural placement containment, independent of a manufacturing policy.
+/// Courtyards reserve assembly space and silkscreen is documentation, not a body.
+pub fn validate_board_outline(
+    instances: &[PartInstance],
+    outline: &Rect,
+    units: LengthUnit,
+) -> Result<Vec<Diagnostic>, CompileError> {
+    let unit = match units {
+        LengthUnit::Mm => "mm",
+        LengthUnit::Mil => "mil",
+        LengthUnit::In => "in",
+    };
+    let [x, y, width, height] = [outline.x, outline.y, outline.width, outline.height]
+        .map(|value| crate::physical::length(&format!("{value}{unit}")));
+    let size = [width?, height?];
+    if size.iter().any(|length| *length <= 0) {
+        return Err(CompileError::invalid(
+            "board outline must have positive dimensions",
+        ));
+    }
+    // Keep outline arithmetic in doubled nanometres, including odd-width edges.
+    let min = [i128::from(x?) * 2, i128::from(y?) * 2];
+    let max = [
+        min[0] + i128::from(size[0]) * 2,
+        min[1] + i128::from(size[1]) * 2,
+    ];
+    let mut parts: Vec<_> = instances.iter().collect();
+    parts.sort_by(|a, b| a.id.cmp(&b.id));
+    let mut diagnostics = Vec::new();
+    for part in parts {
+        let mut outside = Vec::new();
+        for placed in part.physical_features.values() {
+            if matches!(
+                placed.geometry.purpose,
+                crate::physical::Purpose::Courtyard | crate::physical::Purpose::Silkscreen
+            ) {
+                continue;
+            }
+            let bounds = crate::physical::bounds(std::slice::from_ref(&placed.geometry))?;
+            if (0..2).any(|axis| {
+                i128::from(bounds.min2[axis]) < min[axis]
+                    || i128::from(bounds.max2[axis]) > max[axis]
+            }) {
+                outside.push(placed.geometry.id.as_str());
+            }
+        }
+        if !outside.is_empty() {
+            diagnostics.push(
+                Diagnostic::error(
+                    "PCBIR031",
+                    format!(
+                        "part {} extends outside the board outline (features: {})",
+                        part.id,
+                        outside.join(", ")
+                    ),
+                )
+                .with_entity(&part.id)
+                .with_help("Move the part inside the board outline or enlarge the outline. This checks resolved copper, drills, mask/paste openings and fabrication geometry; courtyard and silkscreen are excluded."),
+            );
+        }
+    }
+    Ok(diagnostics)
+}
 
 pub fn validate_instances(
     instances: &[PartInstance],

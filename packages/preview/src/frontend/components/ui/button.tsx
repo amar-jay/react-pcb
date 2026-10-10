@@ -57,7 +57,7 @@ function Button({
 			data-size={size}
 			className={cn(
 				buttonVariants({ variant, size }),
-				size?.startsWith("icon") && "size-[34px]",
+				size?.startsWith("icon") && "size-8.5",
 				className,
 			)}
 			{...props}

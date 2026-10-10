@@ -73,18 +73,18 @@ export function NavigationPanel({
 				>
 					<TabsTrigger
 						value="layers"
-						className="min-w-0 flex-1 gap-[7px] rounded-[5px] text-muted-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-[0_1px_4px_#242b4010] data-[state=active]:[&>svg]:text-primary dark:data-[state=active]:bg-card"
+						className="min-w-0 flex-1 gap-1.75 rounded-[5px] text-muted-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-[0_1px_4px_#242b4010] data-[state=active]:[&>svg]:text-primary dark:data-[state=active]:bg-card"
 					>
 						<Layers3 />
 						Layers
 					</TabsTrigger>
 					<TabsTrigger
 						value="parts"
-						className="min-w-0 flex-1 gap-[7px] rounded-[5px] text-muted-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-[0_1px_4px_#242b4010] data-[state=active]:[&>svg]:text-primary dark:data-[state=active]:bg-card"
+						className="min-w-0 flex-1 gap-1.75 rounded-[5px] text-muted-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-[0_1px_4px_#242b4010] data-[state=active]:[&>svg]:text-primary dark:data-[state=active]:bg-card"
 					>
 						<Box />
 						Parts
-						<small className="pl-0.5 font-mono text-[11px] [line-height:normal] text-muted-foreground">
+						<small className="pl-0.5 font-mono text-[11px] leading-[normal] text-muted-foreground">
 							{ir?.parts.length ?? 0}
 						</small>
 					</TabsTrigger>
@@ -93,7 +93,7 @@ export function NavigationPanel({
 					<TabsContent
 						value="layers"
 						forceMount
-						className="min-h-0 flex-1 px-4 pt-2 pb-4 [scrollbar-width:thin] data-[state=inactive]:hidden"
+						className="min-h-0 flex-1 px-4 pt-2 pb-4 scrollbar-thin data-[state=inactive]:hidden"
 					>
 						<LayerPresetSelect
 							value={preset}
@@ -139,7 +139,7 @@ export function NavigationPanel({
 					<TabsContent
 						value="parts"
 						forceMount
-						className="min-h-0 flex-1 px-4 pt-2 pb-4 [scrollbar-width:thin] data-[state=inactive]:hidden"
+						className="min-h-0 flex-1 px-4 pt-2 pb-4 scrollbar-thin data-[state=inactive]:hidden"
 					>
 						<PartsList
 							ir={ir}

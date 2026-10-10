@@ -27,7 +27,7 @@ export function PartsList({
 
 	return (
 		<>
-			<div className="relative mt-[5px] mb-[18px] [&>svg]:absolute [&>svg]:top-3 [&>svg]:left-[11px] [&>svg]:text-muted-foreground [&_input]:h-10 [&_input]:rounded-[7px] [&_input]:bg-card [&_input]:py-0 [&_input]:pr-[31px] [&_input]:pl-[33px] [&_input]:text-[13px] [&>button]:absolute [&>button]:top-1.5 [&>button]:right-1.5 [&>button]:grid [&>button]:size-7 [&>button]:place-items-center [&>button]:rounded-sm [&>button]:text-muted-foreground [&>button:hover]:bg-muted [&>button:hover]:text-foreground">
+			<div className="relative mt-1.25 mb-4.5 [&>svg]:absolute [&>svg]:top-3 [&>svg]:left-2.75 [&>svg]:text-muted-foreground [&_input]:h-10 [&_input]:rounded-[7px] [&_input]:bg-card [&_input]:py-0 [&_input]:pr-7.75 [&_input]:pl-8.25 [&_input]:text-[13px] [&>button]:absolute [&>button]:top-1.5 [&>button]:right-1.5 [&>button]:grid [&>button]:size-7 [&>button]:place-items-center [&>button]:rounded-sm [&>button]:text-muted-foreground [&>button:hover]:bg-muted [&>button:hover]:text-foreground">
 				<Search size={14} />
 				<Input
 					aria-label="Search parts"
@@ -66,10 +66,10 @@ export function PartsList({
 								onSelect(item.id);
 							}}
 						>
-							<span className="grid size-[38px] shrink-0 place-items-center rounded-[7px] bg-muted font-mono text-[14px] leading-normal group-aria-pressed/part:bg-card group-aria-pressed/part:text-primary">
+							<span className="grid size-9.5 shrink-0 place-items-center rounded-[7px] bg-muted font-mono text-[14px] leading-normal group-aria-pressed/part:bg-card group-aria-pressed/part:text-primary">
 								{item.reference}
 							</span>
-							<span className="min-w-0 text-[13px] font-medium wrap-anywhere [&_small]:mt-[5px] [&_small]:block [&_small]:text-[11px] [&_small]:font-normal [&_small]:text-muted-foreground">
+							<span className="min-w-0 text-[13px] font-medium wrap-anywhere [&_small]:mt-1.25 [&_small]:block [&_small]:text-[11px] [&_small]:font-normal [&_small]:text-muted-foreground">
 								{component?.mpn ?? component?.value ?? item.footprint}
 								<small>
 									{!item.at

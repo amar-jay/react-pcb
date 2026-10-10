@@ -278,7 +278,7 @@ export function BoardCanvas({
 		<>
 			<div
 				id="canvas-surface"
-				className="relative min-h-[340px] flex-1 overflow-hidden bg-canvas bg-[radial-gradient(var(--canvas-dot)_var(--canvas-dot-radius),transparent_var(--canvas-dot-radius))] max-[701px]:min-h-[400px]"
+				className="relative min-h-85 flex-1 overflow-hidden bg-canvas bg-[radial-gradient(var(--canvas-dot)_var(--canvas-dot-radius),transparent_var(--canvas-dot-radius))] max-[701px]:min-h-100"
 				ref={shell}
 				style={
 					{
@@ -297,7 +297,7 @@ export function BoardCanvas({
 					mm
 				</div>
 				<div
-					className="pointer-events-none absolute z-1 overflow-hidden bg-[color-mix(in_srgb,var(--card)_75%,var(--canvas))] font-mono text-[10px] leading-normal text-muted-foreground inset-x-0 top-0 h-7 border-b [&>span]:absolute [&>span]:inset-y-0 [&>span]:flex [&>span]:items-center [&>span]:border-l [&>span]:border-muted-foreground/30 [&>span]:pl-[5px]"
+					className="pointer-events-none absolute z-1 overflow-hidden bg-[color-mix(in_srgb,var(--card)_75%,var(--canvas))] font-mono text-[10px] leading-normal text-muted-foreground inset-x-0 top-0 h-7 border-b [&>span]:absolute [&>span]:inset-y-0 [&>span]:flex [&>span]:items-center [&>span]:border-l [&>span]:border-muted-foreground/30 [&>span]:pl-1.25"
 					aria-hidden="true"
 				>
 					{rulers.x.map((tick) => (
@@ -307,7 +307,7 @@ export function BoardCanvas({
 					))}
 				</div>
 				<div
-					className="pointer-events-none absolute z-1 overflow-hidden bg-[color-mix(in_srgb,var(--card)_75%,var(--canvas))] font-mono text-[10px] leading-normal text-muted-foreground top-0 bottom-0 left-0 w-7 border-r [&>span]:absolute [&>span]:inset-x-0 [&>span]:border-t [&>span]:border-muted-foreground/30 [&>span]:pt-1 [&>span]:pl-[3px] [&>span]:text-[9px]"
+					className="pointer-events-none absolute z-1 overflow-hidden bg-[color-mix(in_srgb,var(--card)_75%,var(--canvas))] font-mono text-[10px] leading-normal text-muted-foreground top-0 bottom-0 left-0 w-7 border-r [&>span]:absolute [&>span]:inset-x-0 [&>span]:border-t [&>span]:border-muted-foreground/30 [&>span]:pt-1 [&>span]:pl-0.75 [&>span]:text-[9px]"
 					aria-hidden="true"
 				>
 					{rulers.y.map((tick) => (
@@ -325,7 +325,7 @@ export function BoardCanvas({
 					/>
 				)}
 				{ir && (
-					<div className="absolute top-[45px] right-[38px] font-mono text-[11px] leading-normal text-canvas-text max-[1401px]:hidden">
+					<div className="absolute top-11.25 right-9.5 font-mono text-[11px] leading-normal text-canvas-text max-[1401px]:hidden">
 						{boardSize(ir)}
 					</div>
 				)}
@@ -333,7 +333,7 @@ export function BoardCanvas({
 					id="scene"
 					data-view={presentation.view}
 					ref={scene}
-					className="absolute top-[66px] right-[42px] bottom-[54px] left-[54px] touch-none cursor-grab data-[measuring=true]:cursor-crosshair data-[measuring=true]:[&_[data-part-id]]:cursor-crosshair data-[dragging=true]:cursor-grabbing focus-visible:rounded-[2px] focus-visible:outline-offset-[5px] max-[701px]:top-[72px] max-[701px]:right-3 max-[701px]:bottom-[62px] max-[701px]:left-10 [&_svg]:block [&_svg]:size-full [&_svg]:overflow-visible data-[view=board]:[&_svg]:drop-shadow-[0_9px_12px_#233d3426] [&_[data-part-id]]:cursor-pointer [&_.selected]:[filter:drop-shadow(0_0_0.18px_#c6e6ff)_drop-shadow(0_0_0.28px_#8fc3ef)] [&_.net-match]:drop-shadow-[0_0_0.4px_#fff0af] [&_.dimmed]:opacity-[0.19] data-[view=analysis]:[&_.dimmed]:opacity-50 data-[view=analysis]:[&_.selected]:[filter:drop-shadow(0_0_0.1px_#555bd5)_drop-shadow(0_0_0.2px_#555bd5)]"
+					className="absolute top-16.5 right-10.5 bottom-13.5 left-13.5 touch-none cursor-grab data-[measuring=true]:cursor-crosshair data-[measuring=true]:**:data-part-id:cursor-crosshair data-[dragging=true]:cursor-grabbing focus-visible:rounded-xs focus-visible:outline-offset-[5px] max-[701px]:top-18 max-[701px]:right-3 max-[701px]:bottom-15.5 max-[701px]:left-10 [&_svg]:block [&_svg]:size-full [&_svg]:overflow-visible data-[view=board]:[&_svg]:drop-shadow-[0_9px_12px_#233d3426] **:data-part-id:cursor-pointer [&_.selected]:filter-[drop-shadow(0_0_0.18px_#c6e6ff)_drop-shadow(0_0_0.28px_#8fc3ef)] [&_.net-match]:drop-shadow-[0_0_0.4px_#fff0af] [&_.dimmed]:opacity-[0.19] data-[view=analysis]:[&_.dimmed]:opacity-50 data-[view=analysis]:[&_.selected]:filter-[drop-shadow(0_0_0.1px_#555bd5)_drop-shadow(0_0_0.2px_#555bd5)]"
 					data-measuring={measuring}
 					// biome-ignore lint/a11y/noNoninteractiveTabindex: Canvas keyboard controls need focus for panning, zooming and measurement.
 					tabIndex={0}
@@ -464,7 +464,7 @@ export function BoardCanvas({
 					</div>
 				)}
 				<fieldset
-					className="min-w-0 absolute bottom-[19px] left-1/2 z-3 flex -translate-x-1/2 items-center rounded-[9px] border bg-card px-1.5 py-[5px] whitespace-nowrap shadow-[0_4px_12px_#202c3f16] max-[701px]:bottom-[17px] max-[701px]:p-1 [&_[data-slot=button]]:gap-2 [&_[data-slot=button]]:text-[12px]"
+					className="min-w-0 absolute bottom-4.75 left-1/2 z-3 flex -translate-x-1/2 items-center rounded-[9px] border bg-card px-1.5 py-1.25 whitespace-nowrap shadow-[0_4px_12px_#202c3f16] max-[701px]:bottom-4.25 max-[701px]:p-1 **:data-[slot=button]:gap-2 **:data-[slot=button]:text-[12px]"
 					aria-label="Canvas controls"
 				>
 					<IconButton
@@ -477,7 +477,7 @@ export function BoardCanvas({
 					</IconButton>
 					<span
 						id="zoom-level"
-						className="min-w-[58px] px-[5px] text-center font-mono text-[12px] leading-normal max-[701px]:min-w-[50px]"
+						className="min-w-14.5 px-1.25 text-center font-mono text-[12px] leading-normal max-[701px]:min-w-12.5"
 					>
 						{zoomLevel}%
 					</span>
@@ -489,7 +489,7 @@ export function BoardCanvas({
 					>
 						<Plus />
 					</IconButton>
-					<span className="mx-2.5 h-5 w-px bg-border max-[701px]:mx-[5px]" />
+					<span className="mx-2.5 h-5 w-px bg-border max-[701px]:mx-1.25" />
 					<Button
 						id="fit"
 						aria-label="Fit board"
@@ -551,14 +551,14 @@ export function BoardCanvas({
 					>
 						X{" "}
 						<span
-							className="min-w-[29px] max-w-[64px] truncate text-foreground max-sm:min-w-5 max-sm:max-w-10"
+							className="min-w-7.25 max-w-16 truncate text-foreground max-sm:min-w-5 max-sm:max-w-10"
 							title={cursor?.x.toFixed(2)}
 						>
 							{cursor ? cursor.x.toFixed(2) : "—"}
 						</span>
-						<span className="mx-0.5 h-[11px] w-px bg-border" />Y{" "}
+						<span className="mx-0.5 h-2.75 w-px bg-border" />Y{" "}
 						<span
-							className="min-w-[29px] max-w-[64px] truncate text-foreground max-sm:min-w-5 max-sm:max-w-10"
+							className="min-w-7.25 max-w-16 truncate text-foreground max-sm:min-w-5 max-sm:max-w-10"
 							title={cursor?.y.toFixed(2)}
 						>
 							{cursor ? cursor.y.toFixed(2) : "—"}

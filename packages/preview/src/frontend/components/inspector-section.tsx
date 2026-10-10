@@ -11,7 +11,7 @@ export function InspectorSection({
 	className?: string;
 }) {
 	return (
-		<section className={cn("mt-6 border-t pt-[22px]", className)}>
+		<section className={cn("mt-6 border-t pt-5.5", className)}>
 			<h4 className="mb-3.5 flex items-center justify-between gap-2 text-[14px] font-medium [&_small]:text-[11px] [&_small]:font-normal [&_small]:text-muted-foreground">
 				{title}
 			</h4>
@@ -41,7 +41,7 @@ export function DetailRow({
 			<dt className="text-muted-foreground wrap-anywhere">{label}</dt>
 			<dd
 				className={cn(
-					"text-right font-mono text-[12px] [line-height:normal] wrap-anywhere data-[status=passed]:text-success data-[status=failed]:text-destructive data-[status=partial]:text-muted-foreground data-[status=skipped]:text-muted-foreground",
+					"text-right font-mono text-[12px] leading-[normal] wrap-anywhere data-[status=passed]:text-success data-[status=failed]:text-destructive data-[status=partial]:text-muted-foreground data-[status=skipped]:text-muted-foreground",
 					compact && "shrink-0 font-sans text-[11px]",
 				)}
 				data-status={status}

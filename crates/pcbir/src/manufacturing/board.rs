@@ -135,6 +135,16 @@ fn validate_realization(ir: &BoardIr) -> Result<(), CompileError> {
             _ => {}
         }
     }
+    let outline = ir
+        .regions
+        .get(&ir.board.outline)
+        .ok_or_else(|| invalid("board outline region is missing"))?;
+    let mut outside =
+        crate::compiler::validate::validate_board_outline(&ir.parts, &outline.geometry, ir.units)?;
+    if !outside.is_empty() {
+        let fatal = outside.remove(0);
+        return Err(CompileError::diagnostic(fatal).with_diagnostics(outside));
+    }
     Ok(())
 }
 
@@ -287,7 +297,7 @@ pub fn validate_board(ir: &BoardIr, profile: &Profile) -> Result<BoardReport, Co
         }
     }
     let mut unverified = Check::new("unverified");
-    unverified.skip("board edges, routed traces/vias, realized zones, board-level mask/paste, NPTH isolation, and 3D package bodies are not checked", &ir.board.id);
+    unverified.skip("board-edge manufacturing clearances, routed traces/vias, realized zones, board-level mask/paste, NPTH isolation, and 3D package bodies are not checked", &ir.board.id);
     let checks = vec![spacing.finish(), courtyard.finish(), unverified.finish()];
     Ok(BoardReport {
         board: ir.board.id.clone(),

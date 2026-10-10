@@ -47,6 +47,16 @@ Board IR now emits `schemaVersion: 2`. Each resolved footprint optionally contai
 
 Explicitly placed physical parts receive `physicalFeatures`, keyed by local feature ID, with exact world geometry and concrete layer IDs. Unplaced parts have an empty world-geometry map; their semantic layer references are still checked. Front/back instances never mutate or copy changes back into the reusable definition.
 
+Board compilation checks these resolved features against the rectangular board
+outline without requiring a manufacturing profile. Pads/copper, drills,
+mask/paste openings, and fabrication geometry (including strokes) must fit;
+exact boundary contact is accepted. Courtyards and silkscreen are excluded.
+`PCBIR031` identifies every overflowing part and its local feature IDs. Unplaced
+parts and legacy or unresolved footprints without canonical physical features
+provide no containment evidence. SVG projection and standalone board validation
+also reject out-of-board canonical geometry; edge process clearances remain a
+separate, unverified manufacturing concern.
+
 Existing `defineFootprint` calls remain supported. They retain their original geometry and board-bound IDs; they are not silently converted into reusable role-based definitions. Rust's `physical::migrate_footprint` converts a resolved legacy footprint only when the caller provides its original length unit and an explicit map from layer IDs to semantic roles. Migration preserves keys and feature IDs and rejects unsupported precision/rotations. Unresolved footprints need geometry before migration. Schema-one board JSON can still deserialize using default values for the new optional footprint field and instance map; callers must explicitly update the board schema version before publishing a schema-two document.
 
 TypeScript callers can use `migrateFootprint(legacy, 'mm', {'old-top': 'front-copper'})`. The CLI exposes the same adapter as `pcbir migrate-footprint`, accepting `{footprint, units, layerRoles}`. Every old board-layer target requires a role mapping; the all-copper selector carries its meaning directly.

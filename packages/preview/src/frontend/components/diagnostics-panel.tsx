@@ -45,14 +45,14 @@ export function DiagnosticList({
 	return (
 		<div>
 			{!findings.length && (
-				<div className="grid place-items-center gap-2.5 px-4 py-[55px] text-[13px] text-muted-foreground [&>svg]:text-success">
+				<div className="grid place-items-center gap-2.5 px-4 py-13.75 text-[13px] text-muted-foreground [&>svg]:text-success">
 					<CheckCircle2 />
 					<p>No findings in this category.</p>
 				</div>
 			)}
 			{entries.map(({ item, key }) => (
 				<article
-					className="flex items-start gap-3 border-b py-4 last:border-b-0 [&>svg]:mt-0.5 [&>svg]:shrink-0 [&>svg]:text-[#aa7a32] [&[data-severity=error]>svg]:text-destructive [&>div]:min-w-0 [&>div]:text-[13px] [&>div]:wrap-anywhere [&_p]:mt-[7px] [&_p]:leading-[1.65] [&_p]:whitespace-pre-wrap [&_small]:mt-1.5 [&_small]:block [&_small]:text-[12px] [&_small]:text-muted-foreground"
+					className="flex items-start gap-3 border-b py-4 last:border-b-0 [&>svg]:mt-0.5 [&>svg]:shrink-0 [&>svg]:text-[#aa7a32] [&[data-severity=error]>svg]:text-destructive [&>div]:min-w-0 [&>div]:text-[13px] [&>div]:wrap-anywhere [&_p]:mt-1.75 [&_p]:leading-[1.65] [&_p]:whitespace-pre-wrap [&_small]:mt-1.5 [&_small]:block [&_small]:text-[12px] [&_small]:text-muted-foreground"
 					data-severity={item.severity}
 					key={key}
 				>
@@ -62,7 +62,7 @@ export function DiagnosticList({
 						<AlertTriangle size={17} />
 					)}
 					<div>
-						<div className="flex flex-wrap items-baseline gap-2 font-mono text-[11px] leading-normal text-muted-foreground [&_[data-slot=badge]]:rounded-sm [&_[data-slot=badge]]:[font:inherit]">
+						<div className="flex flex-wrap items-baseline gap-2 font-mono text-[11px] leading-normal text-muted-foreground **:data-[slot=badge]:rounded-sm **:data-[slot=badge]:[font:inherit]">
 							<Badge
 								variant={item.severity === "error" ? "destructive" : "outline"}
 							>
@@ -111,7 +111,7 @@ export function BuildFailureDialog({
 	return (
 		<AlertDialog open={open} onOpenChange={onOpenChange}>
 			<AlertDialogContent
-				className="flex max-h-[calc(100dvh-48px)] w-[calc(100vw-32px)] max-w-[610px] flex-col gap-[18px] p-[26px] animate-panel-fade data-[size=default]:sm:max-w-[610px] max-md:max-h-[calc(100dvh-24px)] max-md:gap-3.5 max-md:p-5"
+				className="flex max-h-[calc(100dvh-48px)] w-[calc(100vw-32px)] max-w-152.5 flex-col gap-4.5 p-6.5 animate-panel-fade data-[size=default]:sm:max-w-152.5 max-md:max-h-[calc(100dvh-24px)] max-md:gap-3.5 max-md:p-5"
 				onCloseAutoFocus={(event) => {
 					event.preventDefault();
 					(
@@ -121,7 +121,7 @@ export function BuildFailureDialog({
 				}}
 			>
 				<AlertDialogHeader className="flex flex-col items-start gap-2.5 text-left">
-					<span className="mb-0.5 grid size-[46px] place-items-center rounded-xl bg-[color-mix(in_srgb,var(--destructive)_9%,var(--card))] text-destructive">
+					<span className="mb-0.5 grid size-11.5 place-items-center rounded-xl bg-[color-mix(in_srgb,var(--destructive)_9%,var(--card))] text-destructive">
 						<AlertCircle size={24} />
 					</span>
 					<AlertDialogTitle className="text-[21px] tracking-[-0.4px]">
@@ -133,7 +133,7 @@ export function BuildFailureDialog({
 							: "Fix these errors in the source to display your board."}
 					</AlertDialogDescription>
 				</AlertDialogHeader>
-				<div className="min-h-0 overflow-y-auto rounded-lg border px-4 [scrollbar-width:thin]">
+				<div className="min-h-0 overflow-y-auto rounded-lg border px-4 scrollbar-thin">
 					<DiagnosticList findings={errors} />
 				</div>
 				{log && (
@@ -148,13 +148,13 @@ export function BuildFailureDialog({
 							</Button>
 						</CollapsibleTrigger>
 						<CollapsibleContent>
-							<pre className="mt-2 max-h-[130px] overflow-y-auto rounded-md bg-muted p-3 font-mono text-[11px] leading-[1.7] whitespace-pre-wrap wrap-anywhere">
+							<pre className="mt-2 max-h-32.5 overflow-y-auto rounded-md bg-muted p-3 font-mono text-[11px] leading-[1.7] whitespace-pre-wrap wrap-anywhere">
 								{log}
 							</pre>
 						</CollapsibleContent>
 					</Collapsible>
 				)}
-				<AlertDialogFooter className="shrink-0 gap-2.5 pt-2 max-md:flex-col-reverse [&_button]:min-h-[38px] [&_button]:px-3.5 [&_button]:text-[13px]">
+				<AlertDialogFooter className="shrink-0 gap-2.5 pt-2 max-md:flex-col-reverse [&_button]:min-h-9.5 [&_button]:px-3.5 [&_button]:text-[13px]">
 					<Button variant="outline" onClick={onDiagnostics}>
 						View diagnostics{warnings ? ` (${warnings} warnings)` : ""}
 					</Button>
@@ -194,7 +194,7 @@ export function DiagnosticsPanel({
 					document.getElementById("diagnostics-trigger")?.focus();
 				}}
 			>
-				<SheetHeader className="pt-[22px] pr-12 pb-3.5 pl-6 max-md:pl-4">
+				<SheetHeader className="pt-5.5 pr-12 pb-3.5 pl-6 max-md:pl-4">
 					<SheetTitle className="flex items-center gap-2.5 text-[18px]">
 						Diagnostics <Badge variant="secondary">{findings.length}</Badge>
 					</SheetTitle>
@@ -217,7 +217,7 @@ export function DiagnosticsPanel({
 					</TabsList>
 					<TabsContent
 						value="all"
-						className="min-h-0 overflow-y-auto pb-5 [scrollbar-width:thin]"
+						className="min-h-0 overflow-y-auto pb-5 scrollbar-thin"
 					>
 						<div id="diagnostic-list">
 							<DiagnosticList findings={ordered} />
@@ -225,13 +225,13 @@ export function DiagnosticsPanel({
 					</TabsContent>
 					<TabsContent
 						value="errors"
-						className="min-h-0 overflow-y-auto pb-5 [scrollbar-width:thin]"
+						className="min-h-0 overflow-y-auto pb-5 scrollbar-thin"
 					>
 						<DiagnosticList findings={errors} />
 					</TabsContent>
 					<TabsContent
 						value="warnings"
-						className="min-h-0 overflow-y-auto pb-5 [scrollbar-width:thin]"
+						className="min-h-0 overflow-y-auto pb-5 scrollbar-thin"
 					>
 						<DiagnosticList findings={warnings} />
 					</TabsContent>

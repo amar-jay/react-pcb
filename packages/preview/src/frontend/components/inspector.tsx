@@ -25,7 +25,7 @@ export function Inspector({
 	const ir = snapshot.result?.ir;
 	if (!ir)
 		return (
-			<div className="py-[30px] text-center text-muted-foreground">
+			<div className="py-7.5 text-center text-muted-foreground">
 				<Crosshair size={28} strokeWidth={1} className="mx-auto mb-4" />
 				<h3 className="text-[16px] text-foreground">No board loaded</h3>
 				<p className="mt-2 text-[13px] leading-[1.7]">
@@ -161,7 +161,7 @@ function PartDetails({
 				</h3>
 				<Badge
 					variant="outline"
-					className="rounded-[5px] px-[7px] py-0.5 text-[11px] text-muted-foreground"
+					className="rounded-[5px] px-1.75 py-0.5 text-[11px] text-muted-foreground"
 				>
 					{part.side === "front" ? "Front" : "Back"} side
 				</Badge>
@@ -301,12 +301,12 @@ function ConnectionButton({
 	return (
 		<button
 			type="button"
-			className="flex min-h-[32px] w-full items-center gap-2 rounded-md border bg-card px-2.5 py-1.5 text-left hover:border-primary aria-pressed:border-[color-mix(in_srgb,var(--primary)_40%,var(--border))] aria-pressed:bg-secondary"
+			className="flex min-h-8 w-full items-center gap-2 rounded-md border bg-card px-2.5 py-1.5 text-left hover:border-primary aria-pressed:border-[color-mix(in_srgb,var(--primary)_40%,var(--border))] aria-pressed:bg-secondary"
 			aria-pressed={active}
 			onClick={onClick}
 			title={`Highlight ${name}`}
 		>
-			<span className="min-w-[26px] font-mono text-[11px] [line-height:normal] text-muted-foreground wrap-anywhere">
+			<span className="min-w-6.5 font-mono text-[11px] leading-[normal] text-muted-foreground wrap-anywhere">
 				{pin}
 			</span>
 			<ArrowRight size={14} className="shrink-0 text-muted-foreground" />

@@ -190,10 +190,13 @@ with the checked physical parser. Values finer than one nanometre reject rather
 than round. Browser pan/zoom uses floating-point view state solely for inspection.
 
 The viewport includes the board outline and physical feature bounds, with a small
-display margin. Features outside the outline are displayed without clipping or
-moving them. This is not a board-edge clearance check. References and constraint
-regions are inspection overlays. Front/back placements are shown together in a
-front-coordinate view, using already-resolved world geometry and concrete layers.
+display margin. Compilation and projection reject resolved pads/copper, drills,
+mask/paste openings, and fabrication geometry outside the board with `PCBIR031`.
+Courtyard reservations and silkscreen may extend beyond the outline and remain
+visible. Exact edge contact passes; manufacturing edge clearances remain
+unverified. References and constraint regions are inspection overlays. Front/back
+placements are shown together in a front-coordinate view, using already-resolved
+world geometry and concrete layers.
 
 The HTML embeds serialized data with escaped script delimiters and renders labels,
 metadata and errors as text. Export does not change IR, geometry or entity IDs.

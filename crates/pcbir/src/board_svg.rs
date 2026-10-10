@@ -109,7 +109,13 @@ pub fn board_svg(ir: &BoardIr) -> Result<BoardProjection, CompileError> {
             }
         }
     }
-    // Include geometry outside the board, without clipping or silently moving it.
+    let mut outside =
+        crate::compiler::validate::validate_board_outline(&ir.parts, &outline.geometry, ir.units)?;
+    if !outside.is_empty() {
+        let fatal = outside.remove(0);
+        return Err(CompileError::diagnostic(fatal).with_diagnostics(outside));
+    }
+    // Include assembly reservations/documentation that may extend outside the board.
     let pad = (w.max(h) / 25).max(2_000_000);
     let vx = min[0] - pad;
     let vy = min[1] - pad;

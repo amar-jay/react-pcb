@@ -23,7 +23,7 @@ export function BoardViewSelect({
 		>
 			<SelectTrigger
 				aria-label="Board view"
-				className="ml-auto h-[34px] w-[108px] shrink-0 px-2 text-[12px] data-[size=default]:h-[34px]"
+				className="ml-auto h-8.5 w-27 shrink-0 px-2 text-[12px] data-[size=default]:h-8.5"
 			>
 				<SelectValue />
 			</SelectTrigger>

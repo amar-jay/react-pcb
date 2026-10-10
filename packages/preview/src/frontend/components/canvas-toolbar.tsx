@@ -35,7 +35,7 @@ export function CanvasToolbar({
 	let allNetsValue = "__all__";
 	while (ir?.nets.some((item) => item.id === allNetsValue)) allNetsValue += "_";
 	return (
-		<div className="flex min-h-[60px] shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b px-3 py-2">
+		<div className="flex min-h-15 shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b px-3 py-2">
 			<div className="flex min-w-0 flex-1 items-center gap-3 max-[600px]:basis-full">
 				<SidebarTrigger aria-label="Toggle design sidebar" />
 				<div className="min-w-0">
@@ -66,7 +66,7 @@ export function CanvasToolbar({
 					<SelectTrigger
 						id="net"
 						aria-label="Highlight net"
-						className="data-[size=default]:h-[34px] min-w-[120px] max-w-[190px] text-[12px] max-md:min-w-0 max-md:max-w-[122px] max-md:px-2"
+						className="data-[size=default]:h-8.5 min-w-30 max-w-47.5 text-[12px] max-md:min-w-0 max-md:max-w-30.5 max-md:px-2"
 					>
 						<Network size={14} />
 						<SelectValue />

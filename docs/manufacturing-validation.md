@@ -38,6 +38,21 @@ in `diagnostics`. Legacy/library definitions without canonical physical geometry
 emit `PCBMFG003` and receive no fabricated report. An omitted board profile leaves
 structural checks active and selects no manufacturing policy.
 
+## Board outline containment
+
+Board compilation rejects placed physical features outside the rectangular outline
+with `PCBIR031`, even when no manufacturing profile is selected. Checks use exact
+resolved geometry after rotation and back-side reflection, including pads/copper,
+drills, mask/paste openings, and fabrication geometry with its stroke. Exact edge
+contact passes. Courtyard reservations and silkscreen are excluded. Each offending
+part receives a diagnostic naming its stable ID and overflowing local feature IDs.
+Unplaced parts and footprints without canonical physical geometry cannot establish
+containment; their existing unavailable-geometry diagnostics still apply.
+
+Standalone board validation and board SVG projection enforce the same structural
+check on supplied IR. Containment does not establish a manufacturing clearance
+from the edge; that process rule remains unverified.
+
 ## Placed-board checks
 
 `boardManufacturingReport` is separate from reusable footprint reports. It retains
@@ -71,8 +86,9 @@ Unplaced parts, unavailable physical geometry, and missing courtyards on a part'
 placement side produce explicit skipped/partial coverage. Declared courtyards on
 the opposite side are also checked when present; a through-hole pad alone does
 not establish a package body or courtyard on that side. No envelope is invented
-from pads or bounding boxes. Board edges, routed traces/vias, realized zones,
-board mask/paste checks, NPTH isolation, and 3D bodies remain unverified.
+from pads or bounding boxes. Board-edge manufacturing clearances, routed
+traces/vias, realized zones, board mask/paste checks, NPTH isolation, and 3D bodies
+remain unverified.
 
 For inspection without rejecting a valid IR document because of rule failures:
 

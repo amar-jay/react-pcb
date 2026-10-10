@@ -8,7 +8,7 @@ export function CircularChoice({
 	...props
 }: Omit<ComponentProps<"input">, "type"> & { type?: "checkbox" | "radio" }) {
 	return (
-		<span className="relative inline-flex size-[15px] shrink-0 align-middle">
+		<span className="relative inline-flex size-3.75 shrink-0 align-middle">
 			<input
 				{...props}
 				type={type}
@@ -21,12 +21,12 @@ export function CircularChoice({
 				<Check
 					aria-hidden="true"
 					strokeWidth={3}
-					className="pointer-events-none absolute inset-[2px] size-[11px] text-primary-foreground opacity-0 peer-checked:opacity-100 peer-disabled:text-muted-foreground"
+					className="pointer-events-none absolute inset-0.5 size-2.75 text-primary-foreground opacity-0 peer-checked:opacity-100 peer-disabled:text-muted-foreground"
 				/>
 			) : (
 				<span
 					aria-hidden="true"
-					className="pointer-events-none absolute inset-[4px] rounded-full bg-primary-foreground opacity-0 peer-checked:opacity-100 peer-disabled:text-muted-foreground"
+					className="pointer-events-none absolute inset-1 rounded-full bg-primary-foreground opacity-0 peer-checked:opacity-100 peer-disabled:text-muted-foreground"
 				/>
 			)}
 		</span>

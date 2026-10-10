@@ -9,10 +9,10 @@ export function LayerStackup({ ir }: { ir: BoardIr }) {
 		<InspectorSection
 			title={
 				<>
-					Layer stackup <small>Front → back</small>
+					Layer stackup
 				</>
 			}
-			className="mt-5 pt-[18px]"
+			className="mt-5 pt-4.5"
 		>
 			<div
 				className="mb-3 flex flex-col gap-px rounded-md bg-muted px-3.5 py-1.5"
@@ -25,7 +25,7 @@ export function LayerStackup({ ir }: { ir: BoardIr }) {
 							"rounded-[1px]",
 							layer.kind === "copper"
 								? "h-0.5 bg-[#ce9b68]"
-								: "h-[3px] border border-muted-foreground/15 bg-[color-mix(in_srgb,var(--muted-foreground)_18%,var(--card))]",
+								: "h-0.75 border border-muted-foreground/15 bg-[color-mix(in_srgb,var(--muted-foreground)_18%,var(--card))]",
 						)}
 					/>
 				))}
@@ -45,11 +45,11 @@ export function LayerStackup({ ir }: { ir: BoardIr }) {
 						<div
 							key={layer.id}
 							title={layer.id}
-							className="flex items-center gap-2.5 border-b py-[5px] last:border-0"
+							className="flex items-center gap-2.5 border-b py-1.25 last:border-0"
 						>
 							<span
 								className={cn(
-									"h-[29px] w-[3px] shrink-0 rounded-[2px] bg-muted-foreground/35",
+									"h-7.25 w-0.75 shrink-0 rounded-xs bg-muted-foreground/35",
 									layer.kind === "copper" && "bg-[#ce9b68]",
 								)}
 							/>
@@ -61,9 +61,9 @@ export function LayerStackup({ ir }: { ir: BoardIr }) {
 									{layer.kind === "copper" ? layer.usage : "Dielectric"}
 								</small>
 							</div>
-							<span className="text-right font-mono text-[12px] [line-height:normal]">
+							<span className="text-right font-mono text-[12px] leading-[normal]">
 								{layer.thickness}
-								<small className="mt-0.5 block font-mono text-[10px] [line-height:normal] text-muted-foreground">
+								<small className="mt-0.5 block font-mono text-[10px] leading-[normal] text-muted-foreground">
 									{ir.units}
 								</small>
 							</span>

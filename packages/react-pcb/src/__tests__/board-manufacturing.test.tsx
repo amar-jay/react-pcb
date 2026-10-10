@@ -295,7 +295,7 @@ test("different physical copper layers and opposite-side courtyard envelopes do 
 test("only established stable net IDs exempt copper spacing, never courtyards", async () => {
 	const fp = land();
 	const result = await compile(
-		<Board outline={rect(0, 0, 1, 1)} layers={layers}>
+		<Board outline={rect(-1, -1, 2, 2)} layers={layers}>
 			<Part
 				id={part("A")}
 				at={[0, 0]}
@@ -332,7 +332,7 @@ test("only established stable net IDs exempt copper spacing, never courtyards", 
 		);
 	}
 	const isolated = await compile(
-		<Board outline={rect(0, 0, 1, 1)} layers={layers}>
+		<Board outline={rect(-1, -1, 2, 2)} layers={layers}>
 			{["one", "two"].map((name) => (
 				<Module key={name} name={name}>
 					<ScopedPart />
@@ -363,7 +363,7 @@ test("raw copper without pad net bindings remains checked even beside a connecte
 		],
 	});
 	const result = await compile(
-		<Board outline={rect(0, 0, 1, 1)} layers={layers}>
+		<Board outline={rect(-1, -1, 2, 2)} layers={layers}>
 			<Part
 				id={part("A")}
 				footprint={land()}
@@ -452,7 +452,7 @@ test("world rotation, back-side reflection and curved separation use exact geome
 
 test("missing geometry and courtyards produce explicit partial or skipped coverage", async () => {
 	const result = await compile(
-		<Board outline={rect(0, 0, 1, 1)} layers={layers}>
+		<Board outline={rect(-1, -1, 2, 2)} layers={layers}>
 			<Part
 				id={part("A")}
 				footprint={land()}
@@ -521,7 +521,7 @@ test("single-layer aliases and arbitrary courtyard layer IDs use physical metada
 		],
 	});
 	const { ir } = await compile(
-		<Board outline={rect(0, 0, 1, 1)} layers={single}>
+		<Board outline={rect(-1, -1, 2, 2)} layers={single}>
 			<Part
 				id={part("A")}
 				footprint={fp}

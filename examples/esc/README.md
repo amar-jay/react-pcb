@@ -21,6 +21,12 @@ regression-test profiles described below. Importing the
 board entry is safe for preview/watch use; compilation and console output happen
 only when it runs as the main script.
 
+The 36 × 36 mm outline contains the placed physical features. Shrinking it to
+10 × 36 mm rejects compilation and `preview inspect` with `PCBIR031` for 16 parts,
+including `control/U2` and `power/J1`, even without a manufacturing profile.
+The regression is covered in `board-outline.test.tsx`; courtyard and silkscreen
+are not treated as package bodies.
+
 ## Sources and component selection
 
 Checked on 2026-10-10. The previous generic part names and placeholder datasheet

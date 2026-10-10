@@ -16,7 +16,7 @@ mod parse;
 pub(crate) mod validate;
 
 use parse::{constraint_key, parse_board, parse_part, parse_units};
-use validate::{validate_instances, validate_route_endpoint};
+use validate::{validate_board_outline, validate_instances, validate_route_endpoint};
 
 #[cfg(test)]
 mod tests;
@@ -168,6 +168,14 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
     })();
     if let Err(error) = physical_result {
         return Err(error.with_diagnostics(context.compiler_diagnostics));
+    }
+    match validate_board_outline(
+        &context.component_instances,
+        &context.physical.regions[&board.outline].geometry,
+        units,
+    ) {
+        Ok(findings) => diagnostics.extend(findings),
+        Err(error) => return Err(error.with_diagnostics(context.compiler_diagnostics)),
     }
     let known_instances: BTreeMap<_, _> = context
         .component_instances

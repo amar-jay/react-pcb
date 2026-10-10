@@ -28,7 +28,7 @@ export function ExportMenu({
 			<DropdownMenuTrigger asChild>
 				<Button
 					size="default"
-					className="h-[34px] flex-1 gap-2"
+					className="h-8.5 flex-1 gap-2"
 					disabled={!snapshot.result}
 				>
 					<ArrowDownToLine />

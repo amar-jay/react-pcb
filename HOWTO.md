@@ -412,6 +412,7 @@ ordinary errors, rather than structured compiler diagnostics.
 | `PCBIR006` / `PCBIR023` | Duplicate instance IDs or conflicting definitions claiming one footprint key. |
 | `PCBIR024` | A named footprint has no resolved physical geometry. Supply its definition. |
 | `PCBIR026` | Missing pin-to-pad mapping, an unknown logical pin, or a referenced physical pad that does not exist. |
+| `PCBIR031` | A placed physical feature extends outside the board outline. Inspect the named part/features, placement, rotation, board units, and outline dimensions. |
 | `PCBIR002`–`PCBIR005` | Route endpoints: unknown part/pin, mismatched net, or unconnected pin. |
 | `PCBMFG001` | Invalid manufacturing policy or malformed validator input. |
 | `PCBMFG002` | A selected manufacturing check failed; identify the check and implicated part/feature IDs. |
@@ -449,7 +450,7 @@ Read `result.manufacturingReports` and `result.boardManufacturingReport`:
 - `checks[].status` distinguishes `passed`, `failed`, `partial`, `skipped`, and
   `not-applicable`. Read `evaluated`, `skipped`, and per-check diagnostics.
 - `conformsToCheckedRules` means no evaluated rule failed. `complete` remains
-  `false`. Board edges, realized routing/zones, comprehensive electrical rules,
+  `false`. Board-edge manufacturing clearances, realized routing/zones, comprehensive electrical rules,
   thermal behavior, 3D/mechanical clearance, and other coverage remain unverified.
 
 Optional thresholds omitted from a profile are skipped, rather than implicitly

@@ -13,10 +13,10 @@ export function LayerGroup({
 }) {
 	return (
 		<details
-			className="group/layers mb-2 border-b pb-[9px] last:mb-0 last:border-b-0 last:pb-0"
+			className="group/layers mb-2 border-b pb-2.25 last:mb-0 last:border-b-0 last:pb-0"
 			open
 		>
-			<summary className="flex list-none items-center gap-2 px-1 pt-[9px] pb-3 text-[12px] font-medium text-muted-foreground [&::-webkit-details-marker]:hidden">
+			<summary className="flex list-none items-center gap-2 px-1 pt-2.25 pb-3 text-[12px] font-medium text-muted-foreground [&::-webkit-details-marker]:hidden">
 				<span>{title}</span>
 				{legend != null && (
 					<small className="ml-auto font-mono text-[11px] leading-normal font-normal">

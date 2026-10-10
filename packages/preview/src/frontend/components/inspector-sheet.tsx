@@ -45,7 +45,7 @@ export function InspectorSheet({
 				</Button>
 			</SheetTrigger>
 			<SheetContent
-				className="w-[min(100vw,390px)] max-w-[390px] gap-0 animate-panel-right sm:max-w-[390px] data-[docked=true]:top-[14px] data-[docked=true]:right-4 data-[docked=true]:bottom-[14px] data-[docked=true]:h-auto data-[docked=true]:rounded-lg data-[docked=true]:border data-[docked=true]:shadow-[0_2px_3px_#171d3004]"
+				className="w-[min(100vw,390px)] max-w-97.5 gap-0 animate-panel-right sm:max-w-97.5 data-[docked=true]:top-3.5 data-[docked=true]:right-4 data-[docked=true]:bottom-3.5 data-[docked=true]:h-auto data-[docked=true]:rounded-lg data-[docked=true]:border data-[docked=true]:shadow-[0_2px_3px_#171d3004]"
 				data-docked={!compact}
 				onInteractOutside={(event) => {
 					if (!compact) event.preventDefault();
@@ -91,7 +91,7 @@ export function InspectorSheet({
 				<ScrollArea className="min-h-0 flex-1">
 					<div
 						id="part-details"
-						className="min-h-0 flex-1 overflow-visible px-5 py-4 [scrollbar-width:thin]"
+						className="min-h-0 flex-1 overflow-visible px-5 py-4 scrollbar-thin"
 						data-kind={part ? "part" : "board"}
 					>
 						<Inspector

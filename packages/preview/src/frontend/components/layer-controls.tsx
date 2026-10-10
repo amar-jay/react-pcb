@@ -24,8 +24,8 @@ export function LayerList({ items, visibility, onToggle }: LayerControlsProps) {
 			htmlFor={`${prefix}-${layer.key}`}
 			title={layer.id}
 			className={cn(
-				"flex min-h-[38px] cursor-pointer items-center gap-2.5 rounded-md px-1.5 py-[7px] hover:bg-muted",
-				layer.overlay && "min-h-[38px]",
+				"flex min-h-9.5 cursor-pointer items-center gap-2.5 rounded-md px-1.5 py-1.75 hover:bg-muted",
+				layer.overlay && "min-h-9.5",
 			)}
 		>
 			<CircularChoice
@@ -36,8 +36,8 @@ export function LayerList({ items, visibility, onToggle }: LayerControlsProps) {
 			/>
 			<span
 				className={cn(
-					"h-5 w-[3px] shrink-0 rounded-[3px] border border-[#343b4810]",
-					layer.overlay && "size-[9px]",
+					"h-5 w-0.75 shrink-0 rounded-[3px] border border-[#343b4810]",
+					layer.overlay && "size-2.25",
 				)}
 				style={{ background: layer.color }}
 			/>
@@ -64,7 +64,7 @@ export function TechnicalLayers({
 		)
 			return (
 				<div key={name}>
-					<h3 className="px-1.5 py-[7px] text-[13px] font-normal">{name}</h3>
+					<h3 className="px-1.5 py-1.75 text-[13px] font-normal">{name}</h3>
 					<LayerList items={pair} visibility={visibility} onToggle={onToggle} />
 				</div>
 			);
@@ -83,10 +83,10 @@ export function TechnicalLayers({
 		return (
 			<div
 				key={name}
-				className="flex min-h-[40px] items-center gap-2.5 px-1.5 py-1 text-[13px]"
+				className="flex min-h-10 items-center gap-2.5 px-1.5 py-1 text-[13px]"
 			>
 				<span
-					className="size-[9px] shrink-0 rounded-[3px] border border-[#343b4820]"
+					className="size-2.25 shrink-0 rounded-[3px] border border-[#343b4820]"
 					style={{ background: first.color }}
 				/>
 				<span className="min-w-0 flex-1 wrap-anywhere">{name}</span>
@@ -103,7 +103,7 @@ export function TechnicalLayers({
 					<SelectTrigger
 						aria-label={`${name} visibility`}
 						size="sm"
-						className="h-7 w-[92px] shrink-0 gap-1 px-2 text-[11px] data-[size=sm]:h-7"
+						className="h-7 w-23 shrink-0 gap-1 px-2 text-[11px] data-[size=sm]:h-7"
 					>
 						<SelectValue />
 					</SelectTrigger>

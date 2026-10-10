@@ -72,7 +72,7 @@ export function PreviewStatus({
 	return (
 		<Badge
 			id="status"
-			className="group/status h-7 gap-[7px] rounded-md bg-[color-mix(in_srgb,var(--success)_9%,var(--card))] px-2.5 text-[12px] font-normal text-success data-[state=error]:bg-[color-mix(in_srgb,var(--destructive)_9%,var(--card))] data-[state=error]:text-destructive data-[state=building]:bg-[#f4eddb] data-[state=building]:text-[#9a7835]"
+			className="group/status h-7 gap-1.75 rounded-md bg-[color-mix(in_srgb,var(--success)_9%,var(--card))] px-2.5 text-[12px] font-normal text-success data-[state=error]:bg-[color-mix(in_srgb,var(--destructive)_9%,var(--card))] data-[state=error]:text-destructive data-[state=building]:bg-[#f4eddb] data-[state=building]:text-[#9a7835]"
 			role="status"
 			title={status}
 			variant={buildState === "error" ? "destructive" : "secondary"}
