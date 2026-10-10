@@ -637,9 +637,35 @@ fn rejects_exact_duplicate_zones_and_keepouts() {
 
     let zone_error = compile(transaction(vec![zone(), zone()])).unwrap_err();
     assert_eq!(zone_error.diagnostic.code, "PCBIR015");
+    assert!(
+        zone_error
+            .diagnostic
+            .message
+            .contains("Zone in board board/1")
+    );
+    assert!(
+        zone_error
+            .diagnostic
+            .help
+            .unwrap()
+            .contains("<Zone key=\"ground-plane\"")
+    );
 
     let keepout_error = compile(transaction(vec![keepout(), keepout()])).unwrap_err();
     assert_eq!(keepout_error.diagnostic.code, "PCBIR016");
+    assert!(
+        keepout_error
+            .diagnostic
+            .message
+            .contains("Keepout in board board/1")
+    );
+    assert!(
+        keepout_error
+            .diagnostic
+            .help
+            .unwrap()
+            .contains("Geometry edits do not distinguish identities")
+    );
 }
 
 #[test]
@@ -1609,7 +1635,8 @@ fn rejects_ambiguous_identity_and_invalid_references() {
 
 #[test]
 fn identity_namespaces_allow_the_same_frontend_key_in_different_modules() {
-    let keepout = intent_design()[5].clone();
+    let mut keepout = intent_design()[5].clone();
+    keepout["sourceKey"] = json!("same-key");
     let module = |name: &str| json!({"type": "pcb-module", "props": {"name": name, "scope": name}, "children": [keepout]});
     let ir = compile(transaction(vec![module("left"), module("right")]))
         .unwrap()
@@ -1631,4 +1658,284 @@ fn keyed_constraints_keep_identity_when_semantic_references_change() {
         before.route_constraints[0].id,
         after.route_constraints[0].id
     );
+}
+
+#[test]
+fn constraint_identity_values_remain_compatible_with_existing_boards() {
+    // Captured from the phase-2 compiler before changing identity diagnostics.
+    let unkeyed = compile(transaction(intent_design())).unwrap().ir;
+    assert_eq!(
+        unkeyed.route_constraints[0].id,
+        "route/9546bb9ddef15606b5788a68bd8900a1"
+    );
+    assert_eq!(
+        unkeyed.route_constraints[0].through,
+        ["region/419b7bc30b74ffaeb330afb0373e870b"]
+    );
+    assert_eq!(
+        unkeyed.differential_pairs[0].id,
+        "differential-pair/a10cece96a0934909089d926d936a7d0"
+    );
+    assert_eq!(
+        unkeyed.differential_pairs[0].through,
+        ["region/50eb8b387500024fd94afb72e6888d98"]
+    );
+    assert_eq!(unkeyed.zones[0].id, "zone/9be7656a8346c58de0cad8e76ff3dd6f");
+    assert_eq!(
+        unkeyed.keepouts[0].id,
+        "keepout/65596b72ea1ea15a8f128a68ce57274f"
+    );
+    assert_eq!(
+        unkeyed.keepouts[0].region,
+        "region/keepout/65596b72ea1ea15a8f128a68ce57274f/boundary"
+    );
+    let mut design = intent_design();
+    for node in &mut design[2..] {
+        node["sourceKey"] = json!("stable");
+        if let Some(children) = node.get_mut("children").and_then(Value::as_array_mut) {
+            for child in children {
+                child["sourceKey"] = json!("entry");
+            }
+        }
+    }
+    let keyed = compile(transaction(design)).unwrap().ir;
+    assert_eq!(
+        keyed.route_constraints[0].id,
+        "route/5d4f5980b8a81b6cdc4936b193262caf"
+    );
+    assert_eq!(
+        keyed.route_constraints[0].through,
+        ["region/2c57061fae1a0521b301aa5ad61c5bf0"]
+    );
+    assert_eq!(
+        keyed.differential_pairs[0].id,
+        "differential-pair/5d4f5980b8a81b6cdc4936b193262caf"
+    );
+    assert_eq!(
+        keyed.differential_pairs[0].through,
+        ["region/16a8ffceea909fd6c0b9d37367783d99"]
+    );
+    assert_eq!(keyed.zones[0].id, "zone/5d4f5980b8a81b6cdc4936b193262caf");
+    assert_eq!(
+        keyed.keepouts[0].id,
+        "keepout/5d4f5980b8a81b6cdc4936b193262caf"
+    );
+}
+
+#[test]
+fn ambiguous_constraint_diagnostics_name_kind_owner_and_matching_key_example() {
+    for (index, name) in [
+        (2, "Route"),
+        (3, "DifferentialPair"),
+        (4, "Zone"),
+        (5, "Keepout"),
+    ] {
+        let mut design = intent_design();
+        let mut extra = design[index].clone();
+        match index {
+            2 | 3 => extra["props"]["width"] = json!(0.4),
+            4 => {
+                extra["props"]["boundary"] =
+                    json!({"kind": "rect", "x": 1, "y": 1, "width": 2, "height": 2})
+            }
+            _ => extra["props"]["region"]["x"] = json!(6),
+        }
+        design.push(extra);
+        for scope in [None, Some("control")] {
+            let nodes = match scope {
+                Some(scope) => vec![
+                    json!({"type": "pcb-module", "props": {"name": scope, "scope": scope}, "children": design}),
+                ],
+                None => design.clone(),
+            };
+            let error = compile(transaction(nodes)).unwrap_err();
+            assert_eq!(error.diagnostic.code, "PCBIR029");
+            assert!(error.diagnostic.message.contains(name));
+            assert!(error.diagnostic.message.contains(if scope.is_some() {
+                "module \"control\""
+            } else {
+                "board board/1"
+            }));
+            assert_eq!(
+                error.diagnostic.entity.as_deref(),
+                Some(scope.unwrap_or("board/1"))
+            );
+            let help = error.diagnostic.help.unwrap();
+            assert!(help.contains(&format!("<{name} key=\"")));
+            assert!(help.contains("Geometry edits do not distinguish identities"));
+            assert!(help.contains("sourceKey"));
+            assert!(error.diagnostics.iter().any(|d| d.code == "PCBIR024"));
+        }
+    }
+}
+
+#[test]
+fn waypoint_identity_errors_identify_the_actual_route_or_pair_owner() {
+    let baseline = compile(transaction(intent_design())).unwrap().ir;
+    for (index, owner) in [
+        (2, &baseline.route_constraints[0].id),
+        (3, &baseline.differential_pairs[0].id),
+    ] {
+        let mut design = intent_design();
+        let mut extra = design[index]["children"][0].clone();
+        extra["props"]["region"]["x"] = json!(7);
+        design[index]["children"]
+            .as_array_mut()
+            .unwrap()
+            .push(extra);
+        let error = compile(transaction(design)).unwrap_err();
+        assert_eq!(error.diagnostic.code, "PCBIR029");
+        assert!(
+            error
+                .diagnostic
+                .message
+                .contains(&format!("RouteThrough in routing constraint {owner}"))
+        );
+        assert_eq!(error.diagnostic.entity.as_ref(), Some(owner));
+        assert!(
+            error
+                .diagnostic
+                .help
+                .unwrap()
+                .contains("<RouteThrough key=\"entry\"")
+        );
+    }
+}
+
+#[test]
+fn conflicting_and_empty_keys_reject_with_actionable_identity_errors() {
+    for index in 2..=5 {
+        for exact in [false, true] {
+            let mut design = intent_design();
+            design[index]["sourceKey"] = json!("same");
+            let mut extra = design[index].clone();
+            if !exact {
+                match index {
+                    2 | 3 => extra["props"]["width"] = json!(0.4),
+                    4 => extra["props"]["clearance"] = json!(0.5),
+                    _ => extra["props"]["region"]["x"] = json!(6),
+                }
+            }
+            design.push(extra);
+            let error = compile(transaction(design)).unwrap_err();
+            assert_eq!(error.diagnostic.code, "PCBIR029");
+            assert!(
+                error
+                    .diagnostic
+                    .message
+                    .contains("conflicting frontend identity key")
+            );
+            assert!(error.diagnostic.message.contains("sourceKey \"same\""));
+            assert!(
+                error
+                    .diagnostic
+                    .help
+                    .unwrap()
+                    .contains("distinct, stable key")
+            );
+        }
+        let mut design = intent_design();
+        design[index]["sourceKey"] = json!(" ");
+        let error = compile(transaction(design)).unwrap_err();
+        assert_eq!(error.diagnostic.code, "PCBIR029");
+        assert!(
+            error
+                .diagnostic
+                .message
+                .contains("empty frontend identity key")
+        );
+    }
+    for index in [2, 3] {
+        let mut design = intent_design();
+        design[index]["children"][0]["sourceKey"] = json!("same");
+        let extra = design[index]["children"][0].clone();
+        design[index]["children"]
+            .as_array_mut()
+            .unwrap()
+            .push(extra);
+        let error = compile(transaction(design)).unwrap_err();
+        assert_eq!(error.diagnostic.code, "PCBIR029");
+        assert!(
+            error
+                .diagnostic
+                .message
+                .contains("conflicting frontend identity key: RouteThrough")
+        );
+    }
+}
+
+#[test]
+fn multiple_keyed_constraints_and_waypoints_survive_insertion_reordering_and_edits() {
+    let mut design = intent_design();
+    for index in [2, 3] {
+        design[index]["sourceKey"] = json!("signal");
+        design[index]["children"][0]["sourceKey"] = json!("entry");
+        let mut extra = design[index]["children"][0].clone();
+        extra["sourceKey"] = json!("exit");
+        extra["props"]["region"]["x"] = json!(7);
+        design[index]["children"]
+            .as_array_mut()
+            .unwrap()
+            .push(extra);
+    }
+    for index in [4, 5] {
+        design[index]["sourceKey"] = json!("first");
+        let mut extra = design[index].clone();
+        extra["sourceKey"] = json!("second");
+        design.push(extra);
+    }
+    let before = compile(transaction(design.clone())).unwrap().ir;
+    for index in [2, 3] {
+        let children = design[index]["children"].as_array_mut().unwrap();
+        children.reverse();
+        children[0]["props"]["region"]["width"] = json!(3);
+        let mut inserted = children[0].clone();
+        inserted["sourceKey"] = json!("middle");
+        children.insert(1, inserted);
+    }
+    design[4]["props"]["boundary"] =
+        json!({"kind": "rect", "x": 1, "y": 1, "width": 2, "height": 2});
+    design[5]["props"]["region"]["width"] = json!(4);
+    for index in [4, 5] {
+        let mut inserted = design[index].clone();
+        inserted["sourceKey"] = json!("third");
+        design.push(inserted);
+    }
+    design.reverse();
+    let after = compile(transaction(design)).unwrap().ir;
+    for (old, new) in [
+        (
+            before.route_constraints[0].through.as_slice(),
+            after.route_constraints[0].through.as_slice(),
+        ),
+        (
+            before.differential_pairs[0].through.as_slice(),
+            after.differential_pairs[0].through.as_slice(),
+        ),
+    ] {
+        assert_eq!(old[0], new[2]);
+        assert_eq!(old[1], new[0]);
+    }
+    for old in &before.zones {
+        assert!(after.zones.iter().any(|new| new.id == old.id));
+    }
+    for old in &before.keepouts {
+        assert!(
+            after
+                .keepouts
+                .iter()
+                .any(|new| new.id == old.id && new.region == old.region)
+        );
+    }
+    assert_eq!(
+        before.route_constraints[0].id,
+        after.route_constraints[0].id
+    );
+    assert_eq!(
+        before.differential_pairs[0].id,
+        after.differential_pairs[0].id
+    );
+    for id in before.regions.keys() {
+        assert!(after.regions.contains_key(id));
+    }
 }

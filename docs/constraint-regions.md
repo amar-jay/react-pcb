@@ -13,7 +13,7 @@ the remaining phases.
 | Explicit schema-2 upgrade preserving canonical identities and geometry | Implemented. |
 | Unsupported constraint properties and malformed serialized scopes rejected | Implemented. |
 | Uniform exact region precision, constraint reference checks and off-board policy | Implemented across compilation, decoding, projection and standalone board validation. |
-| Improved anonymous-declaration identity diagnostics | Pending phase 3. Use keys to distinguish repeated anonymous constraints. |
+| Predictable declaration identity and actionable collision diagnostics | Implemented. Existing IDs are preserved; errors name the declaration and owner and provide a matching key example. |
 | Physical keepout enforcement and incomplete-coverage diagnostics | Pending phase 4. Scopes are retained but violations are not yet evaluated. |
 | Route waypoint feasibility and realized traversal checks | Empty on-board waypoints reject. Keepout feasibility is pending phase 5; realized traversal requires future routing geometry. |
 | Zone overlays, region selection and full constraint inspection | Pending phase 6. Current preview draws keepouts and route waypoints as one overlay. |
@@ -48,6 +48,52 @@ are not canonical IR entities. Multiple waypoints in one route, multiple keepout
 in one scope, and multiple zones with the same net/layer anchor need distinct
 keys. Ambiguous anonymous declarations are rejected instead of receiving IDs
 derived from array positions or mutable coordinates.
+
+### Declaration keys
+
+Use a stable key on each declaration that needs distinguishing. A key on an
+enclosing circuit component alone does not identify its multiple unkeyed
+keepouts or waypoints. Keep keys independent of coordinates, dimensions,
+restrictions, array indexes and random values. React's
+[key guidance](https://react.dev/learn/rendering-lists#rules-of-keys) explains why
+stable keys preserve identity during list changes; this compiler also uses them
+as frontend identity hints.
+
+| Declaration | Owner and unkeyed identity anchor | When distinct keys are needed |
+| --- | --- | --- |
+| `RouteThrough` | Owning route or differential-pair ID. | Multiple waypoints in that owner, even at different coordinates. |
+| `Keepout` | Board or module scope. | Multiple keepouts of any geometry, restrictions, layers or exceptions in that scope. |
+| `Zone` | Board or module scope plus net ID and the set of copper layer IDs. | Multiple zones with the same net/layer selection, even with different boundaries or clearances. |
+| `Route` | Board or module scope plus net ID and ordered endpoints. | Multiple routes with the same net and ordered endpoints. |
+| `DifferentialPair` | Board or module scope plus ordered net IDs and endpoints. | Multiple pairs with the same ordered nets and endpoints. |
+
+Within each declaration type, a supplied key replaces the unkeyed anchor;
+the owner/scope still participates. Changing a keyed route's endpoints or a
+keyed zone's net/layers keeps its ID. Reusing one key for two declarations of
+the same type in one owner is an error, even if their properties differ.
+Different modules and different routing owners may reuse keys. An unkeyed
+declaration and keyed siblings can coexist; existing unkeyed IDs remain stable
+when keyed siblings are added. Introducing a key to an existing unkeyed
+declaration, changing that key, or moving it to another owner intentionally
+changes its derived ID.
+
+```tsx
+<Keepout key="connector-clearance" region={rect(0, 2, 2, 4)} disallow={["vias"]} />
+<Keepout key="mounting-clearance" region={rect(8, 2, 2, 4)} disallow={["components"]} />
+
+// Two boundaries on the same net and layers still need distinct keys.
+<Zone key="ground-left" net={ground} layers={[frontCopper]} boundary={rect(0, 0, 4, 8)} />
+<Zone key="ground-right" net={ground} layers={[frontCopper]} boundary={rect(6, 0, 4, 8)} />
+```
+
+`PCBIR029` reports ambiguous, conflicting or empty frontend keys with the
+declaration kind, its owner and a matching JSX key example. Exact unkeyed zone
+and keepout duplicates retain `PCBIR015` and `PCBIR016`, with the same key
+guidance. Remove an unintended duplicate or give intended repeated declarations
+distinct stable keys; editing geometry alone cannot distinguish their identities.
+Other frontends supply an opaque `sourceKey` in declaration protocol 2. The
+compiler preserves the existing FNV-1a-128 derivation and excludes these hints
+from canonical IR.
 
 ## Ordered route waypoints
 

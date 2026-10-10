@@ -385,6 +385,16 @@ net props. Add `RouteThrough`, `DifferentialPair`, `Zone`, and `Keepout` when th
 electrical/mechanical intent is known. Their constraints remain independent of
 resolved copper; a zone declaration does not establish a realized ground plane.
 
+Use distinct stable keys for multiple `RouteThrough` declarations in one route
+or pair, multiple `Keepout` declarations in one board/module scope, and multiple
+`Zone` declarations sharing a net/layer selection. For example, use
+`<RouteThrough key="connector-exit" region={...} />` and
+`<RouteThrough key="mcu-entry" region={...} />`. Put the key on each declaration;
+a keyed enclosing circuit alone does not distinguish its unkeyed children.
+Geometry edits and array positions do not distinguish these identities. See the
+[declaration key contract](docs/constraint-regions.md#declaration-keys) for owner
+namespaces, repeated keepout/zone examples and `PCBIR029` recovery guidance.
+
 ## 6. Read diagnostics and manufacturing reports
 
 Treat three checks separately: TypeScript/API correctness, compiler structure

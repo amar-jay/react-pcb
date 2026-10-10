@@ -4,6 +4,7 @@ import {
 	compile,
 	DifferentialPair,
 	Keepout,
+	Module,
 	net,
 	Part,
 	PcbCompileError,
@@ -124,4 +125,215 @@ test("invalid references fail through the TypeScript compiler bridge", async () 
 		expect(error).toBeInstanceOf(PcbCompileError);
 		expect((error as PcbCompileError).diagnostic.code).toBe("PCBIR002");
 	}
+});
+
+function repeatedDesign(changed: boolean) {
+	const names = changed ? ["inserted", "second", "first"] : ["first", "second"];
+	const waypoints = changed ? ["exit", "middle", "entry"] : ["entry", "exit"];
+	const declarations = names.flatMap((name) => [
+		<Route
+			key={`route-${name}`}
+			net={positive}
+			from={pad(first, "P")}
+			to={pad(second, "P")}
+		>
+			{waypoints.map((key) => (
+				<RouteThrough key={key} region={rect(1, 1, changed ? 3 : 2, 2)} />
+			))}
+		</Route>,
+		<DifferentialPair
+			key={`pair-${name}`}
+			positive={positive}
+			negative={negative}
+			from={[pad(first, "P"), pad(first, "N")]}
+			to={[pad(second, "P"), pad(second, "N")]}
+		>
+			{waypoints.map((key) => (
+				<RouteThrough key={key} region={rect(1, 1, changed ? 3 : 2, 2)} />
+			))}
+		</DifferentialPair>,
+		<Zone
+			key={`zone-${name}`}
+			net={negative}
+			layers={testLayers.stackup.entries.filter(
+				(layer) => layer.kind === "copper",
+			)}
+			boundary={rect(1, 1, changed ? 3 : 2, 2)}
+			clearance={changed ? 0.3 : 0.2}
+		/>,
+		<Keepout
+			key={`keepout-${name}`}
+			region={rect(1, 1, changed ? 3 : 2, 2)}
+			disallow={["vias"]}
+		/>,
+	]);
+	return (
+		<Board outline={rect(0, 0, 20, 20)} layers={testLayers}>
+			<Part
+				id={first}
+				footprint="TEST"
+				connect={{ P: positive, N: negative }}
+			/>
+			<Part
+				id={second}
+				footprint="TEST"
+				connect={{ P: positive, N: negative }}
+			/>
+			<Module name="left">{declarations}</Module>
+			<Module name="right">{declarations}</Module>
+		</Board>
+	);
+}
+
+test("repeated keyed JSX declarations retain IDs across insertion, reordering and geometry edits in local owners", async () => {
+	const before = (await compile(repeatedDesign(false), options)).ir;
+	const after = (await compile(repeatedDesign(true), options)).ir;
+	for (const [oldConstraints, newConstraints] of [
+		[before.routeConstraints, after.routeConstraints],
+		[before.differentialPairs, after.differentialPairs],
+		[before.zones, after.zones],
+		[before.keepouts, after.keepouts],
+	] as const) {
+		expect(oldConstraints).toHaveLength(4);
+		expect(
+			new Set(oldConstraints.map((constraint) => constraint.id)).size,
+		).toBe(4);
+		for (const old of oldConstraints)
+			expect(
+				newConstraints.some((constraint) => constraint.id === old.id),
+			).toBe(true);
+	}
+	for (const [oldRoutes, newRoutes] of [
+		[before.routeConstraints, after.routeConstraints],
+		[before.differentialPairs, after.differentialPairs],
+	] as const) {
+		for (const old of oldRoutes) {
+			const next = assertDefined(
+				newRoutes.find((constraint) => constraint.id === old.id),
+			);
+			expect(next.through[0]).toBe(old.through[1]);
+			expect(next.through[2]).toBe(old.through[0]);
+		}
+	}
+	for (const id of Object.keys(before.regions))
+		expect(after.regions[id]?.id).toBe(id);
+	expect(JSON.stringify(after)).not.toContain("sourceKey");
+});
+
+test("unkeyed JSX collisions identify declaration type and module or routing owner", async () => {
+	const board = (children: import("react").ReactNode) => (
+		<Board outline={rect(0, 0, 20, 20)} layers={testLayers}>
+			<Part id={first} footprint="TEST" connect={{ P: positive }} />
+			<Part id={second} footprint="TEST" connect={{ P: positive }} />
+			<Module name="control">{children}</Module>
+		</Board>
+	);
+	const cases = [
+		[
+			"Keepout",
+			<>
+				<Keepout region={rect(1, 1, 2, 2)} disallow={["vias"]} />
+				<Keepout region={rect(5, 1, 2, 2)} disallow={["vias"]} />
+			</>,
+		],
+		[
+			"Zone",
+			<>
+				<Zone
+					net={negative}
+					layers={testLayers.stackup.entries.filter(
+						(layer) => layer.kind === "copper",
+					)}
+					boundary={rect(1, 1, 2, 2)}
+				/>
+				<Zone
+					net={negative}
+					layers={testLayers.stackup.entries.filter(
+						(layer) => layer.kind === "copper",
+					)}
+					boundary={rect(5, 1, 2, 2)}
+				/>
+			</>,
+		],
+		[
+			"RouteThrough",
+			<Route
+				key="waypoint-owner"
+				net={positive}
+				from={pad(first, "P")}
+				to={pad(second, "P")}
+			>
+				<RouteThrough region={rect(1, 1, 2, 2)} />
+				<RouteThrough region={rect(5, 1, 2, 2)} />
+			</Route>,
+		],
+	] as const;
+	for (const [name, children] of cases) {
+		await expect(compile(board(children), options)).rejects.toMatchObject({
+			diagnostic: {
+				code: "PCBIR029",
+				message: expect.stringContaining(
+					name === "RouteThrough"
+						? "RouteThrough in routing constraint route/"
+						: `${name} in module "control"`,
+				),
+				help: expect.stringContaining(`<${name} key="`),
+			},
+		});
+	}
+});
+
+test("identical and edited JSX declarations with conflicting keys report identity errors", async () => {
+	for (const edited of [false, true]) {
+		const declarations = [
+			<Keepout key="same" region={rect(1, 1, 2, 2)} disallow={["vias"]} />,
+			<Keepout
+				key="same"
+				region={rect(edited ? 5 : 1, 1, 2, 2)}
+				disallow={["vias"]}
+			/>,
+		];
+		await expect(
+			compile(
+				<Board outline={rect(0, 0, 20, 20)} layers={testLayers}>
+					{declarations}
+				</Board>,
+				options,
+			),
+		).rejects.toMatchObject({
+			diagnostic: {
+				code: "PCBIR029",
+				message: expect.stringContaining(
+					"conflicting frontend identity key: Keepout in board board/1",
+				),
+				help: expect.stringContaining("distinct, stable key"),
+			},
+		});
+	}
+});
+
+test("a keyed circuit wrapper does not distinguish its unkeyed repeated keepouts", async () => {
+	function Circuit() {
+		return (
+			<>
+				<Keepout region={rect(1, 1, 2, 2)} disallow={["vias"]} />
+				<Keepout region={rect(5, 1, 2, 2)} disallow={["vias"]} />
+			</>
+		);
+	}
+	await expect(
+		compile(
+			<Board outline={rect(0, 0, 20, 20)} layers={testLayers}>
+				<Circuit key="circuit" />
+			</Board>,
+			options,
+		),
+	).rejects.toMatchObject({
+		diagnostic: {
+			code: "PCBIR029",
+			message: expect.stringContaining(
+				"ambiguous declaration identity: Keepout",
+			),
+		},
+	});
 });

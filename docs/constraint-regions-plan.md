@@ -1,18 +1,18 @@
 # Constraint region implementation plan
 
-Status: phases 1–2 complete and verified. Phases 3–7 are pending.
+Status: phases 1–3 complete and verified. Phases 4–7 are pending.
 
 ## Progress and resume checkpoint
 
 Work is being completed one phase at a time. This checkpoint records the
-implemented boundary so subsequent work can resume at phase 3.
+implemented boundary so subsequent work can resume at phase 4.
 
 | Phase | Status |
 | --- | --- |
 | 1. Define and version the contract | Complete and verified. |
 | 2. Centralize region and reference validation | Complete and verified. |
-| 3. Make declaration identity predictable | Next. |
-| 4. Enforce keepouts against available geometry | Pending. |
+| 3. Make declaration identity predictable | Complete and verified. |
+| 4. Enforce keepouts against available geometry | Next. |
 | 5. Check route-region feasibility and report coverage | Pending. |
 | 6. Make all constraint types inspectable | Pending. |
 | 7. Regression fixtures, documentation and completion | Pending; tests are added alongside each completed phase. |
@@ -35,25 +35,43 @@ empty keepouts/zones warn. The standalone `constraint-regions` report check and
 CLI preserve the shared diagnostic codes. Compiler warnings are retained with
 fatal off-board findings and are not duplicated by manufacturing reports.
 
-Resume with phase 3 below. Improve identity collision diagnostics and frontend
-key guidance while preserving existing geometry-independent identities. Reuse
-the shared checked geometry/intersections for phases 4–5. Do not infer ownership
-from ID spelling, regenerate IDs or rewrite off-board geometry. Region sharing
-and repeated ordered visits are valid in serialized IR.
+Phase 3 preserves the existing FNV-1a-128 identity derivation. `PCBIR029`
+diagnostics now name the declaration and owner with matching JSX key examples. Exact
+unkeyed zone/keepout duplicates retain `PCBIR015`/`PCBIR016` with corrected key
+guidance; conflicting supplied keys consistently use `PCBIR029`, whether their
+properties match or differ. The contract/HOWTO document per-owner key rules and
+repeated keepout/zone examples. Existing basic/ESC waypoint keys are annotated
+without changing them or introducing new identities.
+
+Resume with phase 4 below. Reuse `ir/regions.rs` for checked declared rectangles
+and effective on-board intersections, and the existing exact primitive
+intersection utilities for placed copper and explicit courtyard reservations.
+Keep structural enforcement independent of manufacturing profiles and report
+missing geometry/placement/reservations and unresolved tracks/vias as unverified.
+Do not infer ownership from ID spelling, regenerate IDs or rewrite off-board
+geometry. Region sharing and repeated ordered visits remain valid in serialized IR.
 
 Known remaining gaps: keepout geometry is not enforced; on-board waypoints may
-still be blocked or otherwise impossible; zone boundaries are not drawn;
-multiple anonymous declarations still need keys and improved diagnostics. The
-schema version records semantics and scope, not a claim of physical validation.
+still be blocked or otherwise impossible; zone boundaries are not drawn.
+Multiple anonymous declarations require stable keys, with actionable diagnostics.
+The schema version records semantics and scope, not a claim of physical validation.
 
 Evidence: phase 2 adds eight Rust regression tests and four Bun JSX/CLI tests
 covering unit equivalence, exact nm edges, sub-nm and overflow rejection,
 unrendered/unreferenced geometry, malformed identities/references, partial regions,
 boundary contact, both waypoint types, retained warnings and consumer consistency.
 `bun run check` passed TypeScript, Rust formatting/checking, Clippy with warnings
-denied, **81 Rust tests** and **137 Bun tests** including live preview tests.
+denied at phase 2 with 81 Rust tests and 137 Bun tests.
+
+Phase 3 adds five Rust regression tests and four Bun identity tests, covering
+fixed phase-2 IDs, all declaration kinds/owners, ambiguous/empty/conflicting keys,
+local namespaces, insertion/reordering/geometry edits and keyed enclosing circuits.
+The final `bun run check` passed **86 Rust tests** and **141 Bun tests**, including
+live preview and basic/ESC examples, plus TypeScript, formatting/checking and Clippy
+with warnings denied.
+
 Live preview tests require permission to bind local ports outside the sandbox.
-Phase 2 changes are local; no commit was created by this phase.
+Phase 3 changes are local; no commit was created by this phase.
 
 ## Objective
 

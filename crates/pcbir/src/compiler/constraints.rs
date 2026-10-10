@@ -1,8 +1,8 @@
 use super::{
     CompileError,
     parse::{
-        parse_net, parse_pin, parse_rect, require_name, string, validate_keepout,
-        validate_properties, validate_zone, value_number,
+        parse_net, parse_pin, parse_rect, string, validate_keepout, validate_properties,
+        validate_zone, value_number,
     },
 };
 use crate::Diagnostic;
@@ -34,6 +34,53 @@ fn encode(value: &str) -> String {
     }
     format!("{hash:032x}")
 }
+
+pub(super) fn identity_error(
+    node: &DeclarationNode,
+    scope: Option<&str>,
+    code: &'static str,
+    reason: &str,
+) -> CompileError {
+    let (declaration, example) = match node.node_type.as_str() {
+        "pcb-route-through" => (
+            "RouteThrough",
+            "<RouteThrough key=\"entry\" region={...} />",
+        ),
+        "pcb-route" => (
+            "Route",
+            "<Route key=\"supply-route\" net={...} from={...} to={...} />",
+        ),
+        "pcb-differential-pair" => (
+            "DifferentialPair",
+            "<DifferentialPair key=\"usb-data\" positive={...} negative={...} from={...} to={...} />",
+        ),
+        "pcb-zone" => (
+            "Zone",
+            "<Zone key=\"ground-plane\" net={...} layers={...} boundary={...} />",
+        ),
+        "pcb-keepout" => (
+            "Keepout",
+            "<Keepout key=\"connector-clearance\" region={...} disallow={...} />",
+        ),
+        _ => unreachable!("only constraint declarations have constraint identities"),
+    };
+    let owner = match (node.node_type.as_str(), scope) {
+        ("pcb-route-through", Some(id)) => format!("routing constraint {id}"),
+        (_, Some(scope)) => format!("module {scope:?}"),
+        (_, None) => "board board/1".to_owned(),
+    };
+    let key = node
+        .source_key
+        .as_ref()
+        .map(|key| format!(" (sourceKey {key:?})"))
+        .unwrap_or_default();
+    CompileError::diagnostic(
+        Diagnostic::error(code, format!("{reason}: {declaration} in {owner}{key}"))
+            .with_entity(scope.unwrap_or("board/1"))
+            .with_help(format!("Remove the repeated declaration if unintended, or give each {declaration} in this owner a distinct, stable key, for example {example}. Geometry edits do not distinguish identities. Protocol frontends supply sourceKey; frontend keys are not canonical IR IDs.")),
+    )
+}
+
 impl Constraints {
     fn net(&mut self, value: &Value) -> Result<NetId, CompileError> {
         let definition = parse_net(value)?;
@@ -56,8 +103,17 @@ impl Constraints {
         node: &DeclarationNode,
         anchor: Value,
     ) -> Result<String, CompileError> {
-        if let Some(key) = &node.source_key {
-            require_name(key, "source identity", "PCBIR029")?;
+        if node
+            .source_key
+            .as_ref()
+            .is_some_and(|key| key.trim().is_empty())
+        {
+            return Err(identity_error(
+                node,
+                scope,
+                "PCBIR029",
+                "empty frontend identity key",
+            ));
         }
         let identity = json!([
             scope.unwrap_or(""),
@@ -74,8 +130,12 @@ impl Constraints {
             if previous != identity {
                 return Err(CompileError::invalid("compiler identity hash collision"));
             }
-            return Err(CompileError::diagnostic(Diagnostic::error("PCBIR029", "ambiguous declaration identity")
-                .with_entity(id).with_help("Distinguish repeated anonymous declarations with frontend identity hints, such as React keys. No JSX IR ID is required.")));
+            let reason = if node.source_key.is_some() {
+                "conflicting frontend identity key"
+            } else {
+                "ambiguous declaration identity"
+            };
+            return Err(identity_error(node, scope, "PCBIR029", reason));
         }
         Ok(id)
     }

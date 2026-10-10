@@ -78,6 +78,7 @@ export default function Esc() {
 				from={[pad(powerShunt, "1"), pad(powerShunt, "2")]}
 				to={[pad(controller, "PA0"), pad(controller, "PA1")]}
 			>
+				{/* These keys distinguish waypoints within this pair, independent of geometry. */}
 				<RouteThrough key="shunt-kelvin" region={rect(2.2, 14, 2, 12)} />
 				<RouteThrough key="mcu-sense" region={rect(2.2, 10, 2, 3)} />
 			</DifferentialPair>

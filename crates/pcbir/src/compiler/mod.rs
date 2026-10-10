@@ -453,24 +453,17 @@ impl CompileContext {
                         constraint_key(child)?,
                     ))
                     .expect("constraint identity inputs are serializable");
-                    if !self.constraints.insert(key) {
-                        let (code, message, help) = if child.node_type == "pcb-zone" {
-                            (
-                                "PCBIR015",
-                                "duplicate copper zone declaration",
-                                "Remove the repeated zone, or change its net, layers, boundary, or clearance.",
-                            )
+                    if child.source_key.is_none() && !self.constraints.insert(key) {
+                        let (code, message) = if child.node_type == "pcb-zone" {
+                            ("PCBIR015", "duplicate copper zone declaration")
                         } else {
-                            (
-                                "PCBIR016",
-                                "duplicate keepout declaration",
-                                "Remove the repeated keepout, or change its region, restrictions, or exceptions.",
-                            )
+                            ("PCBIR016", "duplicate keepout declaration")
                         };
-                        return Err(CompileError::diagnostic(
-                            Diagnostic::error(code, message)
-                                .with_entity(&child.node_type)
-                                .with_help(help),
+                        return Err(constraints::identity_error(
+                            child,
+                            parent_scope,
+                            code,
+                            message,
                         ));
                     }
                     if child.node_type == "pcb-zone" {
