@@ -240,10 +240,12 @@ including warnings about remaining unverified coverage.
 The capacitor now sits at `[23, 18]` mm, outside the MCU courtyard. Its previous
 `[27, 18]` placement is a regression case that fails both new board checks.
 
-`bun run footprints:inspect` includes this fixture and writes per-fixture
-`.manufacturing.json` reports beside its JSON/SVG previews. The generic Grid/Flexbox
-fixtures intentionally lack some apertures/courtyards, so a stricter inspection
-profile can return useful failed/skipped reports; these are not production
+`bun run board:inspect examples/basic.tsx --out dist/basic-inspect` derives its
+three used footprints from the board and writes the actual board-selected
+`.manufacturing.json` reports beside their JSON/SVG previews. The inspection
+command does not select an independent profile. Generic Grid/Flexbox fixtures
+are covered by tests and intentionally lack some apertures/courtyards; stricter
+validation can return useful failed/skipped reports. These are not production
 land-pattern fixtures.
 
 `bun run check` requires Rust formatting, TypeScript checking, Cargo checking,

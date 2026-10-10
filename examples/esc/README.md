@@ -9,12 +9,15 @@ units, stable feature IDs, and separate logical-pin bindings. The board is a
 bun run examples/esc/index.tsx
 bun run board:dev examples/esc/index.tsx
 bun run board:build examples/esc/index.tsx --out /tmp/esc-board.html
-bun run examples/esc/footprints/inspect.tsx /tmp/react-pcb-esc-footprints
+bun run board:inspect examples/esc/index.tsx --out /tmp/react-pcb-esc-footprints
 bun test packages/react-pcb/src/__tests__/esc.test.tsx
 ```
 
-The inspection command writes JSON, SVG, per-footprint manufacturing reports,
-placed-board geometry and report, and a layer-toggle `index.html`. Importing the
+The inspection command discovers the eight used definitions directly from the
+compiled board and writes canonical JSON, SVG, a manifest, and an offline
+layer-toggle `index.html`. The board selects no manufacturing profile, so its
+gallery records absent reports as `null`; it does not apply the separate
+regression-test profiles described below. Importing the
 board entry is safe for preview/watch use; compilation and console output happen
 only when it runs as the main script.
 
@@ -93,7 +96,7 @@ assembly-process suitability still requires checking the chosen components.
 
 [`footprints/index.ts`](footprints/index.ts) declares example thresholds: copper
 feature/spacing 0.15, drill 0.30, annular ring 0.15, mask expansion 0.05, mask
-web 0.10, paste feature 0.10 and courtyard clearance 0.20. All eight definitions
+web 0.10, paste feature 0.10 and courtyard clearance 0.20. In regression tests, all eight definitions
 pass the checks selected for their profiles. LQFP permits nominal mask openings.
 
 LFPAK's standalone report explicitly selects zero copper spacing and zero mask
@@ -101,11 +104,12 @@ web because this validator is net-independent and sees the continuous drain as
 two touching primitives covered by one merged opening. It cannot apply a
 pin-specific exemption. This relaxed standalone report does **not** establish
 0.15 copper separation or 0.10 mask webs for LFPAK. Regression tests independently
-check its exact geometry; the placed-board report checks 0.15 copper spacing,
+check its exact geometry; the regression-test placed-board report checks 0.15 copper spacing,
 using established net IDs to exempt the common-drain seam. Every report retains
 its actual thresholds and `complete: false`.
 
-The placed board passes copper spacing and inter-part courtyard reservations.
+Under the explicit test profile, the placed board passes copper spacing and
+inter-part courtyard reservations.
 Tests also check pad/drill dimensions, native pin mappings, deterministic SVG,
 JSON round trips, many-pad source/drain binding, side-specific technical layers,
 back-side reflection/rotation, and import-safe preview behavior.

@@ -47,7 +47,7 @@ export function presetVisibility(
                 layer.kind === 'mechanical' &&
                 ['fabrication', 'courtyard'].includes(layer.purpose ?? ''))
             : referenceOverlay ||
-              (layer.side === preset &&
+              ((layer.side === preset || layer.allSides === true) &&
                 (layer.category === 'copper' || layer.kind === 'silkscreen')));
       return [layer.key, visible];
     }),

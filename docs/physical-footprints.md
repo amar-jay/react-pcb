@@ -60,10 +60,17 @@ These checks establish deterministic geometry and reference semantics. Phase six
 ```sh
 cargo run --quiet -p pcbir -- footprint < declaration.json > footprint.json
 cargo run --quiet -p pcbir -- footprint-svg < footprint.json > footprint.svg
-bun run footprints:inspect /tmp/react-pcb-footprints
+bun run board:inspect examples/basic.tsx --out /tmp/react-pcb-footprints
 ```
 
-Open the generated `index.html` in a browser to toggle semantic layers independently, or open the individual SVG files. The checked-in inspection source generates a passive and a through-hole header, including separate mask/paste openings, plated drills, a mounting hole, and documentation strokes. Their dimensions are illustrative.
+Open the generated `index.html` to search the board’s used footprints and toggle
+semantic layers independently, or locate individual JSON/SVG files through
+`manifest.json`. The gallery is derived from the compiled board entry; no separate
+inspection script or footprint registry is required. The basic board includes
+the USB4105, LQFP48 and manufacturing passive. Unplaced parts are included;
+unused fixture definitions are covered by their unit tests. Inspection SVGs use
+exact millimetre coordinates and a display margin; the core projection below
+retains its half-nanometre contract.
 
 ### Projection contract
 
@@ -100,7 +107,7 @@ const footprint = await compileFootprint(declarations); // compileFootprint(elem
 const svg = await footprintSvg(footprint);
 ```
 
-The two pad centers are exactly `[-500000, 0]` and `[500000, 0]` nm. See `examples/footprints/0402.tsx` for a fixture using a layout group. `bun run footprints:inspect` includes its resolved SVG in the inspection page. `examples/basic.tsx` uses the Grid-authored `ManufacturingPassive` fixture for its decoupling capacitor: `renderFootprintDeclarations` snapshots the JSX, and board compilation resolves its layout, pin bindings, placement, and semantic layers.
+The two pad centers are exactly `[-500000, 0]` and `[500000, 0]` nm. See `examples/footprints/0402.tsx` for a fixture using a layout group. This standalone fixture is covered by layout tests; a board using it includes its resolved SVG when exported with `board:inspect`. `examples/basic.tsx` uses the Grid-authored `ManufacturingPassive` fixture for its decoupling capacitor: `renderFootprintDeclarations` snapshots the JSX, and board compilation resolves its layout, pin bindings, placement, and semantic layers.
 
 ### Layout contract
 
@@ -157,7 +164,7 @@ New explicit declarations, JSX compilations and migration of numeric legacy geom
 
 [USB4105 source and coordinate notes](footprints/USB4105.md) document the GCT B4 land pattern, official KiCad cross-check, merged contact lands, mounting slots, and locating holes. Its authored footprint is integrated into the USB4105-GF-A component and `examples/basic.tsx`; the inspection page includes its layer-separated SVG.
 
-The MCU now uses the authored [LQFP48 land pattern](footprints/LQFP48.md), with all 48 physical pads following ST DS13560 Rev 6 Figure 44. Its logical pin definition remains explicitly partial. All footprints in `examples/basic.tsx` resolve to physical geometry; `bun run footprints:inspect` also includes the LQFP48 SVG.
+The MCU now uses the authored [LQFP48 land pattern](footprints/LQFP48.md), with all 48 physical pads following ST DS13560 Rev 6 Figure 44. Its logical pin definition remains explicitly partial. All footprints in `examples/basic.tsx` resolve to physical geometry; `bun run board:inspect examples/basic.tsx` includes the LQFP48 SVG.
 
 
 ## Restricted Flexbox (Phase four)
@@ -181,7 +188,8 @@ rejects container properties on pads, holes, and graphics.
 This produces centers at `[-500000, 0]` and `[500000, 0]` nm, identical to
 explicit-coordinate authoring. `examples/footprints/flex.tsx` also includes a
 four-pad SOIC-style column with independently tested 1.27 mm pitch. Both fixtures
-appear in `bun run footprints:inspect`; their land dimensions are illustrative.
+are covered by layout tests; their land dimensions are illustrative. Inspection
+includes them when the supplied board uses them.
 
 | Property | Contract |
 | --- | --- |
@@ -311,8 +319,8 @@ which properties apply to each declaration and layout context.
 header. Tests independently transcribe every pad's explicit coordinates, shapes,
 layers and drills, compare canonical geometry and SVG, and check pitch, bounds,
 spans, nested transforms, JSON round trips, stable identities, diagnostics, and
-front/back board placement. `bun run footprints:inspect` includes both Grid
-fixtures; their land patterns are illustrative. Grid styles compile away, with
+front/back board placement. Inspection includes the Grid fixtures when the
+supplied board uses them; their land patterns are illustrative. Grid styles compile away, with
 no changes to physical/board schema version two or layout protocol version one.
 Older compilers reject the new properties; existing absolute/Flexbox declarations
 retain their behavior.

@@ -22,6 +22,8 @@ export async function boardHtml(element: ReactNode, options: CompileOptions = {}
 }
 
 export {buildBoardPreview, exportBoardPreview} from './build.ts';
+export {buildBoardInspection, exportBoardInspection} from './inspection.ts';
+export type {BoardInspection, InspectedFootprint} from './inspection.ts';
 export {renderBoardPng, exportBoardPng} from './png.ts';
 export type {PngRenderOptions, PngExportOptions, PngExport} from './png.ts';
 export {startBoardPreview} from './server.ts';

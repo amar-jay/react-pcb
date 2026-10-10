@@ -3,6 +3,26 @@ import type { SceneLayer } from './scene.ts';
 export type BoardView = 'board' | 'analysis';
 export type ScenePresentation = { view: BoardView; theme: string };
 
+export function boardLayerColor(layer: SceneLayer) {
+  if (layer.overlay)
+    return (
+      { references: '#e8eddb', drills: '#263e34', constraints: '#c4b5fd' }[
+        layer.id
+      ] ?? '#a6adbd'
+    );
+  if (layer.category === 'copper')
+    return layer.side === 'front' || layer.allSides
+      ? '#dfae77'
+      : layer.side === 'back'
+        ? '#8dace1'
+        : '#ad99d5';
+  if (layer.kind === 'silkscreen') return '#e8eddb';
+  if (layer.kind === 'solder-mask') return '#68aa98';
+  if (layer.purpose === 'fabrication') return '#67e8f9';
+  if (layer.purpose === 'courtyard') return '#fbbf24';
+  return '#a4abc5';
+}
+
 /** High-contrast colors for inspection; geometry and physical layer identity stay unchanged. */
 export function analysisLayerColor(layer: SceneLayer, dark: boolean) {
   if (layer.overlay) {
@@ -12,7 +32,8 @@ export function analysisLayerColor(layer: SceneLayer, dark: boolean) {
     return dark ? '#f472b6' : '#be185d';
   }
   if (layer.category === 'copper') {
-    if (layer.side === 'front') return dark ? '#fbbf24' : '#a34d0b';
+    if (layer.side === 'front' || layer.allSides)
+      return dark ? '#fbbf24' : '#a34d0b';
     if (layer.side === 'back') return dark ? '#60a5fa' : '#1d4ed8';
     return dark ? '#c4b5fd' : '#6d28d9';
   }

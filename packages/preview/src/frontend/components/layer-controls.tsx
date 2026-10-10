@@ -53,7 +53,7 @@ export function TechnicalLayers({
     const pair = items.filter((layer) => layer.group === name);
     // Shared layers and duplicate sides keep their independent stable-ID controls.
     if (
-      pair.some((layer) => !layer.side) ||
+      pair.some((layer) => !layer.side || layer.allSides) ||
       new Set(pair.map((layer) => layer.side)).size < pair.length
     )
       return (

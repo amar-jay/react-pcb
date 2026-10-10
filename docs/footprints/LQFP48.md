@@ -54,7 +54,8 @@ The logical example remains explicitly partial: VDD/VDDA → 6, VSS/VSSA → 7,
 PA11/USB_DM → 33, and PA12/USB_DP → 34, verified against the GP pinout.
 The physical definition includes all 48 lands regardless of logical coverage.
 
-Run `bun run footprints:inspect` for `lqfp48.svg`, `lqfp48.json`, and the
-layer-toggle inspection page in `/tmp/react-pcb-footprints`. Tests independently
+Run `bun run board:inspect examples/basic.tsx --out /tmp/react-pcb-footprints`
+for the layer-toggle inspection page. `manifest.json` maps the LQFP48 definition
+key to its canonical JSON and styled SVG filenames. Tests independently
 check all land positions and dimensions, numbering, identity, deterministic SVG,
 and front/back board placement and bindings.

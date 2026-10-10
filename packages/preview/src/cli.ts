@@ -1,10 +1,12 @@
 #!/usr/bin/env bun
 import { extname } from 'node:path';
 import { exportBoardPreview } from './build.ts';
+import { exportBoardInspection } from './inspection.ts';
 import { exportBoardPng, type PngExportOptions } from './png.ts';
 import { startBoardPreview } from './server.ts';
 
 const usage = `Usage: react-pcb-preview build <board.tsx> [--out dist/index.html]
+       react-pcb-preview inspect <board.tsx> [--out dist/inspect]
        react-pcb-preview png <board.tsx> [--out dist/board.png] [--view board|analysis|both]
                              [--width 2048] [--theme light|dark] [--layers front|back|copper|fabrication|all]
        react-pcb-preview dev <board.tsx> [--port 3000] [--watch path]
@@ -23,7 +25,7 @@ try {
     console.log(usage);
   } else {
     if (
-      !['build', 'png', 'dev'].includes(mode ?? '') ||
+      !['build', 'png', 'inspect', 'dev'].includes(mode ?? '') ||
       !entry ||
       entry.startsWith('--')
     )
@@ -44,27 +46,33 @@ try {
       else if (flag === '--watch' && mode === 'dev') watch.push(value);
       else if (
         flag === '--view' &&
-        mode !== 'dev' &&
+        ['build', 'png'].includes(mode!) &&
         ['board', 'analysis', 'both'].includes(value)
       )
         png.view = value as PngExportOptions['view'];
       else if (
         flag === '--theme' &&
-        mode !== 'dev' &&
+        ['build', 'png'].includes(mode!) &&
         ['light', 'dark'].includes(value)
       )
         png.theme = value as PngExportOptions['theme'];
       else if (
         flag === '--layers' &&
-        mode !== 'dev' &&
+        ['build', 'png'].includes(mode!) &&
         ['front', 'back', 'copper', 'fabrication', 'all'].includes(value)
       )
         png.layers = value as PngExportOptions['layers'];
-      else if (flag === '--width' && mode !== 'dev' && /^\d+$/.test(value))
+      else if (
+        flag === '--width' &&
+        ['build', 'png'].includes(mode!) &&
+        /^\d+$/.test(value)
+      )
         png.width = Number(value);
       else throw new Error(`Unsupported option ${flag} ${value}\n${usage}`);
     }
-    if (
+    if (mode === 'inspect') {
+      console.log(await exportBoardInspection(entry, output));
+    } else if (
       mode === 'png' ||
       (mode === 'build' && extname(output ?? '').toLowerCase() === '.png')
     ) {

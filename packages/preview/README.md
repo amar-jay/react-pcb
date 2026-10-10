@@ -64,6 +64,39 @@ together. Failed compilation or rendering preserves existing output files.
 Browser preferences, pan/zoom and temporary selection highlights do not affect
 these exports. `react-pcb-preview --help` lists the options.
 
+## Footprint inspection derived from a board
+
+```sh
+bun run react-pcb-preview inspect examples/basic.tsx --out dist/basic-inspect
+bun run board:inspect examples/esc/index.tsx --out dist/esc-inspect
+```
+
+Open the printed `index.html` directly in a browser. The offline gallery discovers
+one entry per canonical footprint key used by the compiled board, including
+unplaced parts. It shows local component-side geometry, part references, Board
+and Analysis views, themes, search, layer presets, and independent layer toggles.
+Save SVG uses the current view and visible layers. No example-specific script or
+manually maintained footprint list is needed.
+
+The default output directory is `dist/inspect`. The directory contains `board.json`
+(canonical IR), `board.svg` (Analysis, light, all layers), `result.json` (full compile
+result), `board.manufacturing.json`, `manifest.json`, and the offline `index.html`.
+Under `footprints/`, each used definition has a `.definition.json` and
+`.manufacturing.json`, plus canonical physical `.json` and styled `.svg` when
+physical geometry exists. Filenames use a SHA-256 hash of the canonical key;
+the manifest maps original keys and stable part IDs to these files.
+
+Manufacturing reports are exactly those produced by the board’s selected profile.
+Absent reports are JSON `null` and shown as “No manufacturing profile selected.”
+Inspection does not select a profile or relax thresholds. Legacy/unresolved
+footprints retain their definition and part references, with no invented physical
+geometry or SVG. Compilation or rendering failures preserve the existing output.
+
+Canonical geometry stays in integer nanometres. Inspection SVGs convert the core
+half-nanometre projection exactly to millimetres and add a display margin; they
+share the workbench’s colors and opening outlines. These are visual artifacts,
+while the canonical JSON retains the manufacturing-relevant geometry.
+
 ## Frontend development and builds
 
 Run `board:dev` to work on the UI with a real board. Bun serves
@@ -106,11 +139,12 @@ that plugin configured under `[serve.static]`.
 ## Programmatic API
 
 ```tsx
-import {boardHtml, exportBoardPreview, exportBoardPng, startBoardPreview} from '@react-pcb/preview';
+import {boardHtml, exportBoardPreview, exportBoardPng, exportBoardInspection, startBoardPreview} from '@react-pcb/preview';
 import MyBoard from './board.tsx';
 
 await Bun.write('dist/index.html', await boardHtml(<MyBoard />, {cwd: process.cwd()}));
 await exportBoardPreview('./board.tsx', 'dist/index.html');
+await exportBoardInspection('./board.tsx', 'dist/inspect');
 const {files, diagnostics} = await exportBoardPng('./board.tsx', 'dist/board.png', {
   view: 'both', layers: 'front', width: 2048, theme: 'light',
 });
@@ -125,6 +159,10 @@ inputs without writing HTML or starting a server. `boardSvg` and `BoardProjectio
 are re-exported from core. `renderBoardPng(projection, ir, options?)` returns PNG
 bytes from an already compiled board for one view; `exportBoardPng` compiles an
 entry, writes one or both views, and returns filenames and diagnostics.
+`buildBoardInspection(entry, options?)` returns the compiled board, unique used
+footprints, local SVGs, and actual reports without writing files.
+`exportBoardInspection(entry, directory?, options?)` writes the gallery and
+artifacts and returns the absolute `index.html` filepath.
 File APIs default to the repository's Rust compiler;
 use `cwd` and `command` options to select another compiler invocation. The package
 is currently private and consumes TypeScript source directly through Bun.

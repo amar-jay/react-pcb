@@ -1,4 +1,5 @@
 import type { BoardIr } from '@react-pcb/core';
+import { boardLayerColor } from './scene-presentation.ts';
 
 export type SceneLayer = {
   key: string;
@@ -10,6 +11,8 @@ export type SceneLayer = {
   category: 'copper' | 'technical' | 'overlay';
   group: string;
   side: 'front' | 'back' | null;
+  /** Reusable footprint roles can apply to both sides without implying an inner copper layer. */
+  allSides?: boolean;
   detail: string;
   kind: string;
   purpose?: string;
@@ -73,28 +76,7 @@ export function sceneLayers(
     const groupName = technicalName
       ? technicalName.charAt(0).toUpperCase() + technicalName.slice(1)
       : id;
-    const color = overlay
-      ? ({ references: '#e8eddb', drills: '#263e34', constraints: '#c4b5fd' }[
-          id
-        ] ?? '#a6adbd')
-      : depth >= 0
-        ? side === 'front'
-          ? '#dfae77'
-          : side === 'back'
-            ? '#8dace1'
-            : '#ad99d5'
-        : technical?.kind === 'silkscreen'
-          ? '#e8eddb'
-          : technical?.kind === 'solder-mask'
-            ? '#68aa98'
-            : technical?.kind === 'mechanical' &&
-                technical.purpose === 'fabrication'
-              ? '#67e8f9'
-              : technical?.kind === 'mechanical' &&
-                  technical.purpose === 'courtyard'
-                ? '#fbbf24'
-                : '#a4abc5';
-    return {
+    const layer: SceneLayer = {
       key: `${overlay ? 'overlay' : 'layer'}:${id}`,
       id,
       name,
@@ -105,7 +87,7 @@ export function sceneLayers(
           : (technical?.kind ?? 'unknown'),
       purpose: technical?.kind === 'mechanical' ? technical.purpose : undefined,
       overlay,
-      color,
+      color: '',
       category,
       group:
         category === 'technical'
@@ -123,6 +105,8 @@ export function sceneLayers(
         : depth === 0 ||
           (technical?.kind === 'silkscreen' && technical.side === 'front'),
     };
+    layer.color = boardLayerColor(layer);
+    return layer;
   });
 }
 

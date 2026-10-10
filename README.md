@@ -12,20 +12,23 @@ The broader routing and fabrication synthesis described above remains future wor
 bun install --frozen-lockfile
 bun run check
 bun run example
-bun run footprints:inspect /tmp/react-pcb-footprints
+bun run board:inspect examples/basic.tsx --out /tmp/react-pcb-footprints
 ```
 
 The basic example compiles three physical footprint definitions and returns scoped
 footprint and board manufacturing reports. Board checks enforce placed copper
 spacing and same-side inter-part courtyard reservations using the selected profile.
-The inspection command writes standalone JSON/SVG fixtures,
-selected manufacturing reports, and an `index.html` with semantic layer toggles.
+The inspection command derives unique footprints directly from the compiled board,
+writes their canonical JSON and SVG alongside the board-selected manufacturing
+reports, and generates an offline `index.html` with search and semantic layer toggles.
+Examples need no separate inspection script or footprint list.
 Illustrative dimensions and limits do not establish fabrication approval.
 
 The [ESC footprint example](examples/esc/README.md) adds real component identities,
-eight physical footprint definitions, and a separate inspection gallery with
-manufacturing reports. Run `bun run example:esc` or
-`bun run footprints:esc:inspect`. Its documentation records datasheet dimensions,
+eight physical footprint definitions. Run `bun run example:esc` or generate its
+gallery with `bun run board:inspect examples/esc/index.tsx --out dist/esc-inspect`.
+The gallery retains the board’s selected reports; the ESC board currently selects
+no manufacturing profile. Its documentation records datasheet dimensions,
 authored aperture choices, source gaps, and the remaining electrical design.
 
 To view board JSX in a browser or export one offline HTML file:

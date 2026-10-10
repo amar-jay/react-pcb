@@ -50,6 +50,39 @@ canvas state. Output paths go to stdout; compiler and projection findings go to
 stderr for automated inspection. Compilation/rendering failures preserve existing
 files. Run `bun run react-pcb-preview --help` for usage.
 
+## Footprint inspection derived from a board
+
+```sh
+bun run react-pcb-preview inspect examples/basic.tsx --out dist/basic-inspect
+bun run board:inspect examples/esc/index.tsx --out dist/esc-inspect
+```
+
+Open the printed `index.html` directly in a browser. The offline gallery discovers
+one entry per canonical footprint key used by the compiled board, including
+unplaced parts. It shows local component-side geometry, part references, Board
+and Analysis views, themes, search, layer presets, and independent layer toggles.
+Save SVG uses the current view and visible layers. No example-specific script or
+manually maintained footprint list is needed.
+
+The default output directory is `dist/inspect`. The directory contains `board.json`
+(canonical IR), `board.svg` (Analysis, light, all layers), `result.json` (full compile
+result), `board.manufacturing.json`, `manifest.json`, and the offline `index.html`.
+Under `footprints/`, each used definition has a `.definition.json` and
+`.manufacturing.json`, plus canonical physical `.json` and styled `.svg` when
+physical geometry exists. Filenames use a SHA-256 hash of the canonical key;
+the manifest maps original keys and stable part IDs to these files.
+
+Manufacturing reports are exactly those produced by the board’s selected profile.
+Absent reports are JSON `null` and shown as “No manufacturing profile selected.”
+Inspection does not select a profile or relax thresholds. Legacy/unresolved
+footprints retain their definition and part references, with no invented physical
+geometry or SVG. Compilation or rendering failures preserve the existing output.
+
+Canonical geometry stays in integer nanometres. Inspection SVGs convert the core
+half-nanometre projection exactly to millimetres and add a display margin; they
+share the workbench’s colors and opening outlines. These are visual artifacts,
+while the canonical JSON retains the manufacturing-relevant geometry.
+
 ## Board entry contract
 
 Default-export a synchronous board component or a JSX element. The component can
@@ -201,11 +234,13 @@ leaves any existing destination unchanged; successful exports replace it atomica
 
 ```tsx
 import {compile} from '@react-pcb/core';
-import {boardHtml, boardSvg, exportBoardPreview, exportBoardPng, renderBoardPng, startBoardPreview} from '@react-pcb/preview';
+import {boardHtml, boardSvg, buildBoardInspection, exportBoardInspection, exportBoardPreview, exportBoardPng, renderBoardPng, startBoardPreview} from '@react-pcb/preview';
 import MyBoard from './board.tsx';
 
 await Bun.write('dist/index.html', await boardHtml(<MyBoard />, {cwd: process.cwd()}));
 await exportBoardPreview('./board.tsx', 'dist/index.html');
+const inspection = await buildBoardInspection('./board.tsx');
+await exportBoardInspection('./board.tsx', 'dist/inspect');
 const pngExport = await exportBoardPng('./board.tsx', 'dist/board.png', {view: 'both'});
 
 const result = await compile(<MyBoard />);
@@ -230,8 +265,11 @@ waits for an active rebuild to finish.
 Import preview APIs from `@react-pcb/preview` instead of `@react-pcb/core`.
 `boardSvg` and its `BoardProjection` type remain available from core and are
 re-exported by preview for convenience. The package provides the
-`react-pcb-preview build <board.tsx>` and `react-pcb-preview dev <board.tsx>`
-executables; the root `board:build` and `board:dev` scripts call this executable.
+`react-pcb-preview` executable with `build`, `dev`, `png`, and `inspect` commands.
+Root `board:build`, `board:dev`, and `board:inspect` scripts call this executable.
+`buildBoardInspection` returns the compiled board, unique used footprints,
+local SVGs, and actual manufacturing reports; `exportBoardInspection` writes
+these alongside the offline gallery and returns its absolute `index.html` filepath.
 
 The Rust CLI exposes the projection directly: `pcbir board-svg < board-ir.json`
 returns `{svg, diagnostics}` JSON. `PCBPREVIEW001` means invalid preview input;

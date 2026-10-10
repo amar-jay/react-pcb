@@ -4,9 +4,9 @@ import tailwind from 'bun-plugin-tailwind';
 export const frontendEntry = resolve(import.meta.dir, 'index.html');
 
 /** HTML is the entrypoint for both the live site and the offline board viewer. */
-export async function bundleFrontend(outdir?: string) {
+export async function bundleFrontend(outdir?: string, entry = frontendEntry) {
   const result = await Bun.build({
-    entrypoints: [frontendEntry],
+    entrypoints: [entry],
     target: 'browser',
     compile: true,
     minify: true,

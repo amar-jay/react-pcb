@@ -17,6 +17,6 @@ jobs:
           components: clippy, rustfmt
       - run: bun install --frozen-lockfile
       - run: bun run check
-      - run: bun run footprints:inspect /tmp/react-pcb-footprints
+      - run: bun run board:inspect examples/basic.tsx --out /tmp/react-pcb-footprints
       - run: bun run preview:build
       - run: bun run board:build examples/basic.tsx --out /tmp/react-pcb-board/index.html
