@@ -23,7 +23,7 @@ bun run board:build examples/basic.tsx
 bun run board:build examples/basic.tsx --out dist/board/index.html
 
 # PNG images for AI visual inspection; no browser or preview server required.
-bun run react-pcb-preview png examples/basic.tsx --view both --out dist/basic.png
+bun run preview png examples/basic.tsx --view both --out dist/basic.png
 # Writes dist/basic.board.png and dist/basic.analysis.png.
 bun run board:build examples/basic.tsx --out dist/analysis.png --view analysis --layers all --width 4096
 ```
@@ -48,12 +48,12 @@ Rendering shares the canvas presentation and layer presets, uses an opaque
 background and the local monospace font, and ignores browser preferences and temporary
 canvas state. Output paths go to stdout; compiler and projection findings go to
 stderr for automated inspection. Compilation/rendering failures preserve existing
-files. Run `bun run react-pcb-preview --help` for usage.
+files. Run `bun run preview --help` for usage.
 
 ## Footprint inspection derived from a board
 
 ```sh
-bun run react-pcb-preview inspect examples/basic.tsx --out dist/basic-inspect
+bun run preview inspect examples/basic.tsx --out dist/basic-inspect
 bun run board:inspect examples/esc/index.tsx --out dist/esc-inspect
 ```
 
@@ -267,7 +267,7 @@ waits for an active rebuild to finish.
 Import preview APIs from `@react-pcb/preview` instead of `@react-pcb/core`.
 `boardSvg` and its `BoardProjection` type remain available from core and are
 re-exported by preview for convenience. The package provides the
-`react-pcb-preview` executable with `build`, `dev`, `png`, and `inspect` commands.
+`preview` executable with `build`, `dev`, `png`, and `inspect` commands.
 Root `board:build`, `board:dev`, and `board:inspect` scripts call this executable.
 `buildBoardInspection` returns the compiled board, unique used footprints,
 local SVGs, and actual manufacturing reports; `exportBoardInspection` writes

@@ -11,7 +11,7 @@
     }
   },
   "bin": {
-    "react-pcb-preview": "./src/cli.ts"
+    "preview": "./src/cli.ts"
   },
   "scripts": {
     "build": "bun run src/frontend/build.ts"

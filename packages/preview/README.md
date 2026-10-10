@@ -28,8 +28,8 @@ bun run board:build examples/basic.tsx --out dist/index.html
 The package also provides its own executable:
 
 ```sh
-bun run react-pcb-preview dev examples/basic.tsx --port 0 --watch ./board-data
-bun run react-pcb-preview build examples/basic.tsx --out dist/index.html
+bun run preview dev examples/basic.tsx --port 0 --watch ./board-data
+bun run preview build examples/basic.tsx --out dist/index.html
 ```
 
 Default-export a synchronous board component or JSX element from your entry.
@@ -43,7 +43,7 @@ Export Board and Analysis images directly from the CLI, without starting a serve
 or installing a browser:
 
 ```sh
-bun run react-pcb-preview png examples/basic.tsx --view both --out dist/basic.png
+bun run preview png examples/basic.tsx --view both --out dist/basic.png
 # Writes dist/basic.board.png and dist/basic.analysis.png.
 bun run board:build examples/basic.tsx --out dist/analysis.png --view analysis --layers all --width 4096
 ```
@@ -62,12 +62,12 @@ The CLI prints absolute output filenames to stdout and compiler/projection
 diagnostics to stderr, so AI agents can inspect the images and geometry warnings
 together. Failed compilation or rendering preserves existing output files.
 Browser preferences, pan/zoom and temporary selection highlights do not affect
-these exports. `react-pcb-preview --help` lists the options.
+these exports. `preview --help` lists the options.
 
 ## Footprint inspection derived from a board
 
 ```sh
-bun run react-pcb-preview inspect examples/basic.tsx --out dist/basic-inspect
+bun run preview inspect examples/basic.tsx --out dist/basic-inspect
 bun run board:inspect examples/esc/index.tsx --out dist/esc-inspect
 ```
 

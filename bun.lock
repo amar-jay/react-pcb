@@ -18,7 +18,7 @@
       "name": "@react-pcb/preview",
       "version": "0.0.0",
       "bin": {
-        "react-pcb-preview": "./src/cli.ts",
+        "preview": "./src/cli.ts",
       },
       "dependencies": {
         "@fontsource/ibm-plex-mono": "^5.3.0",

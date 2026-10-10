@@ -265,7 +265,7 @@ async function cli(entry: string, ...args: string[]) {
     [
       process.execPath,
       'run',
-      'react-pcb-preview',
+      'preview',
       ...args.slice(0, 1),
       entry,
       ...args.slice(1),

@@ -5,11 +5,11 @@ import { exportBoardInspection } from './inspection.ts';
 import { exportBoardPng, type PngExportOptions } from './png.ts';
 import { startBoardPreview } from './server.ts';
 
-const usage = `Usage: react-pcb-preview build <board.tsx> [--out dist/index.html]
-       react-pcb-preview inspect <board.tsx> [--out dist/inspect]
-       react-pcb-preview png <board.tsx> [--out dist/board.png] [--view board|analysis|both]
+const usage = `Usage: preview build <board.tsx> [--out dist/index.html]
+       preview inspect <board.tsx> [--out dist/inspect]
+       preview png <board.tsx> [--out dist/board.png] [--view board|analysis|both]
                              [--width 2048] [--theme light|dark] [--layers front|back|copper|fabrication|all]
-       react-pcb-preview dev <board.tsx> [--port 3000] [--watch path]
+       preview dev <board.tsx> [--port 3000] [--watch path]
 Build also accepts a .png output with the same PNG options.
 With --view both, <name>.png produces <name>.board.png and <name>.analysis.png.
 PNG defaults: Board view, All layers, light theme, 2048 pixels wide.`;
