@@ -64,15 +64,21 @@ fn main() {
         return;
     }
     if command.as_deref() == Some("validate-board") {
-        let input: pcbir::manufacturing::BoardValidationInput = serde_json::from_str(&input)
-            .unwrap_or_else(|e| {
-                fail_compile(CompileError::diagnostic(pcbir::Diagnostic::error(
-                    "PCBMFG001",
-                    format!("invalid board manufacturing input: {e}"),
-                )))
-            });
+        #[derive(serde::Deserialize)]
+        #[serde(deny_unknown_fields)]
+        struct BoardInput {
+            board: serde_json::Value,
+            profile: pcbir::manufacturing::ProfileInput,
+        }
+        let input: BoardInput = serde_json::from_str(&input).unwrap_or_else(|e| {
+            fail_compile(CompileError::diagnostic(pcbir::Diagnostic::error(
+                "PCBMFG001",
+                format!("invalid board manufacturing input: {e}"),
+            )))
+        });
+        let board = pcbir::decode_board_ir(input.board).unwrap_or_else(|e| fail_compile(e));
         let profile = input.profile.compile().unwrap_or_else(|e| fail_compile(e));
-        let report = pcbir::manufacturing::validate_board(&input.board, &profile)
+        let report = pcbir::manufacturing::validate_board(&board, &profile)
             .unwrap_or_else(|e| fail_compile(e));
         println!(
             "{}",

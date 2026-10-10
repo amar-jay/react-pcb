@@ -15,25 +15,8 @@ pub fn validate_board_outline(
     outline: &Rect,
     units: LengthUnit,
 ) -> Result<Vec<Diagnostic>, CompileError> {
-    let unit = match units {
-        LengthUnit::Mm => "mm",
-        LengthUnit::Mil => "mil",
-        LengthUnit::In => "in",
-    };
-    let [x, y, width, height] = [outline.x, outline.y, outline.width, outline.height]
-        .map(|value| crate::physical::length(&format!("{value}{unit}")));
-    let size = [width?, height?];
-    if size.iter().any(|length| *length <= 0) {
-        return Err(CompileError::invalid(
-            "board outline must have positive dimensions",
-        ));
-    }
-    // Keep outline arithmetic in doubled nanometres, including odd-width edges.
-    let min = [i128::from(x?) * 2, i128::from(y?) * 2];
-    let max = [
-        min[0] + i128::from(size[0]) * 2,
-        min[1] + i128::from(size[1]) * 2,
-    ];
+    let checked = crate::ir::regions::CheckedRect::from_rect(outline, units, "board outline")?;
+    let (min, max) = (checked.min2, checked.max2);
     let mut parts: Vec<_> = instances.iter().collect();
     parts.sort_by(|a, b| a.id.cmp(&b.id));
     let mut diagnostics = Vec::new();

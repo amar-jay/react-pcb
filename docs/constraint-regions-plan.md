@@ -1,17 +1,17 @@
 # Constraint region implementation plan
 
-Status: phase 1 complete and verified. Phases 2–7 are pending.
+Status: phases 1–2 complete and verified. Phases 3–7 are pending.
 
 ## Progress and resume checkpoint
 
 Work is being completed one phase at a time. This checkpoint records the
-implemented boundary so subsequent work can resume at phase 2.
+implemented boundary so subsequent work can resume at phase 3.
 
 | Phase | Status |
 | --- | --- |
 | 1. Define and version the contract | Complete and verified. |
-| 2. Centralize region and reference validation | Next. |
-| 3. Make declaration identity predictable | Pending. |
+| 2. Centralize region and reference validation | Complete and verified. |
+| 3. Make declaration identity predictable | Next. |
 | 4. Enforce keepouts against available geometry | Pending. |
 | 5. Check route-region feasibility and report coverage | Pending. |
 | 6. Make all constraint types inspectable | Pending. |
@@ -25,23 +25,35 @@ schema-2 boards. The migration preserves canonical identities, geometry, revisio
 and waypoint order. The [contract](constraint-regions.md) distinguishes current
 support from planned enforcement. Physical footprint/layout versions are unchanged.
 
-Resume with phase 2 below. Reuse the scope validators in `ir/constraints.rs` and
-the current-schema decoder in `ir/migrate.rs`. Add a shared checked region
-representation and complete reference/on-board intersection validation, then
-wire it into compilation, projection and standalone board validation. Do not
-regenerate IDs or silently rewrite off-board geometry.
+Phase 2 adds `ir/regions.rs`: exact checked rectangles, doubled-nm edges and
+explicit on-board intersections shared by compilation, current-schema decoding,
+SVG projection and standalone board validation. It checks every stored region,
+including unrendered zones and unreferenced rectangles, map-key/ID agreement,
+constraint-owner uniqueness, region/net/pin references and copper layer targets.
+Partial regions retain their authored geometry; empty waypoints reject, while
+empty keepouts/zones warn. The standalone `constraint-regions` report check and
+CLI preserve the shared diagnostic codes. Compiler warnings are retained with
+fatal off-board findings and are not duplicated by manufacturing reports.
 
-Known remaining gaps: exact region precision is still deferred until projection;
-region references are not comprehensively checked; keepout geometry is not
-enforced; waypoints may still be impossible; zone boundaries are not drawn;
+Resume with phase 3 below. Improve identity collision diagnostics and frontend
+key guidance while preserving existing geometry-independent identities. Reuse
+the shared checked geometry/intersections for phases 4–5. Do not infer ownership
+from ID spelling, regenerate IDs or rewrite off-board geometry. Region sharing
+and repeated ordered visits are valid in serialized IR.
+
+Known remaining gaps: keepout geometry is not enforced; on-board waypoints may
+still be blocked or otherwise impossible; zone boundaries are not drawn;
 multiple anonymous declarations still need keys and improved diagnostics. The
 schema version records semantics and scope, not a claim of physical validation.
 
-Evidence: seven Rust contract tests and four Bun bridge/migration tests were
-added. `bun run check` passed TypeScript, Rust formatting/checking, Clippy with
-warnings denied, **73 Rust tests** and **133 Bun tests** including live preview
-tests. Live preview tests require permission to bind local ports outside the
-sandbox. Changes are local; no commit was created.
+Evidence: phase 2 adds eight Rust regression tests and four Bun JSX/CLI tests
+covering unit equivalence, exact nm edges, sub-nm and overflow rejection,
+unrendered/unreferenced geometry, malformed identities/references, partial regions,
+boundary contact, both waypoint types, retained warnings and consumer consistency.
+`bun run check` passed TypeScript, Rust formatting/checking, Clippy with warnings
+denied, **81 Rust tests** and **137 Bun tests** including live preview tests.
+Live preview tests require permission to bind local ports outside the sandbox.
+Phase 2 changes are local; no commit was created by this phase.
 
 ## Objective
 

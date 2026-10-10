@@ -178,7 +178,8 @@ in the source tree. Programmatic callers can set `cwd` for another Rust workspac
 
 The Rust `board_svg` projection consumes schema-three board IR. Saved schema-two
 boards require the explicit [board upgrade](constraint-regions.md#saved-boards-and-compatibility).
-It validates keepout scope before projection and verifies
+It validates all stored regions, constraint identities/references and keepout
+scope through the shared structural validator before projection, and verifies
 stored placed features against the physical definition, instance transform and
 board-layer bindings before drawing them. It reuses the footprint projection's
 shape construction, escaping, decimal formatting and stable hex ID encoding.
@@ -192,9 +193,14 @@ nanometres with up to seven decimal places. Very large raw nanometre SVG lengths
 can exceed browser drawing limits even on ordinary boards; millimetre coordinates
 keep practical board sizes renderable without changing canonical integer geometry.
 Standalone footprint SVG retains its existing half-nanometre user-unit contract.
-Board outline and constraint rectangles are converted from declared board units
-with the checked physical parser. Values finer than one nanometre reject rather
-than round. Browser pan/zoom uses floating-point view state solely for inspection.
+Board outline and constraint rectangles use the same checked board-unit conversion
+as compilation and standalone validation. Values finer than one nanometre and
+overflowing derived edges reject during compilation and at serialized-board
+boundaries. Partially off-board rectangles retain their authored geometry;
+empty waypoint intersections reject, while empty keepout/zone intersections
+produce `PCBIR039` warnings. Zone boundaries are validated even though their
+overlay is still pending. Browser pan/zoom uses floating-point view state solely
+for inspection.
 
 The viewport includes the board outline and physical feature bounds, with a small
 display margin. Compilation and projection reject resolved pads/copper, drills,

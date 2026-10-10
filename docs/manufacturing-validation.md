@@ -161,6 +161,14 @@ not check distances between different placed parts. The separate board report
 checks placed geometry, concrete layers, and stable pad-net bindings, including
 front/back copper aliases on a single-copper-layer board.
 
+Board validation first applies the shared region/reference checks used by
+compilation and projection. Invalid region precision, bounds or references reject
+with `PCBIR037`/`PCBIR038`; an off-board route or differential-pair waypoint rejects
+with `PCBIR039`. The board report's `constraint-regions` check carries `PCBIR039`
+warnings for keepouts and zones with no positive-area board intersection.
+Partially off-board regions retain authored geometry. This structural check does
+not establish keepout compliance, route feasibility or realized zone fills.
+
 Pad mask roles create nominal apertures using the pad's shape. Explicit
 `mask-opening` features contribute their own exact aperture shapes. Expansion
 passes when one aperture contains a pad with the selected margin on that side.

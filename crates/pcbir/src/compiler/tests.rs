@@ -1130,6 +1130,358 @@ fn intent_design() -> Vec<Value> {
     ]
 }
 
+fn region_test_profile() -> crate::manufacturing::Profile {
+    serde_json::from_value::<crate::manufacturing::ProfileInput>(json!({
+        "schemaVersion": 1, "key": "region-test", "minCopperFeature": "1nm", "minCopperSpacing": "1nm",
+        "minDrillDiameter": "1nm", "minAnnularRing": "0nm"
+    })).unwrap().compile().unwrap()
+}
+
+fn assert_region_consumers_reject(ir: &crate::BoardIr, code: &str) {
+    let decoded = crate::decode_board_ir(serde_json::to_value(ir).unwrap()).unwrap_err();
+    let projected = crate::board_svg(ir).unwrap_err();
+    let validated = crate::manufacturing::validate_board(ir, &region_test_profile()).unwrap_err();
+    for error in [decoded, projected, validated] {
+        assert_eq!(error.diagnostic.code, code, "{}", error.diagnostic.message);
+    }
+}
+
+#[test]
+fn exact_regions_are_unit_independent_and_preserve_authored_geometry() {
+    let mut checked = Vec::new();
+    for (unit, step) in [("mm", 0.0254), ("mil", 1.0), ("in", 0.001)] {
+        let mut input = transaction(vec![scoped_keepout(json!({
+            "region": {"kind": "rect", "x": -step, "y": step, "width": step * 2.0, "height": step}
+        }))]);
+        input.declarations.children[0].props["units"] = json!(unit);
+        let output = compile(input).unwrap();
+        assert!(output.diagnostics.is_empty());
+        let id = &output.ir.keepouts[0].region;
+        assert_eq!(output.ir.regions[id].geometry.x, -step);
+        let regions = crate::ir::regions::validate_regions(&output.ir).unwrap();
+        checked.push((regions.declared[id], regions.on_board[id]));
+    }
+    assert_eq!(checked[0], checked[1]);
+    assert_eq!(checked[1], checked[2]);
+    assert_eq!(checked[0].0.min2, [-50_800, 50_800]);
+    assert_eq!(checked[0].1.unwrap().min2, [0, 50_800]);
+}
+
+#[test]
+fn compilation_rejects_sub_nm_and_overflow_in_every_region_kind() {
+    for (unit, value) in [
+        ("mm", 0.0000001),
+        ("mil", 0.00001),
+        ("in", 0.00000001),
+        ("mm", 1e30),
+        ("mm", 9_007_199_254.0),
+    ] {
+        for kind in ["outline", "keepout", "zone", "route", "pair"] {
+            let mut design = intent_design();
+            design[4]["props"]["boundary"] =
+                json!({"kind": "rect", "x": 1, "y": 1, "width": 2, "height": 2});
+            let mut input = transaction(design);
+            let board = &mut input.declarations.children[0];
+            board.props["units"] = json!(unit);
+            let region = match kind {
+                "outline" => &mut board.props["outline"],
+                "keepout" => &mut board.children[5].props["region"],
+                "zone" => &mut board.children[4].props["boundary"],
+                "route" => &mut board.children[2].children[0].props["region"],
+                _ => &mut board.children[3].children[0].props["region"],
+            };
+            // Last value fits as a coordinate but overflows when adding width.
+            region["x"] = json!(value);
+            if value == 9_007_199_254.0 {
+                region["width"] = json!(10);
+            }
+            let error = compile(input).unwrap_err();
+            assert_eq!(error.diagnostic.code, "PCBIR037", "{kind} {unit} {value}");
+        }
+    }
+}
+
+#[test]
+fn every_serialized_region_is_checked_even_when_unrendered_or_unreferenced() {
+    let ir = compile(transaction(intent_design())).unwrap().ir;
+    for bad in [0.0000001, 1e30, 9_007_199_254.0] {
+        let mut forged = ir.clone();
+        forged.regions.insert(
+            "custom".into(),
+            crate::RegionDefinition {
+                id: "custom".into(),
+                geometry: crate::Rect {
+                    x: bad,
+                    y: 0.0,
+                    width: 10.0,
+                    height: 1.0,
+                },
+            },
+        );
+        assert_region_consumers_reject(&forged, "PCBIR037");
+        forged.zones[0].boundary = "custom".into();
+        assert_region_consumers_reject(&forged, "PCBIR037");
+    }
+    for bad in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY, 0.0, -1.0] {
+        let mut forged = ir.clone();
+        forged
+            .regions
+            .get_mut(&forged.board.outline)
+            .unwrap()
+            .geometry
+            .width = bad;
+        assert_eq!(
+            crate::board_svg(&forged).unwrap_err().diagnostic.code,
+            "PCBIR037"
+        );
+        assert_eq!(
+            crate::manufacturing::validate_board(&forged, &region_test_profile())
+                .unwrap_err()
+                .diagnostic
+                .code,
+            "PCBIR037"
+        );
+    }
+}
+
+#[test]
+fn all_constraint_references_and_owner_ids_are_checked_by_every_consumer() {
+    let ir = compile(transaction(intent_design())).unwrap().ir;
+    let mut cases = Vec::new();
+    let mut add = |change: fn(&mut crate::BoardIr)| {
+        let mut forged = ir.clone();
+        change(&mut forged);
+        cases.push(forged);
+    };
+    add(|ir| ir.regions.get_mut(&ir.board.outline).unwrap().id = "wrong".into());
+    add(|ir| ir.board.outline = "missing".into());
+    add(|ir| ir.route_constraints[0].through[0] = ir.keepouts[0].id.clone());
+    add(|ir| ir.differential_pairs[0].through[0] = "missing".into());
+    add(|ir| ir.zones[0].boundary = "missing".into());
+    add(|ir| ir.keepouts[0].region = "missing".into());
+    add(|ir| ir.route_constraints[0].net.0 = "missing".into());
+    add(|ir| ir.differential_pairs[0].negative.0 = "missing".into());
+    add(|ir| ir.zones[0].net.0 = "missing".into());
+    add(|ir| ir.keepouts[0].except[0].0 = "missing".into());
+    add(|ir| ir.zones[0].layers = vec!["solder-mask/front".into()]);
+    add(|ir| ir.zones[0].layers = vec!["missing".into()]);
+    add(|ir| {
+        ir.board
+            .layers
+            .stackup
+            .entries
+            .push(crate::StackupLayer::Dielectric {
+                id: "core".into(),
+                material: "FR-4".into(),
+                thickness: 1.0,
+                epsilon_r: 4.2,
+                loss_tangent: None,
+            });
+        ir.zones[0].layers = vec!["core".into()];
+    });
+    add(|ir| ir.zones[0].layers.clear());
+    add(|ir| {
+        let layer = ir.zones[0].layers[0].clone();
+        ir.zones[0].layers.push(layer);
+    });
+    add(|ir| ir.keepouts[0].id = ir.zones[0].id.clone());
+    add(|ir| ir.route_constraints.push(ir.route_constraints[0].clone()));
+    add(|ir| ir.differential_pairs[0].id = " ".into());
+    add(|ir| ir.nets.push(ir.nets[0].clone()));
+    add(|ir| {
+        ir.board.layers.technical[0] = crate::TechnicalLayer::Paste {
+            id: "copper/1".into(),
+            side: crate::BoardSide::Front,
+        }
+    });
+    add(|ir| ir.route_constraints[0].from.part = "missing".into());
+    add(|ir| ir.differential_pairs[0].to[1].name = "missing".into());
+    add(|ir| ir.route_constraints[0].to.name = "N".into());
+    add(|ir| {
+        ir.component_definitions.remove(&ir.parts[0].component);
+    });
+    add(|ir| {
+        ir.footprint_definitions.values_mut().next().unwrap().key = "wrong".into();
+    });
+    for forged in cases {
+        assert_region_consumers_reject(&forged, "PCBIR038");
+    }
+}
+
+#[test]
+fn partial_regions_keep_geometry_and_empty_waypoints_fail_for_both_route_types() {
+    let ir = compile(transaction(intent_design())).unwrap().ir;
+    for pair in [false, true] {
+        for x in [-1.0, 9.0, 10.0, 12.0] {
+            let mut design = intent_design();
+            let region = &mut design[if pair { 3 } else { 2 }]["children"][0]["props"]["region"];
+            region["x"] = json!(x);
+            if x < 10.0 {
+                let output = compile(transaction(design)).unwrap();
+                let id = if pair {
+                    &output.ir.differential_pairs[0].through[0]
+                } else {
+                    &output.ir.route_constraints[0].through[0]
+                };
+                assert_eq!(output.ir.regions[id].geometry.x, x);
+                assert!(crate::board_svg(&output.ir).is_ok());
+            } else {
+                assert_eq!(
+                    compile(transaction(design)).unwrap_err().diagnostic.code,
+                    "PCBIR039"
+                );
+                let mut forged = ir.clone();
+                let id = if pair {
+                    &forged.differential_pairs[0].through[0]
+                } else {
+                    &forged.route_constraints[0].through[0]
+                };
+                forged.regions.get_mut(id).unwrap().geometry.x = x;
+                assert_region_consumers_reject(&forged, "PCBIR039");
+            }
+        }
+    }
+}
+
+#[test]
+fn off_board_boundaries_warn_consistently_and_warnings_survive_fatal_waypoints() {
+    let mut design = intent_design();
+    design[4]["props"]["boundary"] =
+        json!({"kind": "rect", "x": 12, "y": 1, "width": 2, "height": 2});
+    design[5]["props"]["region"]["x"] = json!(10);
+    let output = compile(transaction(design.clone())).unwrap();
+    let region_warnings = |diagnostics: &[crate::Diagnostic]| {
+        diagnostics
+            .iter()
+            .filter(|d| d.code == "PCBIR039")
+            .map(|d| serde_json::to_value(d).unwrap())
+            .collect::<Vec<_>>()
+    };
+    let expected = region_warnings(&output.diagnostics);
+    assert_eq!(expected.len(), 2);
+    assert!(expected.iter().all(|d| d["severity"] == "warning"));
+    let projected = crate::board_svg(&output.ir).unwrap();
+    assert_eq!(region_warnings(&projected.diagnostics), expected);
+    assert!(projected.svg.contains("x=\"10\""));
+    let report = crate::manufacturing::validate_board(&output.ir, &region_test_profile()).unwrap();
+    assert_eq!(region_warnings(&report.checks[0].diagnostics), expected);
+    assert!(report.conforms_to_checked_rules);
+    let mut profiled = transaction(design.clone());
+    profiled.declarations.children[0].props["manufacturingProfile"] = json!({
+        "schemaVersion": 1, "key": "region-test", "minCopperFeature": "1nm", "minCopperSpacing": "1nm",
+        "minDrillDiameter": "1nm", "minAnnularRing": "0nm"
+    });
+    let profiled_output = compile(profiled).unwrap();
+    assert_eq!(region_warnings(&profiled_output.diagnostics), expected);
+    let encoded = serde_json::to_value(&output.ir).unwrap();
+    assert_eq!(
+        serde_json::to_value(crate::decode_board_ir(encoded.clone()).unwrap()).unwrap(),
+        encoded
+    );
+    design[2]["children"][0]["props"]["region"]["x"] = json!(20);
+    let error = compile(transaction(design)).unwrap_err();
+    assert_eq!(error.diagnostic.code, "PCBIR039");
+    assert_eq!(region_warnings(&error.diagnostics), expected);
+}
+
+#[test]
+fn arbitrary_region_ids_and_shared_references_do_not_imply_ownership_or_order() {
+    let mut ir = compile(transaction(intent_design())).unwrap().ir;
+    let first = ir.route_constraints[0].through[0].clone();
+    let mut region = ir.regions.remove(&first).unwrap();
+    region.id = "custom-stable-id".into();
+    ir.regions.insert(region.id.clone(), region);
+    ir.route_constraints[0].through = vec![
+        "custom-stable-id".into(),
+        ir.differential_pairs[0].through[0].clone(),
+        "custom-stable-id".into(),
+    ];
+    ir.zones[0].boundary = "custom-stable-id".into();
+    let encoded = serde_json::to_value(&ir).unwrap();
+    assert_eq!(
+        serde_json::to_value(crate::decode_board_ir(encoded.clone()).unwrap()).unwrap(),
+        encoded
+    );
+    assert!(crate::board_svg(&ir).is_ok());
+    assert!(crate::manufacturing::validate_board(&ir, &region_test_profile()).is_ok());
+}
+
+#[test]
+fn region_intersections_preserve_nm_precision_and_handle_all_boundary_contacts() {
+    use crate::ir::regions::CheckedRect;
+    let tiny = CheckedRect::from_rect(
+        &crate::Rect {
+            x: 0.000001,
+            y: -0.000001,
+            width: 0.000003,
+            height: 0.000001,
+        },
+        crate::LengthUnit::Mm,
+        "tiny",
+    )
+    .unwrap();
+    assert_eq!(tiny.min2, [2, -2]);
+    assert_eq!(tiny.max2, [8, 0]);
+    let huge = CheckedRect::from_rect(
+        &crate::Rect {
+            x: -9_007_199_254.0,
+            y: 0.0,
+            width: 9_007_199_254.0,
+            height: 1.0,
+        },
+        crate::LengthUnit::Mm,
+        "huge",
+    )
+    .unwrap();
+    assert_eq!(huge.max2[0], 0);
+    let outline = CheckedRect::from_rect(
+        &crate::Rect {
+            x: 0.0,
+            y: 0.0,
+            width: 10.0,
+            height: 10.0,
+        },
+        crate::LengthUnit::Mm,
+        "outline",
+    )
+    .unwrap();
+    for (x, y) in [
+        (-2.0, 1.0),
+        (10.0, 1.0),
+        (1.0, -2.0),
+        (1.0, 10.0),
+        (10.0, 10.0),
+    ] {
+        let touching = CheckedRect::from_rect(
+            &crate::Rect {
+                x,
+                y,
+                width: 2.0,
+                height: 2.0,
+            },
+            crate::LengthUnit::Mm,
+            "touching",
+        )
+        .unwrap();
+        assert_eq!(touching.intersection(outline), None);
+        assert_eq!(outline.intersection(touching), None);
+    }
+    let sliver = CheckedRect::from_rect(
+        &crate::Rect {
+            x: 9.999999,
+            y: 1.0,
+            width: 2.0,
+            height: 2.0,
+        },
+        crate::LengthUnit::Mm,
+        "sliver",
+    )
+    .unwrap()
+    .intersection(outline)
+    .unwrap();
+    assert_eq!(sliver.xywh2()[2], 2);
+}
+
 #[test]
 fn assigns_ids_in_ir_and_retains_all_supported_intent() {
     let output = compile(transaction(intent_design())).unwrap();

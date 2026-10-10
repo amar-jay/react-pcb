@@ -12,10 +12,10 @@ the remaining phases.
 | Typed keepout restrictions, scope defaults, scope validation and serialization | Implemented. |
 | Explicit schema-2 upgrade preserving canonical identities and geometry | Implemented. |
 | Unsupported constraint properties and malformed serialized scopes rejected | Implemented. |
-| Uniform exact region precision, complete reference checks and off-board policy | Pending phase 2. Existing rectangle parsing checks finite values and positive dimensions. |
+| Uniform exact region precision, constraint reference checks and off-board policy | Implemented across compilation, decoding, projection and standalone board validation. |
 | Improved anonymous-declaration identity diagnostics | Pending phase 3. Use keys to distinguish repeated anonymous constraints. |
 | Physical keepout enforcement and incomplete-coverage diagnostics | Pending phase 4. Scopes are retained but violations are not yet evaluated. |
-| Route waypoint feasibility and realized traversal checks | Static feasibility is pending phase 5; realized traversal requires future routing geometry. |
+| Route waypoint feasibility and realized traversal checks | Empty on-board waypoints reject. Keepout feasibility is pending phase 5; realized traversal requires future routing geometry. |
 | Zone overlays, region selection and full constraint inspection | Pending phase 6. Current preview draws keepouts and route waypoints as one overlay. |
 
 The semantic rules below define how later validators must interpret this intent.
@@ -26,6 +26,21 @@ A successful compile today does not establish physical constraint satisfaction.
 Regions have their own stable IDs and rectangular geometry; constraints refer to
 those IDs. Coordinates use the board's declared units and global board coordinate
 system. Modules namespace identities and do not transform coordinates.
+
+Every stored rectangle is validated, including custom zone boundaries and regions
+that no constraint currently references. Values must be finite, dimensions must
+be positive, and declared decimal board-unit values must convert exactly to
+integer nanometres. Sub-nanometre values reject during compilation. Coordinates,
+dimensions and derived right/bottom edges must fit the exact JSON integer range
+in nm (absolute value at most 9,007,199,254,740,991). Edge and intersection
+arithmetic uses doubled nm without floating-point multiplication or rounding.
+
+Region map keys must agree with their IDs. Constraint IDs are nonempty and unique
+across routes, differential pairs, zones and keepouts. References must resolve
+to regions, declared nets, connected logical endpoint pins and appropriate copper
+layers. Ownership is established by references, never inferred from ID spelling.
+Serialized IR may share a region between constraints or revisit it in an ordered
+waypoint sequence; every use is checked in its owner's context.
 
 Preserve region IDs across unrelated insertion, reordering and geometry edits.
 Frontends may supply ordinary keys to distinguish repeated declarations; keys
@@ -103,11 +118,17 @@ It does not create filled copper or establish electrical continuity. An overlapp
 keepout may require a future fill engine to subtract forbidden areas; boundary
 overlap alone is not proof of an invalid zone.
 
-The pending region validator will preserve authored geometry and compute its
+The shared region validator preserves authored geometry and computes its
 on-board intersection explicitly. Partially off-board regions are allowed;
 stored geometry is not rewritten. Completely off-board keepouts and zones warn
 because they have no on-board effect. A route waypoint with no positive-area
-board intersection is an error.
+board intersection is an error, including rectangles that only touch the board
+edge. This applies to ordinary routes and differential pairs. Compilation and
+projection return boundary warnings in their diagnostics; standalone board
+validation includes them in its `constraint-regions` check. Decoding and upgrading
+validate structure without returning a separate warning report; use projection
+or validation to inspect those warnings. Warnings remain available when an
+off-board waypoint also fails compilation.
 
 Feasibility errors require proof after considering net exceptions, all eligible
 copper layers and permitted boundary contact. Overlap with one keepout, a gap
@@ -139,7 +160,9 @@ cargo run --quiet -p pcbir -- upgrade-board < board-v2.json > board-v3.json
 Upgrading preserves canonical IDs, geometry, revision and route order. It adds
 both component sides to legacy component restrictions, all board copper IDs to
 legacy electrical restrictions, and empty arrays to inactive scopes. It accepts
-schema 2 or current schema 3, validates scope, and does not mutate the API input.
+schema 2 or current schema 3, validates scope, region geometry and references, and
+does not mutate the API input. Invalid legacy geometry or references reject;
+the upgrade does not repair them.
 Legacy documents containing schema-3 scope fields are rejected rather than
 overwritten. Unsupported versions require a separate migration.
 
@@ -148,5 +171,7 @@ physical connectivity or certify constraint satisfaction. The next validator
 phases evaluate additional structure and available physical geometry.
 
 `PCBIR035` identifies an invalid keepout scope. `PCBIR036` identifies incompatible
-or malformed board IR at decoding/upgrade boundaries. Existing property and
-geometry diagnostics retain their codes.
+or malformed board IR at decoding/upgrade boundaries. `PCBIR037` identifies invalid
+exact region geometry, `PCBIR038` invalid identity or references, and `PCBIR039`
+an empty on-board region (error for waypoints, warning for keepouts and zones).
+Existing declaration-property diagnostics retain their codes.

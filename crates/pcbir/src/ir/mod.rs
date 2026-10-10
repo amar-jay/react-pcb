@@ -7,6 +7,7 @@ mod constraints;
 mod footprint;
 mod geometry;
 mod migrate;
+pub(crate) mod regions;
 mod routing;
 
 pub use board::{

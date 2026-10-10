@@ -142,14 +142,9 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
                 // New physical footprints have independent nm coordinates. Board placement
                 // remains in board units during the compatibility period.
                 if let Some(at) = part.at {
-                    let unit = match units {
-                        crate::LengthUnit::Mm => "mm",
-                        crate::LengthUnit::Mil => "mil",
-                        crate::LengthUnit::In => "in",
-                    };
                     let at = [
-                        crate::physical::length(&format!("{}{unit}", at[0]))?,
-                        crate::physical::length(&format!("{}{unit}", at[1]))?,
+                        crate::ir::regions::board_length(at[0], units)?,
+                        crate::ir::regions::board_length(at[1], units)?,
                     ];
                     if ![0.0, 90.0, 180.0, 270.0].contains(&part.rotation) {
                         return Err(CompileError::invalid(
@@ -256,12 +251,22 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
         keepouts: context.physical.keepouts,
         regions: context.physical.regions,
     };
+    match crate::ir::regions::validate_regions(&ir) {
+        Ok(checked) => diagnostics.extend(checked.diagnostics),
+        Err(mut error) => {
+            let mut previous = context.compiler_diagnostics;
+            previous.extend(diagnostics);
+            previous.append(&mut error.diagnostics);
+            return Err(error.with_diagnostics(previous));
+        }
+    }
     let board_manufacturing_report = if let Some(profile) = &ir.board.manufacturing_profile {
         let report = crate::manufacturing::validate_board(&ir, profile)?;
         diagnostics.extend(
             report
                 .checks
                 .iter()
+                .filter(|check| check.id != "constraint-regions")
                 .flat_map(|check| check.diagnostics.iter().cloned()),
         );
         Some(report)

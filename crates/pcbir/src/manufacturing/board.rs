@@ -2,8 +2,8 @@
 use super::{Check, Profile, ProfileInput, Status, copper, geometry::Solid, invalid};
 use crate::physical::{PlacedFeature, Purpose};
 use crate::{
-    BoardIr, BoardSide, CompileError, LengthUnit, MechanicalPurpose, NetId, PartInstance,
-    StackupLayer, TechnicalLayer,
+    BoardIr, BoardSide, CompileError, MechanicalPurpose, NetId, PartInstance, StackupLayer,
+    TechnicalLayer,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
@@ -46,55 +46,6 @@ fn validate_realization(ir: &BoardIr) -> Result<(), CompileError> {
             "board checks require current canonical board IR and a nonempty board ID",
         ));
     }
-    crate::ir::validate_constraint_scopes(ir)?;
-    let mut layers = BTreeSet::new();
-    for id in ir
-        .board
-        .layers
-        .stackup
-        .entries
-        .iter()
-        .map(StackupLayer::id)
-        .chain(ir.board.layers.technical.iter().map(TechnicalLayer::id))
-    {
-        if id.trim().is_empty() || !layers.insert(id) {
-            return Err(invalid("board layer IDs must be nonempty and unique"));
-        }
-    }
-    if !ir
-        .board
-        .layers
-        .stackup
-        .entries
-        .iter()
-        .any(|layer| matches!(layer, StackupLayer::Copper { .. }))
-    {
-        return Err(invalid("board checks require concrete copper layers"));
-    }
-    let mut nets = BTreeSet::new();
-    for net in &ir.nets {
-        if net.id.0.trim().is_empty() || !nets.insert(&net.id) {
-            return Err(invalid("board net IDs must be nonempty and unique"));
-        }
-    }
-    let mut ids = BTreeSet::new();
-    for part in &ir.parts {
-        if part.id.trim().is_empty() || !ids.insert(&part.id) {
-            return Err(invalid("board part IDs must be nonempty and unique"));
-        }
-        if !ir.component_definitions.contains_key(&part.component)
-            || !ir.footprint_definitions.contains_key(&part.footprint)
-        {
-            return Err(invalid(
-                "placed part references a missing component or footprint definition",
-            ));
-        }
-        if part.connections.values().any(|net| !nets.contains(net)) {
-            return Err(invalid(
-                "placed part connection references a missing net ID",
-            ));
-        }
-    }
     crate::compiler::validate::validate_instances(
         &ir.parts,
         &ir.component_definitions,
@@ -108,14 +59,9 @@ fn validate_realization(ir: &BoardIr) -> Result<(), CompileError> {
                         "physical board checks require quarter-turn placement",
                     ));
                 }
-                let unit = match ir.units {
-                    LengthUnit::Mm => "mm",
-                    LengthUnit::Mil => "mil",
-                    LengthUnit::In => "in",
-                };
                 let at = [
-                    crate::physical::length(&format!("{}{unit}", at[0]))?,
-                    crate::physical::length(&format!("{}{unit}", at[1]))?,
+                    crate::ir::regions::board_length(at[0], ir.units)?,
+                    crate::ir::regions::board_length(at[1], ir.units)?,
                 ];
                 let expected = physical.place(
                     at,
@@ -152,7 +98,11 @@ fn validate_realization(ir: &BoardIr) -> Result<(), CompileError> {
 
 pub fn validate_board(ir: &BoardIr, profile: &Profile) -> Result<BoardReport, CompileError> {
     profile.validate()?;
+    let checked = crate::ir::regions::validate_regions(ir)?;
     validate_realization(ir)?;
+    let mut regions = Check::new("constraint-regions");
+    regions.evaluated = checked.on_board.len();
+    regions.diagnostics = checked.diagnostics;
     let copper_ids: BTreeSet<_> = ir
         .board
         .layers
@@ -300,7 +250,12 @@ pub fn validate_board(ir: &BoardIr, profile: &Profile) -> Result<BoardReport, Co
     }
     let mut unverified = Check::new("unverified");
     unverified.skip("board-edge manufacturing clearances, routed traces/vias, realized zones, board-level mask/paste, NPTH isolation, and 3D package bodies are not checked", &ir.board.id);
-    let checks = vec![spacing.finish(), courtyard.finish(), unverified.finish()];
+    let checks = vec![
+        regions.finish(),
+        spacing.finish(),
+        courtyard.finish(),
+        unverified.finish(),
+    ];
     Ok(BoardReport {
         board: ir.board.id.clone(),
         profile: profile.clone(),

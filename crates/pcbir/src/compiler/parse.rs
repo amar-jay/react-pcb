@@ -55,6 +55,11 @@ pub fn parse_board(props: &Value) -> Result<(Board, RegionDefinition), CompileEr
         height: number(outline, "height")?,
     };
     validate_rect(&outline, "board outline")?;
+    crate::ir::regions::CheckedRect::from_rect(
+        &outline,
+        parse_units(props)?,
+        "region/board-outline",
+    )?;
     validate_stackup(&layers)?;
     let mut ids = BTreeSet::new();
     for id in layers
@@ -572,10 +577,15 @@ pub(super) fn parse_pin(value: &Value) -> Result<PinRef, CompileError> {
 }
 
 fn validate_rect(rect: &Rect, label: &str) -> Result<(), CompileError> {
-    if rect.width <= 0.0 || rect.height <= 0.0 {
+    if ![rect.x, rect.y, rect.width, rect.height]
+        .iter()
+        .all(|value| value.is_finite())
+        || rect.width <= 0.0
+        || rect.height <= 0.0
+    {
         return Err(semantic_error(
             "PCBIR017",
-            format!("{label} must have positive width and height"),
+            format!("{label} must have finite coordinates and positive width and height"),
             "Use dimensions greater than zero.",
         ));
     }

@@ -1,8 +1,6 @@
 //! Board inspection projection. Only realized physical geometry is drawn.
 use crate::svg::{escape, geometry_mm as geometry, identity, mm};
-use crate::{
-    BoardIr, BoardSide, CompileError, Diagnostic, LengthUnit, StackupLayer, TechnicalLayer,
-};
+use crate::{BoardIr, BoardSide, CompileError, Diagnostic, StackupLayer, TechnicalLayer};
 use serde::Serialize;
 use std::collections::BTreeSet;
 use std::fmt::Write;
@@ -15,38 +13,21 @@ pub struct BoardProjection {
 fn invalid(message: &str) -> CompileError {
     CompileError::diagnostic(Diagnostic::error("PCBPREVIEW001", message))
 }
-fn nm(value: f64, units: LengthUnit) -> Result<i64, CompileError> {
-    let unit = match units {
-        LengthUnit::Mm => "mm",
-        LengthUnit::Mil => "mil",
-        LengthUnit::In => "in",
-    };
-    crate::physical::length(&format!("{value}{unit}"))
-}
-fn rect(region: &crate::Rect, units: LengthUnit) -> Result<[i128; 4], CompileError> {
-    let result = [region.x, region.y, region.width, region.height]
-        .map(|v| nm(v, units).map(|n| i128::from(n) * 2));
-    let [x, y, w, h] = result;
-    let result = [x?, y?, w?, h?];
-    if result[2] <= 0 || result[3] <= 0 {
-        return Err(invalid("preview regions must have positive dimensions"));
-    }
-    Ok(result)
-}
+use crate::ir::regions::board_length as nm;
 
 pub fn board_svg(ir: &BoardIr) -> Result<BoardProjection, CompileError> {
     if ir.schema_version != crate::SCHEMA_VERSION {
         return Err(invalid("unsupported board IR version for preview"));
     }
-    crate::ir::validate_constraint_scopes(ir)?;
+    let checked = crate::ir::regions::validate_regions(ir)?;
     let outline = ir
         .regions
         .get(&ir.board.outline)
         .ok_or_else(|| invalid("board outline region is missing"))?;
-    let [x, y, w, h] = rect(&outline.geometry, ir.units)?;
+    let [x, y, w, h] = checked.declared[&ir.board.outline].xywh2();
     let mut min = [x, y];
     let mut max = [x + w, y + h];
-    let mut diagnostics = vec![];
+    let mut diagnostics = checked.diagnostics;
     let mut parts: Vec<_> = ir.parts.iter().collect();
     parts.sort_by(|a, b| a.id.cmp(&b.id));
     let mut ids = BTreeSet::new();
@@ -243,11 +224,7 @@ pub fn board_svg(ir: &BoardIr) -> Result<BoardProjection, CompileError> {
         .chain(ir.differential_pairs.iter().flat_map(|r| r.through.iter()))
         .collect();
     for id in regions {
-        let region = ir
-            .regions
-            .get(id)
-            .ok_or_else(|| invalid("constraint region is missing"))?;
-        let [x, y, w, h] = rect(&region.geometry, ir.units)?;
+        let [x, y, w, h] = checked.declared[id].xywh2();
         writeln!(svg, "<rect data-region-id=\"{}\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\"><title>Constraint region: {}</title></rect>", escape(id)?, mm(x), mm(y), mm(w), mm(h), escape(id)?).unwrap();
     }
     svg.push_str("</g>\n");

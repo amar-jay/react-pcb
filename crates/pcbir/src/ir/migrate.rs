@@ -1,9 +1,6 @@
 use serde_json::{Value, json};
 
-use super::{
-    BoardIr, BoardSide, KeepoutRestriction, LayerSet, SCHEMA_VERSION, StackupLayer,
-    validate_constraint_scopes,
-};
+use super::{BoardIr, BoardSide, KeepoutRestriction, LayerSet, SCHEMA_VERSION, StackupLayer};
 use crate::{CompileError, Diagnostic};
 
 fn invalid(message: impl Into<String>) -> CompileError {
@@ -21,12 +18,12 @@ pub fn decode_board_ir(input: Value) -> Result<BoardIr, CompileError> {
     }
     let ir: BoardIr = serde_json::from_value(input)
         .map_err(|error| invalid(format!("invalid board IR: {error}")))?;
-    validate_constraint_scopes(&ir)?;
+    super::regions::validate_regions(&ir)?;
     Ok(ir)
 }
 
 /// Explicit schema-2 upgrade, preserving identities, geometry, revision and route
-/// order. Current documents are accepted unchanged after scope validation.
+/// order. Current documents are accepted unchanged after structural validation.
 pub fn upgrade_board_ir(mut input: Value) -> Result<BoardIr, CompileError> {
     match input.get("schemaVersion").and_then(Value::as_u64) {
         Some(version) if version == u64::from(SCHEMA_VERSION) => return decode_board_ir(input),
