@@ -1,20 +1,11 @@
-import {defineFootprint, definePart} from '@react-pcb/core';
-import {smd} from '../layers.ts';
-import {datasheet, passivePins} from './shared.ts';
+import React from 'react';
+import {definePart, renderFootprintDeclarations} from '@react-pcb/core';
+import {Shunt2512Footprint} from '../footprints/passives.tsx';
+import {passivePins} from './shared.ts';
 
-const footprint = defineFootprint({
-  key: 'esc:2512',
-  pads: [
-    {id: '1', at: [-1.6, 0], shape: 'rect', size: [1.2, 3.2], layers: smd},
-    {id: '2', at: [1.6, 0], shape: 'rect', size: [1.2, 3.2], layers: smd},
-  ],
-});
-
+const footprint = await renderFootprintDeclarations(React.createElement(Shunt2512Footprint));
 export const Shunt = definePart({
-  manufacturer: 'Generic',
-  mpn: 'SHUNT-2512',
-  package: '2512',
-  datasheet: datasheet('shunt'),
-  pinoutCoverage: 'complete',
-  pins: passivePins,
+  manufacturer: 'Vishay Dale', mpn: 'WSL2512R0100FEA', package: '2512, 10 mOhm, two-terminal',
+  datasheet: {url: 'https://www.vishay.com/docs/30100/wsl.pdf', document: '30100', revision: '23-Nov-2023', page: 2},
+  pinoutCoverage: 'complete', pins: passivePins,
 }, {footprint, pinMap: {1: '1', 2: '2'}});

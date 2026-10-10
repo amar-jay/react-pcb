@@ -1,20 +1,12 @@
-import {defineFootprint, definePart} from '@react-pcb/core';
-import {smd} from '../layers.ts';
-import {datasheet, passivePins} from './shared.ts';
+import React from 'react';
+import {definePart, renderFootprintDeclarations} from '@react-pcb/core';
+import {Capacitor0402Footprint} from '../footprints/passives.tsx';
+import {passivePins} from './shared.ts';
 
-const footprint = defineFootprint({
-  key: 'esc:0402',
-  pads: [
-    {id: '1', at: [-0.5, 0], shape: 'rect', size: [0.5, 0.6], layers: smd},
-    {id: '2', at: [0.5, 0], shape: 'rect', size: [0.5, 0.6], layers: smd},
-  ],
-});
-
+const footprint = await renderFootprintDeclarations(React.createElement(Capacitor0402Footprint));
 export const Capacitor = definePart({
-  manufacturer: 'Generic',
-  mpn: 'CAP-PASSIVE',
-  package: 'two-terminal',
-  datasheet: datasheet('cap'),
-  pinoutCoverage: 'complete',
-  pins: passivePins,
+  manufacturer: 'Murata Manufacturing', mpn: 'GRM155R71H104KE14D', package: '0402 / 1005 metric, 100 nF, 50 V, X7R',
+  datasheet: {url: 'https://search.murata.co.jp/Ceramy/image/img/A01X/G101/ENG/GRM155R71H104KE14-01A.pdf',
+    document: 'GRM155R71H104KE14-01A', page: 27},
+  pinoutCoverage: 'complete', pins: passivePins,
 }, {footprint, pinMap: {1: '1', 2: '2'}});

@@ -7,7 +7,7 @@ export const gateDriver = part('U1', `${scope}/U1`);
 
 type DriveProps = {
   ground: Net;
-  logic: Net;
+  gateSupply: Net;
   phaseA: Net;
   pwmHigh: Net;
   pwmLow: Net;
@@ -24,7 +24,7 @@ function DriveParts(props: DriveProps) {
     <>
       <GateDriver
         id={driver}
-        at={[16, 5]}
+        at={[16, 4]}
         connect={{
           HIN: props.pwmHigh,
           LIN: props.pwmLow,
@@ -32,11 +32,11 @@ function DriveParts(props: DriveProps) {
           LO: props.gateLow,
           VB: props.bootstrap,
           VS: props.phaseA,
-          VCC: props.logic,
-          GND: props.ground,
+          VCC: props.gateSupply,
+          COM: props.ground,
         }}
       />
-      <Capacitor id={driverCap} at={[16, 2]} connect={{1: props.logic, 2: props.ground}} />
+      <Capacitor id={driverCap} at={[16, 7.5]} connect={{1: props.gateSupply, 2: props.ground}} />
       <Capacitor id={bootCap} at={[20, 4]} side="back" connect={{1: props.bootstrap, 2: props.phaseA}} />
     </>
   );

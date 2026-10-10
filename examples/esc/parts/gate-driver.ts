@@ -1,38 +1,21 @@
-import {defineFootprint, definePart} from '@react-pcb/core';
-import {smd} from '../layers.ts';
-import {datasheet} from './shared.ts';
+import React from 'react';
+import {definePart, renderFootprintDeclarations} from '@react-pcb/core';
+import {SOIC8Footprint} from '../footprints/SOIC8.tsx';
 
-const footprint = defineFootprint({
-  key: 'esc:soic-8',
-  pads: [
-    {id: '1', at: [-2.7, 1.905], shape: 'rect', size: [1.5, 0.6], layers: smd},
-    {id: '2', at: [-2.7, 0.635], shape: 'rect', size: [1.5, 0.6], layers: smd},
-    {id: '3', at: [-2.7, -0.635], shape: 'rect', size: [1.5, 0.6], layers: smd},
-    {id: '4', at: [-2.7, -1.905], shape: 'rect', size: [1.5, 0.6], layers: smd},
-    {id: '5', at: [2.7, -1.905], shape: 'rect', size: [1.5, 0.6], layers: smd},
-    {id: '6', at: [2.7, -0.635], shape: 'rect', size: [1.5, 0.6], layers: smd},
-    {id: '7', at: [2.7, 0.635], shape: 'rect', size: [1.5, 0.6], layers: smd},
-    {id: '8', at: [2.7, 1.905], shape: 'rect', size: [1.5, 0.6], layers: smd},
-  ],
-});
-
+const footprint = await renderFootprintDeclarations(React.createElement(SOIC8Footprint));
 export const GateDriver = definePart({
-  manufacturer: 'Generic',
-  mpn: 'HALF-BRIDGE-DRIVER',
-  package: 'SOIC-8',
-  datasheet: datasheet('driver'),
-  pinoutCoverage: 'partial',
+  manufacturer: 'Infineon Technologies', mpn: 'IR2101STRPBF', package: 'SOIC-8 narrow',
+  datasheet: {url: 'https://www.infineon.com/assets/row/public/documents/24/49/infineon-ir2101-ds-en.pdf',
+    document: 'PD60043', revision: 'O', page: 5},
+  pinoutCoverage: 'complete',
   pins: {
-    HIN: {electricalType: 'input', required: true, functions: ['high-side input']},
-    LIN: {electricalType: 'input', required: true, functions: ['low-side input']},
-    HO: {electricalType: 'output', required: true},
+    VCC: {electricalType: 'power-input', required: true, functions: ['10–20 V gate supply']},
+    HIN: {electricalType: 'input', required: true},
+    LIN: {electricalType: 'input', required: true},
+    COM: {electricalType: 'power-input', required: true},
     LO: {electricalType: 'output', required: true},
-    VB: {electricalType: 'power-input', required: true},
     VS: {electricalType: 'passive', required: true},
-    VCC: {electricalType: 'power-input', required: true},
-    GND: {electricalType: 'power-input', required: true},
+    HO: {electricalType: 'output', required: true},
+    VB: {electricalType: 'power-input', required: true},
   },
-}, {
-  footprint,
-  pinMap: {HIN: '1', LIN: '2', VCC: '3', GND: '4', LO: '5', VS: '6', HO: '7', VB: '8'},
-});
+}, {footprint, pinMap: {VCC: '1', HIN: '2', LIN: '3', COM: '4', LO: '5', VS: '6', HO: '7', VB: '8'}});

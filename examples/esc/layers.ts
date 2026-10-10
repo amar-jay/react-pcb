@@ -39,8 +39,7 @@ export const boardLayers = defineLayerSet({
     mechanicalLayer({purpose: 'courtyard', side: 'front'}),
     mechanicalLayer({purpose: 'assembly', side: 'front'}),
     mechanicalLayer({purpose: 'courtyard', side: 'back'}),
+    mechanicalLayer({purpose: 'fabrication', side: 'front'}),
+    mechanicalLayer({purpose: 'fabrication', side: 'back'}),
   ],
 });
-
-export const smd = [frontCopper, frontMask, frontPaste] as const;
-export const throughHole = [{kind: 'all-copper' as const}, frontMask, backMask];

@@ -1,23 +1,12 @@
-import {defineFootprint, definePart} from '@react-pcb/core';
-import {throughHole} from '../layers.ts';
-import {datasheet} from './shared.ts';
+import React from 'react';
+import {definePart, renderFootprintDeclarations} from '@react-pcb/core';
+import {XT30UPBFootprint} from '../footprints/terminals.tsx';
 
-const footprint = defineFootprint({
-  key: 'esc:xt30',
-  pads: [
-    {id: '+', at: [-2.5, 0], shape: 'oval', size: [2.2, 3.2], layers: throughHole, drill: {diameter: 1.6, plated: true}},
-    {id: '-', at: [2.5, 0], shape: 'oval', size: [2.2, 3.2], layers: throughHole, drill: {diameter: 1.6, plated: true}},
-  ],
-});
-
+const footprint = await renderFootprintDeclarations(React.createElement(XT30UPBFootprint));
 export const Battery = definePart({
-  manufacturer: 'Generic',
-  mpn: 'XT30',
-  package: 'XT30',
-  datasheet: datasheet('xt30'),
+  manufacturer: 'AMASS', mpn: 'XT30UPB-M', package: 'Vertical PCB connector, 5 mm pitch',
+  datasheet: {url: 'https://www.tme.eu/en/Document/4acc913878197f8c2e30d4b8cdc47230/XT30UPB%20SPEC.pdf',
+    document: 'XT30UPB SPEC (geometry cross-check: official KiCad library)'},
   pinoutCoverage: 'complete',
-  pins: {
-    '+': {electricalType: 'power-input', required: true},
-    '-': {electricalType: 'power-input', required: true},
-  },
-}, {footprint, pinMap: {'+': '+', '-': '-'}});
+  pins: {'+': {electricalType: 'power-input', required: true}, '-': {electricalType: 'power-input', required: true}},
+}, {footprint, pinMap: {'-': '1', '+': '2'}});

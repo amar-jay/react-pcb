@@ -21,19 +21,23 @@ function ControlParts(props: ControlProps) {
     <>
       <Controller
         id={mcu}
-        at={[28, 5]}
+        at={[29, 6]}
         connect={{
-          VDD: props.logic,
+          'VDD/VDDA': props.logic,
+          VDDIO2: props.logic,
+          VBAT: props.logic,
+          'VREF+': props.logic,
+          'VSS/VSSA': props.ground,
           VSS: props.ground,
-          PWM_H: props.pwmHigh,
-          PWM_L: props.pwmLow,
-          SENSE_P: props.ground,
-          SENSE_N: props.shuntN,
-          PHASE: props.phaseA,
+          PA8: props.pwmHigh,
+          PB13: props.pwmLow,
+          PA0: props.ground,
+          PA1: props.shuntN,
+          // Phase-voltage conditioning is intentionally unresolved; never connect VBAT-level phase to an ADC.
         }}
       />
       <Capacitor id={logicCap} at={[32, 5]} side="back" connect={{1: props.logic, 2: props.ground}} />
-      <Route net={props.logic} from={pad(logicCap, '1')} to={pad(mcu, 'VDD')} width={0.25} />
+      <Route net={props.logic} from={pad(logicCap, '1')} to={pad(mcu, 'VDD/VDDA')} width={0.25} />
     </>
   );
 }
