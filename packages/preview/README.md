@@ -17,6 +17,18 @@ dock beside the canvas on large screens and open as a sheet on smaller screens.
 Click the red X in the bottom bar to open compilation failure details; diagnostics have separate
 All, Errors, and Warnings tabs in a bottom sheet.
 
+For `PCBIR031` outline violations, click the diagnostic code in the diagnostics
+sheet or **Show on board** beside the part in the compilation-failure dialog.
+The canvas focuses the offending feature, outlines the failed placement and its
+board boundary, and labels the exact overflow in millimetres for each crossed
+edge. Mask openings are selected first when present; feature buttons switch
+between the other offending pads, bodies or openings. The overlay remains visible
+even when that feature's layer is hidden. Its geometry comes from the latest
+failed build and is labelled separately from the retained successful board.
+If there is no successful board, only the failed outline and offending features
+are drawn. Clear the highlight with its close button; a completed rebuild also
+clears it. Compilation and exports still reject invalid placements.
+
 From the repository root:
 
 ```sh

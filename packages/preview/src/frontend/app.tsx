@@ -1,3 +1,4 @@
+import type { CompilerDiagnostic } from "@react-pcb/core";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { BoardCanvas, type CanvasActions } from "./components/board-canvas.tsx";
@@ -18,6 +19,10 @@ import { useBoardPreferences } from "./hooks/use-board-preferences.ts";
 import { useIsMobile } from "./hooks/use-mobile";
 import { usePreview } from "./hooks/use-preview.ts";
 import { previewFindings } from "./lib/findings.ts";
+import {
+	focusOutlineFinding,
+	type OutlineFocus,
+} from "./lib/outline-diagnostic.ts";
 import { download, sceneLayers } from "./lib/scene.ts";
 import {
 	analysisLayerColor,
@@ -36,6 +41,25 @@ export function App() {
 	const [inspectorOpen, setInspectorOpen] = useState(false);
 	const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
 	const [failureOpen, setFailureOpen] = useState(false);
+	const [outlineSelection, setOutlineSelection] = useState<{
+		version: number;
+		focus: OutlineFocus;
+	} | null>(null);
+	const outlineFocus =
+		snapshot.error && outlineSelection?.version === snapshot.version
+			? outlineSelection.focus
+			: null;
+	const showFinding = (finding: CompilerDiagnostic) => {
+		const focus = focusOutlineFinding(finding);
+		if (!focus) return;
+		toast.dismiss(failureToastId);
+		setOutlineSelection({ version: snapshot.version, focus });
+		setDiagnosticsOpen(false);
+		setFailureOpen(false);
+		setSelected(null);
+		setInspectorOpen(false);
+		setNet("");
+	};
 	const compactInspector = useIsMobile(1280);
 	const selectPart = (id: string | null) => {
 		setSelected(id);
@@ -216,6 +240,15 @@ export function App() {
 						</CanvasToolbar>
 						<BoardCanvas
 							ref={canvas}
+							outlineFocus={outlineFocus}
+							onOutlineFeature={(featureId) => {
+								if (outlineFocus)
+									setOutlineSelection({
+										version: snapshot.version,
+										focus: { ...outlineFocus, featureId },
+									});
+							}}
+							onDismissOutline={() => setOutlineSelection(null)}
 							presentation={{ view: boardView, theme }}
 							svg={snapshot.projection?.svg ?? null}
 							ir={ir}
@@ -247,6 +280,7 @@ export function App() {
 					findings={findings}
 					log={snapshot.error}
 					retained={Boolean(ir)}
+					onFinding={showFinding}
 					onDiagnostics={() => {
 						setFailureOpen(false);
 						setDiagnosticsOpen(true);
@@ -257,6 +291,7 @@ export function App() {
 					onOpenChange={setDiagnosticsOpen}
 					findings={findings}
 					failed={Boolean(snapshot.error)}
+					onFinding={showFinding}
 				/>
 			</div>
 		</TooltipProvider>

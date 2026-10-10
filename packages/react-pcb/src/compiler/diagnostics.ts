@@ -1,4 +1,21 @@
+import type {
+	PhysicalFeature,
+	PhysicalFootprint,
+} from "../footprints/physical.ts";
+
 export type DiagnosticSeverity = "error" | "warning";
+
+/** Exact world geometry from the failed build; all bounds use doubled nanometres. */
+export type OutlineDiagnosticGeometry = {
+	kind: "board-outline";
+	boardBounds: PhysicalFootprint["bounds"];
+	features: readonly {
+		geometry: PhysicalFeature<number>;
+		bounds: PhysicalFootprint["bounds"];
+		/** Left, top, right, bottom overflow in doubled nanometres. */
+		overflow2: readonly [number, number, number, number];
+	}[];
+};
 
 export type CompilerDiagnostic = {
 	code: string;
@@ -6,6 +23,7 @@ export type CompilerDiagnostic = {
 	message: string;
 	entity: string | null;
 	help?: string;
+	geometry?: OutlineDiagnosticGeometry;
 	source?: {
 		sourceKey?: string;
 		file?: string;

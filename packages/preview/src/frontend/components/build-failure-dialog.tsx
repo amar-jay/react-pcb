@@ -7,7 +7,8 @@ import {
 	Terminal,
 	X,
 } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { outlineGeometry } from "../lib/outline-diagnostic.ts";
 import { ComponentIcon } from "./pcb-icons.tsx";
 import {
 	AlertDialog,
@@ -36,7 +37,13 @@ function errorSummary(finding: CompilerDiagnostic) {
 	return message.charAt(0).toUpperCase() + message.slice(1);
 }
 
-function FailureErrors({ errors }: { errors: readonly CompilerDiagnostic[] }) {
+function FailureErrors({
+	errors,
+	onFinding,
+}: {
+	errors: readonly CompilerDiagnostic[];
+	onFinding?: (finding: CompilerDiagnostic) => void;
+}) {
 	const groups = new Map<string, CompilerDiagnostic[]>();
 	for (const error of errors) {
 		const group = groups.get(error.code) ?? [];
@@ -46,7 +53,8 @@ function FailureErrors({ errors }: { errors: readonly CompilerDiagnostic[] }) {
 	return (
 		<div className="space-y-4">
 			{[...groups].map(([code, findings]) => {
-				const sharedHelp = findings[0]?.help;
+				const first = findings[0];
+				const sharedHelp = first?.help;
 				const hasSharedHelp =
 					Boolean(sharedHelp) &&
 					findings.every((finding) => finding.help === sharedHelp);
@@ -58,8 +66,27 @@ function FailureErrors({ errors }: { errors: readonly CompilerDiagnostic[] }) {
 								<Badge
 									variant="destructive"
 									className="rounded-sm font-mono text-[11px]"
+									asChild={Boolean(
+										onFinding &&
+											findings.length === 1 &&
+											outlineGeometry(first),
+									)}
 								>
-									{code}
+									{onFinding &&
+									findings.length === 1 &&
+									first &&
+									outlineGeometry(first) ? (
+										<button
+											type="button"
+											className="cursor-pointer hover:underline"
+											onClick={() => first && onFinding(first)}
+											aria-label={`${code}: show ${first?.entity} on board`}
+										>
+											{code}
+										</button>
+									) : (
+										code
+									)}
 								</Badge>
 								<span className="text-xs text-muted-foreground">
 									{findings.length} {findings.length === 1 ? "error" : "errors"}
@@ -110,6 +137,18 @@ function FailureErrors({ errors }: { errors: readonly CompilerDiagnostic[] }) {
 											/>
 										</button>
 									</CollapsibleTrigger>
+									{onFinding && outlineGeometry(finding) && (
+										<div className="pb-2 pl-11">
+											<Button
+												size="sm"
+												variant="ghost"
+												className="h-7 text-xs text-primary"
+												onClick={() => onFinding(finding)}
+											>
+												Show on board
+											</Button>
+										</div>
+									)}
 									<CollapsibleContent className="px-4 pb-3">
 										<div className="ml-7 rounded-md bg-muted/60 p-3 text-xs leading-relaxed">
 											<p className="font-mono whitespace-pre-wrap wrap-anywhere">
@@ -187,6 +226,7 @@ export function BuildFailureDialog({
 	log,
 	retained,
 	onDiagnostics,
+	onFinding,
 }: {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
@@ -194,7 +234,15 @@ export function BuildFailureDialog({
 	log: string | null;
 	retained: boolean;
 	onDiagnostics: () => void;
+	onFinding?: (finding: CompilerDiagnostic) => void;
 }) {
+	const focusCanvasOnClose = useRef(false);
+	const locateFinding = onFinding
+		? (finding: CompilerDiagnostic) => {
+				focusCanvasOnClose.current = true;
+				onFinding(finding);
+			}
+		: undefined;
 	const errors = findings.filter((finding) => finding.severity === "error");
 	const warnings = findings.filter(
 		(finding) => finding.severity === "warning",
@@ -205,10 +253,12 @@ export function BuildFailureDialog({
 				className="flex max-h-[calc(100dvh-48px)] w-[calc(100vw-48px)] max-w-256 flex-col gap-0 overflow-hidden rounded-xl p-0 animate-panel-fade data-[size=default]:sm:max-w-256 max-sm:max-h-[calc(100dvh-24px)] max-sm:w-[calc(100vw-24px)]"
 				onCloseAutoFocus={(event) => {
 					event.preventDefault();
-					(
-						document.getElementById("build-error") ??
-						document.getElementById("scene")
-					)?.focus();
+					const target = focusCanvasOnClose.current
+						? document.getElementById("scene")
+						: (document.getElementById("build-error") ??
+							document.getElementById("scene"));
+					focusCanvasOnClose.current = false;
+					target?.focus({ preventScroll: true });
 				}}
 			>
 				<Tabs
@@ -265,7 +315,7 @@ export function BuildFailureDialog({
 						value="errors"
 						className="h-[min(640px,68dvh)] min-h-0 flex-auto overflow-y-auto px-6 py-4 scrollbar-thin max-sm:px-4"
 					>
-						<FailureErrors errors={errors} />
+						<FailureErrors errors={errors} onFinding={locateFinding} />
 					</TabsContent>
 					{log && (
 						<TabsContent

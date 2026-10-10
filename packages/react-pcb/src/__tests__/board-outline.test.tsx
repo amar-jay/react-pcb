@@ -68,16 +68,33 @@ test("board containment permits exact edge contact and rejects one-nanometre ove
 	] as const) {
 		expect((await compile(board(at), options)).diagnostics).toEqual([]);
 	}
-	for (const at of [
-		[0.999999, 2],
-		[3.000001, 2],
-		[2, 0.999999],
-		[2, 3.000001],
-	] as const) {
-		expect((await failure(board(at))).diagnostic).toMatchObject({
+	for (const [index, at] of (
+		[
+			[0.999999, 2],
+			[3.000001, 2],
+			[2, 0.999999],
+			[2, 3.000001],
+		] as const
+	).entries()) {
+		const diagnostic = (await failure(board(at))).diagnostic;
+		expect(diagnostic).toMatchObject({
 			code: "PCBIR031",
 			entity: "P1",
 			message: expect.stringContaining("features: P"),
+		});
+		const overflow2 = [0, 0, 0, 0];
+		const edge = [0, 2, 1, 3][index];
+		if (edge === undefined) throw new Error("Missing edge fixture");
+		overflow2[edge] = 2;
+		expect(diagnostic.geometry).toMatchObject({
+			kind: "board-outline",
+			boardBounds: { min2: [0, 0], max2: [8_000_000, 8_000_000] },
+			features: [
+				{
+					geometry: { id: "P", at: at.map((n) => Math.round(n * 1_000_000)) },
+					overflow2,
+				},
+			],
 		});
 	}
 });
@@ -101,7 +118,14 @@ test("odd feature sizes retain half-nanometre edges rather than rounding them in
 		</Board>
 	);
 	await compile(board(0.000002), options);
-	expect((await failure(board(0.000001))).diagnostic.code).toBe("PCBIR031");
+	expect((await failure(board(0.000001))).diagnostic).toMatchObject({
+		code: "PCBIR031",
+		geometry: {
+			features: [
+				{ bounds: { min2: [-1, 1], max2: [5, 7] }, overflow2: [1, 0, 0, 0] },
+			],
+		},
+	});
 });
 
 test("containment respects nonzero outline origins and mm, mil, and inch units", async () => {
@@ -164,7 +188,18 @@ test("containment uses rotated and reflected world geometry, not part centers", 
 	);
 	await compile(board("front", 1), options);
 	await compile(board("back", 3), options);
-	expect((await failure(board("back", 1))).diagnostic.code).toBe("PCBIR031");
+	expect((await failure(board("back", 1))).diagnostic).toMatchObject({
+		code: "PCBIR031",
+		geometry: {
+			features: [
+				{
+					geometry: { at: [2_000_000, 0], rotation: 90 },
+					bounds: { min2: [0, -2_000_000], max2: [8_000_000, 2_000_000] },
+					overflow2: [0, 2_000_000, 0, 0],
+				},
+			],
+		},
+	});
 });
 
 test("fabrication bodies and aperture/drill bounds are checked while courtyard and silk are not treated as bodies", async () => {

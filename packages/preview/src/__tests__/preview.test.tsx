@@ -213,6 +213,35 @@ async function fixture() {
 	return { directory, entry: join(directory, "board.tsx") };
 }
 
+test("failed preview builds retain exact outline diagnostic geometry through the worker boundary", async () => {
+	const { directory, entry } = await fixture();
+	try {
+		await Bun.write(entry, source().replace("at={[5,5]}", "at={[19.8,5]}"));
+		const build = await buildBoardPreview(entry);
+		expect(build.result).toBeNull();
+		expect(build.projection).toBeNull();
+		expect(build.error).toContain("PCBIR031");
+		expect(build.buildDiagnostics).toMatchObject([
+			{
+				code: "PCBIR031",
+				entity: "C1",
+				geometry: {
+					kind: "board-outline",
+					boardBounds: { min2: [0, 0], max2: [40_000_000, 40_000_000] },
+					features: [
+						{
+							geometry: { id: "1", at: [19_800_000, 5_000_000] },
+							overflow2: [0, 0, 600_000, 0],
+						},
+					],
+				},
+			},
+		]);
+	} finally {
+		await rm(directory, { recursive: true, force: true });
+	}
+}, 15000);
+
 test("JSX entry exports offline HTML and imports are fresh on subsequent builds", async () => {
 	const { directory, entry } = await fixture();
 	try {

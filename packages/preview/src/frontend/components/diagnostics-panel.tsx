@@ -1,5 +1,12 @@
 import type { CompilerDiagnostic } from "@react-pcb/core";
-import { AlertCircle, AlertTriangle, CheckCircle2, ChevronDown } from "lucide-react";
+import {
+	AlertCircle,
+	AlertTriangle,
+	CheckCircle2,
+	ChevronDown,
+} from "lucide-react";
+import { useRef } from "react";
+import { outlineGeometry } from "../lib/outline-diagnostic.ts";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import {
@@ -13,8 +20,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 
 export function DiagnosticList({
 	findings,
+	onFinding,
 }: {
 	findings: readonly CompilerDiagnostic[];
+	onFinding?: (finding: CompilerDiagnostic) => void;
 }) {
 	const occurrences = new Map<string, number>();
 	const entries = findings.map((item) => {
@@ -46,8 +55,20 @@ export function DiagnosticList({
 						<div className="flex flex-wrap items-baseline gap-2 font-mono text-[11px] leading-normal text-muted-foreground **:data-[slot=badge]:rounded-sm **:data-[slot=badge]:[font:inherit]">
 							<Badge
 								variant={item.severity === "error" ? "destructive" : "outline"}
+								asChild={Boolean(onFinding && outlineGeometry(item))}
 							>
-								{item.code}
+								{onFinding && outlineGeometry(item) ? (
+									<button
+										type="button"
+										className="cursor-pointer hover:underline"
+										onClick={() => onFinding(item)}
+										aria-label={`${item.code}: show ${item.entity} on board`}
+									>
+										{item.code}
+									</button>
+								) : (
+									item.code
+								)}
 							</Badge>
 							{item.entity && <span>{item.entity}</span>}
 						</div>
@@ -77,12 +98,21 @@ export function DiagnosticsPanel({
 	onOpenChange,
 	findings,
 	failed,
+	onFinding,
 }: {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	findings: readonly CompilerDiagnostic[];
 	failed: boolean;
+	onFinding?: (finding: CompilerDiagnostic) => void;
 }) {
+	const focusCanvasOnClose = useRef(false);
+	const locateFinding = onFinding
+		? (finding: CompilerDiagnostic) => {
+				focusCanvasOnClose.current = true;
+				onFinding(finding);
+			}
+		: undefined;
 	const errors = findings.filter((item) => item.severity === "error");
 	const warnings = findings.filter((item) => item.severity === "warning");
 	const ordered = [
@@ -96,7 +126,11 @@ export function DiagnosticsPanel({
 				className="h-[min(620px,75dvh)] gap-0 p-0 animate-panel-bottom"
 				onCloseAutoFocus={(event) => {
 					event.preventDefault();
-					document.getElementById("diagnostics-trigger")?.focus();
+					const target = document.getElementById(
+						focusCanvasOnClose.current ? "scene" : "diagnostics-trigger",
+					);
+					focusCanvasOnClose.current = false;
+					target?.focus({ preventScroll: true });
 				}}
 			>
 				<SheetHeader className="pt-5.5 pr-12 pb-3.5 pl-6 max-md:pl-4">
@@ -125,20 +159,20 @@ export function DiagnosticsPanel({
 						className="min-h-0 overflow-y-auto pb-5 scrollbar-thin"
 					>
 						<div id="diagnostic-list">
-							<DiagnosticList findings={ordered} />
+							<DiagnosticList findings={ordered} onFinding={locateFinding} />
 						</div>
 					</TabsContent>
 					<TabsContent
 						value="errors"
 						className="min-h-0 overflow-y-auto pb-5 scrollbar-thin"
 					>
-						<DiagnosticList findings={errors} />
+						<DiagnosticList findings={errors} onFinding={locateFinding} />
 					</TabsContent>
 					<TabsContent
 						value="warnings"
 						className="min-h-0 overflow-y-auto pb-5 scrollbar-thin"
 					>
-						<DiagnosticList findings={warnings} />
+						<DiagnosticList findings={warnings} onFinding={locateFinding} />
 					</TabsContent>
 				</Tabs>
 			</SheetContent>

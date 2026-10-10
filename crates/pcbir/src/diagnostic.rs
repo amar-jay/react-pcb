@@ -8,6 +8,34 @@ pub enum Severity {
     Error,
 }
 
+/// Exact failed placement geometry, independent of any viewer or accepted board IR.
+/// Bounds and overflows use doubled nanometres to preserve half-nm edges.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OutlineFeatureViolation {
+    pub geometry: crate::physical::Feature,
+    pub bounds: crate::physical::Bounds,
+    /// Left, top, right, bottom; zero means contained at that edge.
+    pub overflow2: [i128; 4],
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(tag = "kind", rename_all = "kebab-case")]
+pub enum DiagnosticGeometry {
+    #[serde(rename_all = "camelCase")]
+    BoardOutline {
+        board_bounds: OutlineBounds,
+        features: Vec<OutlineFeatureViolation>,
+    },
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OutlineBounds {
+    pub min2: [i128; 2],
+    pub max2: [i128; 2],
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct Diagnostic {
     pub code: &'static str,
@@ -18,6 +46,8 @@ pub struct Diagnostic {
     pub help: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub source: Option<Box<serde_json::Value>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub geometry: Option<DiagnosticGeometry>,
 }
 
 impl Diagnostic {
@@ -29,6 +59,7 @@ impl Diagnostic {
             entity: None,
             help: None,
             source: None,
+            geometry: None,
         }
     }
 
@@ -40,6 +71,7 @@ impl Diagnostic {
             entity: None,
             help: None,
             source: None,
+            geometry: None,
         }
     }
 

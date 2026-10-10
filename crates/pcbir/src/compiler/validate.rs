@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::diagnostic::Diagnostic;
+use crate::diagnostic::{Diagnostic, DiagnosticGeometry, OutlineBounds, OutlineFeatureViolation};
 use crate::ir::{
     ComponentDefinition, FootprintDefinition, LengthUnit, PartInstance, PinRef, PinoutCoverage,
     Rect, RouteConstraint,
@@ -51,22 +51,37 @@ pub fn validate_board_outline(
                 i128::from(bounds.min2[axis]) < min[axis]
                     || i128::from(bounds.max2[axis]) > max[axis]
             }) {
-                outside.push(placed.geometry.id.as_str());
+                outside.push(OutlineFeatureViolation {
+                    geometry: placed.geometry.clone(),
+                    overflow2: [
+                        (min[0] - i128::from(bounds.min2[0])).max(0),
+                        (min[1] - i128::from(bounds.min2[1])).max(0),
+                        (i128::from(bounds.max2[0]) - max[0]).max(0),
+                        (i128::from(bounds.max2[1]) - max[1]).max(0),
+                    ],
+                    bounds,
+                });
             }
         }
         if !outside.is_empty() {
-            diagnostics.push(
-                Diagnostic::error(
+            let mut diagnostic = Diagnostic::error(
                     "PCBIR031",
                     format!(
                         "part {} extends outside the board outline (features: {})",
                         part.id,
-                        outside.join(", ")
+                        outside.iter().map(|f| f.geometry.id.as_str()).collect::<Vec<_>>().join(", ")
                     ),
                 )
                 .with_entity(&part.id)
-                .with_help("Move the part inside the board outline or enlarge the outline. This checks resolved copper, drills, mask/paste openings and fabrication geometry; courtyard and silkscreen are excluded."),
-            );
+                .with_help("Move the part inside the board outline or enlarge the outline. This checks resolved copper, drills, mask/paste openings and fabrication geometry; courtyard and silkscreen are excluded.");
+            diagnostic.geometry = Some(DiagnosticGeometry::BoardOutline {
+                board_bounds: OutlineBounds {
+                    min2: min,
+                    max2: max,
+                },
+                features: outside,
+            });
+            diagnostics.push(diagnostic);
         }
     }
     Ok(diagnostics)

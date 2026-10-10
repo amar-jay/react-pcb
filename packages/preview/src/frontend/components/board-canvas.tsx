@@ -13,6 +13,12 @@ import {
 	useState,
 } from "react";
 import {
+	diagnosticBoardSvg,
+	type OutlineFocus,
+	outlineFocusView,
+	outlineGeometry,
+} from "../lib/outline-diagnostic.ts";
+import {
 	type CanvasPoint,
 	measureDistance,
 	type RulerTick,
@@ -24,6 +30,7 @@ import {
 	applyScenePresentation,
 	type ScenePresentation,
 } from "../lib/scene-presentation.ts";
+import { CanvasDiagnostic } from "./canvas-diagnostic.tsx";
 import {
 	CanvasMeasurement,
 	type CanvasViewport,
@@ -51,11 +58,14 @@ type Props = {
 	onSelect: (id: string) => void;
 	statusControls: ReactNode;
 	presentation: ScenePresentation;
+	outlineFocus?: OutlineFocus | null;
+	onOutlineFeature?: (id: string) => void;
+	onDismissOutline?: () => void;
 };
 
 export function BoardCanvas({
 	ref,
-	svg: markup,
+	svg,
 	ir,
 	layers,
 	visibility,
@@ -64,7 +74,16 @@ export function BoardCanvas({
 	onSelect,
 	statusControls,
 	presentation,
+	outlineFocus = null,
+	onOutlineFeature,
+	onDismissOutline,
 }: Props) {
+	const diagnosticGeometry = outlineGeometry(outlineFocus?.finding);
+	const diagnosticFeature = diagnosticGeometry?.features.find(
+		(item) => item.geometry.id === outlineFocus?.featureId,
+	);
+	const markup =
+		svg ?? (diagnosticGeometry ? diagnosticBoardSvg(diagnosticGeometry) : null);
 	const scene = useRef<HTMLElement>(null);
 	const shell = useRef<HTMLDivElement>(null);
 	const viewport = useRef<View | null>(null);
@@ -223,6 +242,19 @@ export function BoardCanvas({
 	}, [getSvg, fitView, markup, view]);
 
 	useLayoutEffect(() => {
+		if (!outlineFocus || !diagnosticGeometry || !diagnosticFeature) return;
+		const bounds = scene.current?.getBoundingClientRect();
+		view(
+			outlineFocusView(
+				diagnosticGeometry,
+				diagnosticFeature,
+				bounds && bounds.height > 0 ? bounds.width / bounds.height : 1,
+			),
+		);
+		scene.current?.focus({ preventScroll: true });
+	}, [outlineFocus, diagnosticGeometry, diagnosticFeature, view]);
+
+	useLayoutEffect(() => {
 		const svg = getSvg();
 		if (!markup || !svg || !ir) return;
 		applyScenePresentation(svg, layers, visibility, { view: boardView, theme });
@@ -324,6 +356,20 @@ export function BoardCanvas({
 						complete={Boolean(measurementEnd)}
 					/>
 				)}
+				{outlineFocus &&
+					diagnosticGeometry &&
+					diagnosticFeature &&
+					canvasViewport && (
+						<CanvasDiagnostic
+							focus={outlineFocus}
+							geometry={diagnosticGeometry}
+							feature={diagnosticFeature}
+							viewport={canvasViewport}
+							retained={Boolean(svg)}
+							onFeature={(id) => onOutlineFeature?.(id)}
+							onDismiss={() => onDismissOutline?.()}
+						/>
+					)}
 				{ir && (
 					<div className="absolute top-11.25 right-9.5 font-mono text-[11px] leading-normal text-canvas-text max-[1401px]:hidden">
 						{boardSize(ir)}

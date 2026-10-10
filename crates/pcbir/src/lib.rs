@@ -7,7 +7,9 @@ pub mod physical;
 mod protocol;
 
 pub use compiler::{CompileError, CompileOutput, compile};
-pub use diagnostic::{Diagnostic, Severity};
+pub use diagnostic::{
+    Diagnostic, DiagnosticGeometry, OutlineBounds, OutlineFeatureViolation, Severity,
+};
 pub use ir::{
     Board, BoardIr, BoardSide, ComponentDefinition, CopperUsage, DatasheetSource, ElectricalType,
     LayerSet, LengthUnit, MechanicalPurpose, NetDefinition, NetId, PartInstance, PinDefinition,

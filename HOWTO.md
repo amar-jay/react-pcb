@@ -492,6 +492,16 @@ last successful scene remains visible: click the bottom-bar failure icon to read
 the **current** failure. A green compile indicator reflects compilation, not full
 manufacturing coverage. Inspect Board checks and part details as well.
 
+For `PCBIR031`, use **Show on board** in the failure dialog or click the error code
+in the diagnostics sheet. The canvas zooms to the offending feature, draws its
+latest failed geometry and board outline, and shows the exact overflow past each
+edge in millimetres. Select a feature button to inspect another reported opening,
+pad or body; mask openings are selected first. The overlay identifies its failed
+build origin when the background is the last successful board. On an initial
+failure with no successful board, it shows only the known outline and offending
+features. A completed rebuild clears the highlight. This diagnostic view does
+not make the board valid or permit exports of the failed revision.
+
 Use Board view for material appearance and Analysis view for contrast and feature
 boundaries. Select front/back/copper/fabrication/all layer presets, inspect parts
 and net membership, and use the ruler/distance tool for visual measurements.
