@@ -184,7 +184,11 @@ stored placed features against the physical definition, instance transform and
 board-layer bindings before drawing them. Projection also rejects proven
 physical keepout violations with `PCBIR040` and retains `PCBIR041` warnings for
 unavailable keepout geometry and unresolved tracks, vias or fills. It applies
-the same exact selected-layer/side checks as compilation and standalone validation. It reuses the footprint projection's
+the same exact selected-layer/side checks as compilation and standalone validation.
+It also rejects provably blocked route/pair waypoints with `PCBIR042` and reports
+unrealized routing coverage with `PCBIR043`. Unblocked waypoint geometry does not
+prove traversal, ordering, width/gap clearance or a usable path. It reuses the
+footprint projection's
 shape construction, escaping, decimal formatting and stable hex ID encoding.
 Rounded rectangles, circles, capsule ovals, circular/slotted drills and documentation
 strokes retain their physical meanings. SVG entity IDs separate concrete layer

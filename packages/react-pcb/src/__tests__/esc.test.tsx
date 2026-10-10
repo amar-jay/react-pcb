@@ -204,6 +204,16 @@ test("ESC uses real part bindings, all 48 MCU lands and collision-free placed ge
 			entity: assertDefined(result.ir.keepouts[0]).id,
 			message: expect.stringContaining(`realized ${kind} are unavailable`),
 		})),
+		...[...result.ir.routeConstraints, ...result.ir.differentialPairs]
+			.sort((a, b) => a.id.localeCompare(b.id))
+			.map((owner) => ({
+				code: "PCBIR043",
+				severity: "warning",
+				entity: owner.id,
+				message: expect.stringContaining(
+					"realized route geometry is unavailable",
+				),
+			})),
 	]);
 	expect(result.ir.parts).toHaveLength(17);
 	expect(Object.values(result.ir.footprintDefinitions)).toHaveLength(8);

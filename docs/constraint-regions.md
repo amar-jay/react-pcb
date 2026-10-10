@@ -15,11 +15,11 @@ the remaining phases.
 | Uniform exact region precision, constraint reference checks and off-board policy | Implemented across compilation, decoding, projection and standalone board validation. |
 | Predictable declaration identity and actionable collision diagnostics | Implemented. Existing IDs are preserved; errors name the declaration and owner and provide a matching key example. |
 | Physical keepout enforcement and incomplete-coverage diagnostics | Implemented for canonical placed pads/copper and explicit courtyard reservations. Missing realization reports incomplete coverage. |
-| Route waypoint feasibility and realized traversal checks | Empty on-board waypoints reject. Keepout feasibility is pending phase 5; realized traversal requires future routing geometry. |
+| Route waypoint feasibility and realized traversal checks | Empty and provably blocked waypoints reject, including joint keepout coverage and both pair legs. Realized traversal remains explicitly unverified. |
 | Zone overlays, region selection and full constraint inspection | Pending phase 6. Current preview draws keepouts and route waypoints as one overlay. |
 
 The semantic rules below define constraint intent and the available checks.
-A successful compile rejects proven keepout violations but does not establish
+A successful compile rejects proven keepout violations and blocked waypoints but does not establish
 complete physical constraint satisfaction; read the coverage warnings.
 
 ## Geometry and ownership
@@ -113,6 +113,14 @@ Separated waypoints are valid: the route may travel between them. A waypoint doe
 not reserve exclusive space or confine the entire route to its rectangle.
 Width, differential-pair gap and impedance remain independent routing intent.
 Endpoints and waypoint rectangles are not substitutes for realized trace paths.
+
+Every `Route` and `DifferentialPair`, including owners without waypoints, emits
+one `PCBIR043` coverage warning until realized route geometry exists. The warning
+names its stable owner and net IDs and keeps waypoint traversal/order,
+width/gap clearance, layer transitions and remaining path feasibility explicitly
+unverified. A declared connection graph can be connected while physical routing
+remains unverified. Waypoints narrower than an intended trace or pair envelope
+are not rejected without a defined physical envelope rule.
 
 ## Keepout restrictions and scope
 
@@ -213,6 +221,35 @@ between waypoints, or a straight-line sketch between endpoints does not establis
 that routing is impossible. Checks needing unresolved paths, layer transitions,
 trace envelopes or zone fills must report incomplete coverage.
 
+`PCBIR042` rejects a waypoint only when the exact union of applicable keepout
+interiors excludes every point of its effective on-board rectangle, including
+its boundary, on every eligible layer for that net. `copper` and `tracks` block
+track centerline visits; `components` and `vias` alone do not prove a visit
+impossible. Net exceptions apply separately to each differential-pair leg.
+Current routing IR has no layer restriction, so all concrete board copper layers,
+including layers described as planes, remain eligible. One candidate on one layer
+prevents a blockage error; choosing a reachable layer remains unverified.
+
+The proof checks rectangle edges and the intervals between them with exact integer
+arithmetic. Overlapping keepouts can jointly block a waypoint. Keepouts that only
+touch leave an allowed seam, and even an isolated boundary point prevents this
+conservative centerline test from declaring impossibility. Such a candidate does
+not prove trace width/gap clearance or a usable path. Keepout interiors use authored
+boundaries: clipping an off-board keepout must not invent an allowed edge where it
+actually extends beyond the board. Stored rectangles and ordered references remain
+unchanged, including shared regions and repeated visits.
+
+Compilation and SVG projection reject proven blockage with `PCBIR042`, identifying
+the routing owner, waypoint sequence number, region, net, eligible layers and
+blocking keepout IDs. Standalone board validation returns the same findings in
+`constraint-routes`; failures make `conformsToCheckedRules` false. Its `evaluated`
+count is waypoint/net checks (two legs per pair visit), and `skipped` counts one
+coverage warning per owner. Owners with no waypoints are `skipped`; unblocked visits
+with unrealized routes produce `partial` coverage. The compiler includes coverage
+warnings once even when a manufacturing profile supplies the same report. Empty
+waypoints retain `PCBIR039`; compiler errors retain other blocked-visit findings,
+region warnings and both keepout/routing coverage warnings.
+
 ## Saved boards and compatibility
 
 Recompile source declarations with protocol 2 to obtain schema-3 IR. Current
@@ -244,13 +281,15 @@ Legacy documents containing schema-3 scope fields are rejected rather than
 overwritten. Unsupported versions require a separate migration.
 
 Migration does not compile declarations, move parts, synthesize routing, prove
-physical connectivity or certify constraint satisfaction. Physical consumers evaluate available placed geometry; later validator
-phases add route-region feasibility and further inspection.
+physical connectivity or certify constraint satisfaction. Physical consumers
+evaluate available placed geometry and route-region feasibility; full constraint
+inspection remains a later phase.
 
 `PCBIR035` identifies an invalid keepout scope. `PCBIR036` identifies incompatible
 or malformed board IR at decoding/upgrade boundaries. `PCBIR037` identifies invalid
 exact region geometry, `PCBIR038` invalid identity or references, and `PCBIR039`
 an empty on-board region (error for waypoints, warning for keepouts and zones).
 `PCBIR040` identifies a proven physical keepout violation and `PCBIR041`
-incomplete keepout coverage. Existing declaration-property diagnostics retain
-their codes.
+incomplete keepout coverage. `PCBIR042` identifies a provably blocked route
+waypoint and `PCBIR043` unrealized routing coverage. Existing declaration-property
+diagnostics retain their codes.

@@ -156,3 +156,106 @@ pub(crate) fn validate_keepouts(ir: &BoardIr, regions: &CheckedRegions) -> Findi
     }
     findings
 }
+
+/// Waypoint feasibility is necessary, never sufficient for a physical route.
+/// No route-layer restriction exists in current IR: every concrete copper layer
+/// remains eligible, including planes. Endpoints do not imply a layer/path.
+pub(crate) fn validate_route_regions(ir: &BoardIr, regions: &CheckedRegions) -> Findings {
+    let mut findings = Findings::default();
+    let layers: BTreeSet<_> = ir
+        .board
+        .layers
+        .stackup
+        .entries
+        .iter()
+        .filter_map(|layer| match layer {
+            crate::StackupLayer::Copper { id, .. } => Some(id.as_str()),
+            _ => None,
+        })
+        .collect();
+    let mut keepouts: Vec<_> = ir
+        .keepouts
+        .iter()
+        .filter(|keepout| {
+            keepout
+                .disallow
+                .iter()
+                .any(|r| matches!(r, KeepoutRestriction::Copper | KeepoutRestriction::Tracks))
+                && regions.on_board[&keepout.region].is_some()
+        })
+        .collect();
+    keepouts.sort_by(|a, b| a.id.cmp(&b.id));
+    let mut owners: Vec<_> = ir
+        .route_constraints
+        .iter()
+        .map(|route| (route.id.as_str(), "route", vec![&route.net], &route.through))
+        .chain(ir.differential_pairs.iter().map(|pair| {
+            (
+                pair.id.as_str(),
+                "differential pair",
+                vec![&pair.positive, &pair.negative],
+                &pair.through,
+            )
+        }))
+        .collect();
+    owners.sort_by(|a, b| a.0.cmp(b.0));
+    for (owner, kind, nets, through) in owners {
+        let net_ids = nets
+            .iter()
+            .map(|net| net.0.as_str())
+            .collect::<Vec<_>>()
+            .join(", ");
+        findings.skipped += 1;
+        findings.diagnostics.push(Diagnostic::warning("PCBIR043", format!("{kind} constraint {owner} for nets [{net_ids}]: realized route geometry is unavailable; waypoint traversal and ordering, width/gap clearance, layer transitions and remaining path feasibility are unverified"))
+            .with_entity(owner)
+            .with_help("Supply realized routing geometry to verify physical connectivity and traversal. A connected declaration graph and unblocked waypoints establish routing intent only; no endpoint segments or trace envelopes are inferred."));
+        for (index, region) in through.iter().enumerate() {
+            // The region check reports empty visits for both kinds. Still retain
+            // coverage and evaluate the other visits/leg before returning failure.
+            let Some(target) = regions.on_board[region] else {
+                continue;
+            };
+            for net in &nets {
+                findings.evaluated += 1;
+                let mut blockers = Vec::new();
+                for layer in &layers {
+                    let selected: Vec<_> = keepouts
+                        .iter()
+                        .filter(|keepout| {
+                            keepout.copper_layers.iter().any(|id| id == layer)
+                                && !keepout.except.contains(net)
+                                && regions.declared[&keepout.region]
+                                    .intersection(target)
+                                    .is_some()
+                        })
+                        .collect();
+                    let rectangles: Vec<_> = selected
+                        .iter()
+                        .map(|keepout| regions.declared[&keepout.region])
+                        .collect();
+                    // Use authored interiors. Clipping a keepout at the board edge
+                    // must not create an allowed boundary there when the declared
+                    // keepout actually extends beyond it.
+                    if !crate::geometry::interiors_cover(target, &rectangles) {
+                        break;
+                    }
+                    blockers.push(format!(
+                        "{}: [{}]",
+                        layer,
+                        selected
+                            .iter()
+                            .map(|keepout| keepout.id.as_str())
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    ));
+                }
+                if blockers.len() == layers.len() {
+                    findings.diagnostics.push(Diagnostic::error("PCBIR042", format!("{kind} constraint {owner} waypoint {} region {region} for net {} is fully blocked by keepout interiors on every eligible copper layer ({})", index + 1, net.0, blockers.join("; ")))
+                        .with_entity(owner)
+                        .with_help("Move the waypoint or keepout, adjust explicit copper layer scopes, or exempt this net. Every possible visit point, including permitted boundary contact, is excluded on every board copper layer."));
+                }
+            }
+        }
+    }
+    findings
+}

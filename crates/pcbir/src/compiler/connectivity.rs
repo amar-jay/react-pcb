@@ -12,6 +12,9 @@ fn label((part, pin): &Endpoint<'_>) -> String {
 
 /// Check declared connectivity intent, not physical copper continuity. Routes and
 /// differential-pair legs are edges; unresolved zone fills do not imply edges.
+/// Region feasibility is checked independently by constraint_validation. Keep
+/// these edges even when a waypoint is blocked: a graph connection records intent
+/// and never approves realized traversal (reported separately as PCBIR043).
 pub(super) fn validate_connectivity(
     instances: &[PartInstance],
     definitions: &BTreeMap<String, ComponentDefinition>,

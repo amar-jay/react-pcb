@@ -1,6 +1,54 @@
 //! Exact quarter-turn rounded-box geometry in doubled nanometres.
 //! All supported filled primitives are rectangles Minkowski-summed with a disk.
+use crate::ir::regions::CheckedRect;
 use crate::physical::{Feature, Shape};
+
+/// Prove that open rectangle interiors cover every point of a closed waypoint.
+/// Keepout boundaries are allowed, so closed-area union or area totals would
+/// wrongly reject shared edges, seams, isolated points and zero-width exits.
+/// Check each x event and each open slab between events: the active rectangles
+/// are constant there. Their open y intervals must cover both target endpoints
+/// with strictly overlapping intervals. All coordinates and midpoints are exact.
+pub(crate) fn interiors_cover(target: CheckedRect, rectangles: &[CheckedRect]) -> bool {
+    let mut xs = vec![target.min2[0], target.max2[0]];
+    for rect in rectangles {
+        xs.extend(
+            [rect.min2[0], rect.max2[0]]
+                .into_iter()
+                .filter(|x| target.min2[0] < *x && *x < target.max2[0]),
+        );
+    }
+    xs.sort_unstable();
+    xs.dedup();
+    // One further doubling keeps slab midpoints exact even for odd edges.
+    let samples = xs
+        .iter()
+        .map(|x| x * 2)
+        .chain(xs.windows(2).map(|edges| edges[0] + edges[1]));
+    for x in samples {
+        let mut intervals: Vec<_> = rectangles
+            .iter()
+            .filter(|rect| rect.min2[0] * 2 < x && x < rect.max2[0] * 2)
+            .map(|rect| (rect.min2[1], rect.max2[1]))
+            .filter(|(_, max)| *max > target.min2[1])
+            .collect();
+        intervals.sort_unstable();
+        let mut end = target.min2[1];
+        for (min, max) in intervals {
+            if min >= end {
+                break;
+            }
+            end = end.max(max);
+            if end > target.max2[1] {
+                break;
+            }
+        }
+        if end <= target.max2[1] {
+            return false;
+        }
+    }
+    true
+}
 
 #[derive(Clone, Copy)]
 pub(crate) struct Solid {
@@ -82,6 +130,30 @@ impl Solid {
 mod tests {
     use super::*;
     use crate::physical::{Purpose, Role};
+    #[test]
+    fn open_union_keeps_isolated_boundary_points_even_at_large_coordinates() {
+        for offset in [0, -18_014_398_509_481_900_i128, 18_014_398_509_481_900] {
+            let rect = |min: [i128; 2], max: [i128; 2]| CheckedRect {
+                min2: min.map(|n| n + offset),
+                max2: max.map(|n| n + offset),
+            };
+            let target = rect([4, 4], [8, 8]);
+            let mut surrounding = vec![
+                rect([2, 2], [6, 10]),
+                rect([6, 2], [10, 10]),
+                rect([2, 2], [10, 6]),
+                rect([2, 6], [10, 10]),
+            ];
+            // Every point except the shared center (6,6) is prohibited. Area
+            // totals, bounding boxes and rasterization would lose that candidate.
+            assert!(!interiors_cover(target, &surrounding));
+            surrounding.reverse();
+            assert!(!interiors_cover(target, &surrounding));
+            surrounding.push(target);
+            assert!(interiors_cover(target, &surrounding));
+        }
+    }
+
     fn feature(shape: Shape, at: [i64; 2], rotation: u16) -> Feature {
         Feature {
             id: "geometry".into(),

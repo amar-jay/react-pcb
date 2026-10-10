@@ -1,11 +1,11 @@
 # Constraint region implementation plan
 
-Status: phases 1–4 complete and verified. Phases 5–7 are pending.
+Status: phases 1–5 complete and verified. Phases 6–7 are pending.
 
 ## Progress and resume checkpoint
 
 Work is being completed one phase at a time. This checkpoint records the
-implemented boundary so subsequent work can resume at phase 5.
+implemented boundary so subsequent work can resume at phase 6.
 
 | Phase | Status |
 | --- | --- |
@@ -13,8 +13,8 @@ implemented boundary so subsequent work can resume at phase 5.
 | 2. Centralize region and reference validation | Complete and verified. |
 | 3. Make declaration identity predictable | Complete and verified. |
 | 4. Enforce keepouts against available geometry | Complete and verified. |
-| 5. Check route-region feasibility and report coverage | Next. |
-| 6. Make all constraint types inspectable | Pending. |
+| 5. Check route-region feasibility and report coverage | Complete and verified. |
+| 6. Make all constraint types inspectable | Next. |
 | 7. Regression fixtures, documentation and completion | Pending; tests are added alongside each completed phase. |
 
 Phase 1 delivers board IR schema 3, declaration protocol 2, typed keepout
@@ -68,20 +68,46 @@ retains the original violation. ESC geometry passes, with explicit unresolved
 track/via coverage warnings. Legacy numeric pads remain unverified until explicit
 migration supplies canonical physical geometry.
 
-Resume with phase 5 below. Reuse `ir/regions.rs` for checked declared rectangles
-and effective on-board intersections, and `constraint_validation.rs` for shared
-constraint checks. Account for exceptions and every eligible copper layer before
-claiming a waypoint impossible; disjoint waypoints and partial keepout overlap are
-valid intent. Keep route traversal/width/gap/transitions explicitly unverified
-without router geometry. Do not infer ownership from ID spelling, regenerate IDs
-or rewrite off-board geometry. Region sharing and repeated ordered visits remain
-valid in serialized IR. Preserve accumulated warnings when another check is fatal.
+Phase 5 extends `constraint_validation.rs` with route-region feasibility and
+`geometry.rs` with an exact open-rectangle union coverage proof. For each ordinary
+visit or pair leg, copper/track keepouts are selected by concrete layer ID and net
+exception. All board copper layers (including planes) remain eligible because
+current routing intent has no layer restriction. A waypoint is blocked only when
+the authored keepout interiors jointly exclude every point of its effective
+on-board rectangle on every layer. Boundary contact, seams, isolated boundary
+points and one-nanometre gaps prevent false errors; width/gap envelopes and paths
+are not inferred. Authored keepout edges prevent clipping from creating a false
+escape at the board edge. IDs and waypoint reference order are unchanged.
 
-Known remaining gaps: on-board waypoints may still be blocked or otherwise
-impossible; zone boundaries are not drawn. Anonymous repeated declarations require
-stable keys, with actionable diagnostics. Full region inspection and current
-constraint/violation diagnostic geometry are pending phase 6. The schema version
-records semantics and scope, not a claim of full physical validation.
+`PCBIR042` identifies a proven blockage with owner, waypoint sequence number,
+region, net and per-layer keepout IDs. `PCBIR043` warns once per Route or
+DifferentialPair, including owners without waypoints, that physical traversal,
+ordering, width/gap clearance, transitions and remaining path feasibility are
+unverified. Declaration graph connectivity still records intent independently.
+Compilation and SVG projection reject blockage; standalone board validation
+returns it in `constraint-routes` alongside coverage counts. Compiler warnings
+are not duplicated by manufacturing reports. Both examples build successfully
+with explicit unrealized-routing warnings; no source geometry changed in phase 5.
+
+`ir/regions.rs` now exposes `check_regions` to physical checks so empty-waypoint
+errors, other blocked visits and all coverage warnings can accumulate together.
+The strict `validate_regions` wrapper remains at decoding/upgrade boundaries;
+structurally valid saved IR is not certified for keepout satisfaction or routing
+feasibility by migration. Standalone validation still rejects empty waypoints,
+while proven on-board blockage returns a failed report check.
+
+Resume with phase 6 below. Reuse checked authored/effective regions and the shared
+validators. Add zone intent outlines, separate overlay controls, owner metadata,
+selection/highlighting, full scene bounds and current diagnostic geometry for
+failed-build focusing. Keep exports and saved preferences consistent. Do not
+infer ownership from ID spelling, regenerate IDs or rewrite authored geometry.
+Region sharing and repeated ordered visits remain valid in serialized IR.
+
+Known remaining gaps: zone boundaries are not drawn; full constraint inspection,
+separate overlay visibility and current region/violation diagnostic geometry are
+pending phase 6. Realized routing/fills are unavailable and have explicit coverage
+warnings. Anonymous repeated declarations require stable keys, with actionable
+diagnostics. The schema records semantics and scope, not full physical approval.
 
 Evidence: phase 2 adds eight Rust regression tests and four Bun JSX/CLI tests
 covering unit equivalence, exact nm edges, sub-nm and overflow rejection,
@@ -109,7 +135,21 @@ The final `bun run check` passed **96 Rust tests** and **147 Bun tests**, includ
 live preview and basic/ESC examples, plus TypeScript, formatting/checking and Clippy
 with warnings denied. Both example builds also passed.
 
-Phase 4 changes are local; no commit was created by this phase.
+Phase 4 was committed as `496f2eb` (Enforce keepouts against available physical geometry).
+
+Phase 5 adds twelve Rust regressions (eleven direct-protocol/serialized cases and
+one exact-geometry case) and six Bun JSX/CLI regressions covering both route kinds,
+profile independence, joint open-interior coverage, seams/isolated points and
+one-nanometre gaps, large coordinates and unit equivalence, every eligible layer,
+net exceptions, independent pair legs, effective board clipping, disjoint/narrow
+ordered visits, unrealized routing coverage, custom/shared IDs, repeated visits,
+immutable/deterministic reports, connectivity intent and retained warnings/fatal
+findings. Identity and ESC expectations now include per-owner routing warnings.
+The final `bun run check` passed **108 Rust tests** and **153 Bun tests**, including
+live preview, TypeScript, Rust formatting/checking and Clippy with warnings denied.
+Both basic and ESC example builds passed with their new coverage warnings.
+
+Phase 5 changes are local; no commit was created by this phase.
 
 ## Objective
 

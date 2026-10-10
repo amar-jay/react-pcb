@@ -19,7 +19,7 @@ pub fn board_svg(ir: &BoardIr) -> Result<BoardProjection, CompileError> {
     if ir.schema_version != crate::SCHEMA_VERSION {
         return Err(invalid("unsupported board IR version for preview"));
     }
-    let checked = crate::ir::regions::validate_regions(ir)?;
+    let checked = crate::ir::regions::check_regions(ir)?;
     crate::realization::validate_realization(ir)?;
     let outline = ir
         .regions
@@ -29,8 +29,10 @@ pub fn board_svg(ir: &BoardIr) -> Result<BoardProjection, CompileError> {
     let mut min = [x, y];
     let mut max = [x + w, y + h];
     let findings = crate::constraint_validation::validate_keepouts(ir, &checked);
+    let routes = crate::constraint_validation::validate_route_regions(ir, &checked);
     let mut diagnostics = checked.diagnostics;
     diagnostics.extend(findings.diagnostics);
+    diagnostics.extend(routes.diagnostics);
     if let Some(index) = diagnostics
         .iter()
         .position(|d| matches!(d.severity, crate::Severity::Error))

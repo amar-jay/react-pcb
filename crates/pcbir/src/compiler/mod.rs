@@ -22,6 +22,8 @@ use validate::{validate_board_outline, validate_instances, validate_route_endpoi
 #[cfg(test)]
 mod keepout_tests;
 #[cfg(test)]
+mod route_region_tests;
+#[cfg(test)]
 mod tests;
 
 #[derive(Debug, Serialize)]
@@ -253,11 +255,18 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
         keepouts: context.physical.keepouts,
         regions: context.physical.regions,
     };
-    match crate::ir::regions::validate_regions(&ir) {
+    let empty_waypoint;
+    match crate::ir::regions::check_regions(&ir) {
         Ok(checked) => {
             let findings = crate::constraint_validation::validate_keepouts(&ir, &checked);
+            let routes = crate::constraint_validation::validate_route_regions(&ir, &checked);
+            empty_waypoint = checked
+                .diagnostics
+                .iter()
+                .any(|d| matches!(d.severity, crate::Severity::Error));
             diagnostics.extend(checked.diagnostics);
             diagnostics.extend(findings.diagnostics);
+            diagnostics.extend(routes.diagnostics);
         }
         Err(mut error) => {
             let mut previous = context.compiler_diagnostics;
@@ -265,6 +274,16 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
             previous.append(&mut error.diagnostics);
             return Err(error.with_diagnostics(previous));
         }
+    }
+    if empty_waypoint {
+        let index = diagnostics
+            .iter()
+            .position(|d| d.code == "PCBIR039" && matches!(d.severity, crate::Severity::Error))
+            .expect("checked empty waypoint has a fatal diagnostic");
+        let fatal = diagnostics.remove(index);
+        let mut previous = context.compiler_diagnostics;
+        previous.extend(diagnostics);
+        return Err(CompileError::diagnostic(fatal).with_diagnostics(previous));
     }
     let board_manufacturing_report = if let Some(profile) = &ir.board.manufacturing_profile {
         let report = crate::manufacturing::validate_board(&ir, profile)?;
@@ -275,7 +294,7 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
                 .filter(|check| {
                     !matches!(
                         check.id.as_str(),
-                        "constraint-regions" | "constraint-keepouts"
+                        "constraint-regions" | "constraint-keepouts" | "constraint-routes"
                     )
                 })
                 .flat_map(|check| check.diagnostics.iter().cloned()),

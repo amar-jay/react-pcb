@@ -80,6 +80,22 @@ pub(crate) struct CheckedRegions {
 /// unrendered zones and unreferenced regions. Shared region references are legal;
 /// each reference is checked in its owner's context (including waypoint order).
 pub(crate) fn validate_regions(ir: &BoardIr) -> Result<CheckedRegions, CompileError> {
+    let mut checked = check_regions(ir)?;
+    if let Some(index) = checked
+        .diagnostics
+        .iter()
+        .position(|d| matches!(d.severity, Severity::Error))
+    {
+        let fatal = checked.diagnostics.remove(index);
+        return Err(CompileError::diagnostic(fatal).with_diagnostics(checked.diagnostics));
+    }
+    Ok(checked)
+}
+
+/// Structural/reference failures reject immediately. Validated rectangles retain
+/// all off-board findings so physical checks can accumulate coverage and failures
+/// before choosing a fatal diagnostic. Decoding/upgrading uses the strict wrapper.
+pub(crate) fn check_regions(ir: &BoardIr) -> Result<CheckedRegions, CompileError> {
     if ir.schema_version != super::SCHEMA_VERSION || ir.board.id.trim().is_empty() {
         return Err(invalid(
             "PCBIR036",
@@ -310,13 +326,6 @@ pub(crate) fn validate_regions(ir: &BoardIr) -> Result<CheckedRegions, CompileEr
             check_net(net, &keepout.id)?;
         }
         region_use(&keepout.region, &keepout.id, false)?;
-    }
-    if let Some(index) = diagnostics
-        .iter()
-        .position(|d| matches!(d.severity, Severity::Error))
-    {
-        let fatal = diagnostics.remove(index);
-        return Err(CompileError::diagnostic(fatal).with_diagnostics(diagnostics));
     }
     Ok(CheckedRegions {
         declared,

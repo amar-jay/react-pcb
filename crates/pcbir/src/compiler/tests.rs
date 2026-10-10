@@ -1542,7 +1542,12 @@ fn assigns_ids_in_ir_and_retains_all_supported_intent() {
     let serialized = serde_json::to_string(ir).unwrap();
     assert!(!serialized.contains("pcb-"));
     assert!(!serialized.contains("sourceKey"));
-    assert!(output.diagnostics.iter().all(|d| d.code == "PCBIR041"));
+    assert!(
+        output
+            .diagnostics
+            .iter()
+            .all(|d| matches!(d.code, "PCBIR041" | "PCBIR043"))
+    );
 }
 
 #[test]

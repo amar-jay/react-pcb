@@ -70,6 +70,16 @@ unverified; net exceptions only exempt authoritatively bound electrical objects.
 Standalone validation returns proven violations as a failed check, while board
 compilation rejects them. Compiler diagnostics are not duplicated by the report.
 
+`constraint-routes` checks ordinary and differential-pair waypoints against the
+exact union of applicable copper/track keepout interiors, accounting for net
+exceptions and every concrete copper layer. A proven all-layer blockage returns
+`PCBIR042` and a failed check. Each routing owner also receives `PCBIR043` until
+realized traversal, ordering, width/gap clearance, transitions and path feasibility
+can be checked; owners without waypoints are explicitly skipped. Coverage counts
+measure waypoint/net checks and skipped owners. Boundary contact and an available
+candidate layer prevent false failures, but do not prove a physically usable route.
+Compilation and SVG projection enforce the same rules without selecting a profile.
+
 `board-copper-spacing` compares placed pads and copper primitives on each shared
 concrete copper layer ID using `minCopperSpacing`. It checks both different parts
 and concrete-layer aliases within a part, including single-copper-layer boards.
@@ -177,7 +187,8 @@ with `PCBIR037`/`PCBIR038`; an off-board route or differential-pair waypoint rej
 with `PCBIR039`. The board report's `constraint-regions` check carries `PCBIR039`
 warnings for keepouts and zones with no positive-area board intersection.
 Partially off-board regions retain authored geometry. The separate
-`constraint-keepouts` check enforces available physical geometry; route feasibility
+`constraint-keepouts` check enforces available physical geometry and
+`constraint-routes` checks provable waypoint blockage. Remaining path feasibility
 and realized zone fills remain unverified.
 
 Pad mask roles create nominal apertures using the pad's shape. Explicit
@@ -276,7 +287,9 @@ physical definitions and instance geometry. The board emits three footprint repo
 including warnings about remaining unverified coverage. The copper/via keepout
 reserves the board-edge strip up to x=0.745 mm, touching the nearest USB contact
 without overlapping it. Its original 8 mm width overlapped connector copper and
-is retained as a keepout regression.
+is retained as a keepout regression. Its ordinary-route and differential-pair
+waypoints remain unblocked, with `PCBIR043` warnings documenting their unrealized
+routing coverage.
 The capacitor now sits at `[23, 18]` mm, outside the MCU courtyard. Its previous
 `[27, 18]` placement is a regression case that fails both new board checks.
 

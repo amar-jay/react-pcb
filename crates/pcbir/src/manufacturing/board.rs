@@ -35,7 +35,7 @@ struct Object<'a> {
 
 pub fn validate_board(ir: &BoardIr, profile: &Profile) -> Result<BoardReport, CompileError> {
     profile.validate()?;
-    let checked = crate::ir::regions::validate_regions(ir)?;
+    let checked = crate::ir::regions::check_regions(ir)?;
     crate::realization::validate_realization(ir)?;
     let mut outside = crate::compiler::validate::validate_board_outline(
         &ir.parts,
@@ -47,6 +47,22 @@ pub fn validate_board(ir: &BoardIr, profile: &Profile) -> Result<BoardReport, Co
         return Err(CompileError::diagnostic(fatal).with_diagnostics(outside));
     }
     let findings = crate::constraint_validation::validate_keepouts(ir, &checked);
+    let routing = crate::constraint_validation::validate_route_regions(ir, &checked);
+    if let Some(index) = checked
+        .diagnostics
+        .iter()
+        .position(|d| matches!(d.severity, crate::Severity::Error))
+    {
+        let mut diagnostics = checked.diagnostics;
+        let fatal = diagnostics.remove(index);
+        diagnostics.extend(findings.diagnostics);
+        diagnostics.extend(routing.diagnostics);
+        return Err(CompileError::diagnostic(fatal).with_diagnostics(diagnostics));
+    }
+    let mut routes = Check::new("constraint-routes");
+    routes.evaluated = routing.evaluated;
+    routes.skipped = routing.skipped;
+    routes.diagnostics = routing.diagnostics;
     let mut keepouts = Check::new("constraint-keepouts");
     keepouts.evaluated = findings.evaluated;
     keepouts.skipped = findings.skipped;
@@ -204,6 +220,7 @@ pub fn validate_board(ir: &BoardIr, profile: &Profile) -> Result<BoardReport, Co
     let checks = vec![
         regions.finish(),
         keepouts.finish(),
+        routes.finish(),
         spacing.finish(),
         courtyard.finish(),
         unverified.finish(),
