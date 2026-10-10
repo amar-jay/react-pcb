@@ -12,7 +12,7 @@ import {
 import { batteryPlane, boardLayers, groundPlane } from "./layers.ts";
 import { Control, controller } from "./modules/control.tsx";
 import { Drive, gateDriver } from "./modules/drive.tsx";
-import { Inverter, phasePadA } from "./modules/inverter.tsx";
+import { Inverter, phaseHighA } from "./modules/inverter.tsx";
 import { Power, powerShunt } from "./modules/power.tsx";
 
 export default function Esc() {
@@ -78,17 +78,18 @@ export default function Esc() {
 				from={[pad(powerShunt, "1"), pad(powerShunt, "2")]}
 				to={[pad(controller, "PA0"), pad(controller, "PA1")]}
 			>
-				<RouteThrough key="shunt-kelvin" region={rect(1.2, 22, 3.2, 8)} />
-				<RouteThrough key="mcu-sense" region={rect(1.2, 12, 3.2, 6)} />
+				<RouteThrough key="shunt-kelvin" region={rect(2.2, 14, 2, 12)} />
+				<RouteThrough key="mcu-sense" region={rect(2.2, 10, 2, 3)} />
 			</DifferentialPair>
 
 			<Route
 				net={phaseA}
-				from={pad(phasePadA, "P")}
+				// Take VS from the high-side source, away from motor-terminal current.
+				from={pad(phaseHighA, "S")}
 				to={pad(gateDriver, "VS")}
-				width={0.8}
+				width={0.3}
 			>
-				<RouteThrough region={rect(16, 20.4, 16, 2.2)} />
+				<RouteThrough region={rect(16, 20, 1.6, 2.5)} />
 			</Route>
 
 			<Zone
@@ -103,7 +104,12 @@ export default function Esc() {
 				boundary={rect(2, 2, 32, 32)}
 				clearance={0.3}
 			/>
-			<Keepout region={rect(12.4, 10, 2, 2)} disallow={["vias", "copper"]} />
+			{/* Separate the left sensing corridor from switching circuitry while
+			    retaining continuous reference-plane copper. */}
+			<Keepout
+				region={rect(11.5, 14, 1.2, 13)}
+				disallow={["components", "tracks", "vias"]}
+			/>
 		</Board>
 	);
 }

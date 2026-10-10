@@ -14,6 +14,7 @@ const scope = "inverter";
 export const phasePadA = part("J2", `${scope}/J2`);
 export const phasePadB = part("J3", `${scope}/J3`);
 export const phasePadC = part("J4", `${scope}/J4`);
+export const phaseHighA = part("QAH", `${scope}/QAH`);
 
 type PhaseName = "A" | "B" | "C";
 
@@ -52,12 +53,14 @@ function InverterPhase({
 		<>
 			<Mosfet
 				id={high}
-				at={[x, y - 4]}
+				// Drain faces the top VBAT bus; source faces the low-side drain.
+				at={[x, y - 4.8]}
 				connect={{ G: highNet, D: vbat, S: phase }}
 			/>
 			<Mosfet
 				id={low}
-				at={[x, y + 4]}
+				// Leave a body gap for the back-side driver and thermal-via access.
+				at={[x, y + 4.8]}
 				connect={{ G: lowNet, D: phase, S: ground }}
 			/>
 			<PhasePad id={output} at={padAt} connect={{ P: phase }} />
@@ -104,7 +107,7 @@ function InverterParts(props: InverterProps) {
 				gateLow={props.gateLow}
 				driver={props.driver}
 				at={[15.6, 21.3]}
-				padAt={[22.6, 33.2]}
+				padAt={[15.6, 33.2]}
 			/>
 			<InverterPhase
 				name="B"
@@ -112,7 +115,7 @@ function InverterParts(props: InverterProps) {
 				ground={props.ground}
 				phase={props.phaseB}
 				at={[22.2, 21.3]}
-				padAt={[26.9, 33.2]}
+				padAt={[22.2, 33.2]}
 			/>
 			<InverterPhase
 				name="C"
@@ -120,7 +123,7 @@ function InverterParts(props: InverterProps) {
 				ground={props.ground}
 				phase={props.phaseC}
 				at={[28.8, 21.3]}
-				padAt={[31.2, 33.2]}
+				padAt={[28.8, 33.2]}
 			/>
 		</>
 	);

@@ -260,7 +260,8 @@ test("ESC PNG defaults retain courtyard, fabrication, mask, paste and constraint
 		),
 	);
 	expect(board.width).toBe(1024);
-	expect(board.height).toBe(1024);
+	// The ESC is 35 × 36 mm; the export includes the standard board margin.
+	expect(board.height).toBe(1051);
 	for (const color of ["fbbf24", "67e8f9", "c4b5fd"]) {
 		expect(board.colors.has(color)).toBe(true);
 		expect(front.colors.has(color)).toBe(false);

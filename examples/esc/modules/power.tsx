@@ -19,11 +19,22 @@ function PowerParts({ vbat, ground, shuntN }: PowerProps) {
 	const shunt = usePart("R1");
 	return (
 		<>
-			<Battery id={battery} at={[6.0, 32.4]} connect={{ "+": vbat, "-": ground }} />
-			<BulkCapacitor id={bulk} at={[6.4, 26.2]} connect={{ 1: vbat, 2: ground }} />
+			{/* Input at the top edge, adjacent to the high-side drain bus. */}
+			<Battery
+				id={battery}
+				at={[22.2, 4.2]}
+				connect={{ "+": vbat, "-": ground }}
+			/>
+			<BulkCapacitor
+				id={bulk}
+				at={[22.2, 10.3]}
+				rotation={180}
+				connect={{ 1: vbat, 2: ground }}
+			/>
 			<Shunt
 				id={shunt}
-				at={[16.2, 32.2]}
+				// Pin 2 faces the low-side source bus; pin 1 faces the quiet left edge.
+				at={[6.5, 29]}
 				connect={{ 1: ground, 2: shuntN }}
 			/>
 		</>

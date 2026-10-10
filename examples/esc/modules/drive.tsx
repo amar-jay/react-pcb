@@ -24,7 +24,10 @@ function DriveParts(props: DriveProps) {
 		<>
 			<GateDriver
 				id={driver}
-				at={[6.2, 18.2]}
+				// Back-side reflection faces HO/LO toward phase A's gate lands.
+				// The body sits in the gap between the front-side MOSFET rows.
+				at={[18.8, 21.3]}
+				side="back"
 				connect={{
 					HIN: props.pwmHigh,
 					LIN: props.pwmLow,
@@ -38,13 +41,18 @@ function DriveParts(props: DriveProps) {
 			/>
 			<Capacitor
 				id={driverCap}
-				at={[6.2, 22.8]}
+				// VCC/COM are on the right in board front coordinates.
+				at={[23.4, 21.3]}
+				side="back"
+				rotation={270}
 				connect={{ 1: props.gateSupply, 2: props.ground }}
 			/>
 			<Capacitor
 				id={bootCap}
-				at={[11.1, 16.6]}
+				// VB is above VS; back reflection plus rotation puts pin 1 above 2.
+				at={[14.2, 20.665]}
 				side="back"
+				rotation={270}
 				connect={{ 1: props.bootstrap, 2: props.phaseA }}
 			/>
 		</>

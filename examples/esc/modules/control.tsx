@@ -36,8 +36,9 @@ function ControlParts(props: ControlProps) {
 			/>
 			<Capacitor
 				id={logicCap}
-				at={[4.2, 13.5]}
-				side="back"
+				// Pins 6/7 are on the MCU's left edge; avoid a via in this loop.
+				at={[1.2, 7.2]}
+				rotation={90}
 				connect={{ 1: props.logic, 2: props.ground }}
 			/>
 			<Route

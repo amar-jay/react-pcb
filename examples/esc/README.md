@@ -3,7 +3,7 @@
 This extends the basic example with real component identities and eight reusable
 physical footprint definitions. Footprints use semantic layers, exact physical
 units, stable feature IDs, and separate logical-pin bindings. The board is a
-36 × 36 mm footprint study with 17 placed parts. It is not a complete ESC circuit.
+35 × 36 mm footprint study with 17 placed parts. It is not a complete ESC circuit.
 
 ```sh
 bun run examples/esc/index.tsx
@@ -21,7 +21,7 @@ regression-test profiles described below. Importing the
 board entry is safe for preview/watch use; compilation and console output happen
 only when it runs as the main script.
 
-The 36 × 36 mm outline contains the placed physical features. Shrinking it to
+The 35 × 36 mm outline contains the placed physical features. Shrinking it to
 10 × 36 mm rejects compilation and `preview inspect` with `PCBIR031` for 16 parts,
 including `control/U2` and `power/J1`, even without a manufacturing profile.
 The regression is covered in `board-outline.test.tsx`; courtyard and silkscreen
@@ -98,6 +98,52 @@ The nominal body drawings do not encode complete package tolerances or 3D
 height envelopes. Capacitor and shunt courtyard margins allow additional room;
 assembly-process suitability still requires checking the chosen components.
 
+## Placement rationale
+
+The input connector is at the top edge and the three motor terminals are at the
+bottom edge. The power stage occupies the right side; the MCU and shunt-sense
+approach occupy the left. Coordinates below use the board's front view, including
+back-side parts. No mounting-hole or enclosure restrictions have been supplied.
+Supply current, switching frequency, cooling and conductor sizing remain inputs
+to a later electrical and thermal design.
+
+| Parts | Origin (mm), side, rotation | Placement purpose |
+| --- | --- | --- |
+| J1 | (22.2, 4.2), front, 0° | Top-edge battery access; positive contact faces the VBAT side of C1. |
+| C1 | (22.2, 10.3), front, 180° | Beside the high-side drain row, with its VBAT land toward J1 positive. |
+| QAH/QBH/QCH | x = 15.6/22.2/28.8, y = 16.5, front, 0° | Drains face the input bus; sources face the corresponding low-side drains. |
+| QAL/QBL/QCL | Same x, y = 26.1, front, 0° | Sources face the bottom return bus; each column forms one half-bridge. |
+| J2/J3/J4 | Same x, y = 33.2, through-hole | Each output is aligned with its half-bridge, with space for soldering motor wires. |
+| U1 | (18.8, 21.3), back, 0° | Mirrored output pins face the phase-A gates; its body lies between the front-side MOSFET body rows. |
+| C3 | (23.4, 21.3), back, 270° | At U1's VCC/COM edge; supply land above return land. |
+| C4 | (14.2, 20.665), back, 270° | At U1's VB/VS edge; bootstrap land above phase land. |
+| U2 | (7.2, 7.2), front, 0° | Separate from the power stage, with ADC inputs facing the left sensing corridor. |
+| C2 | (1.2, 7.2), front, 90° | Beside U2 pins 6/7, on the same side for a short supply loop. |
+| R1 | (6.5, 29), front, 0° | SHUNT_N land faces the low-side return bus; GND land faces the sensing corridor. |
+
+This placement follows the short gate-loop, local bypassing and separate sense
+pickup principles in [TI SLVA959B, sections 5–7](https://www.ti.com/lit/an/slva959b/slva959b.pdf).
+The [IR2101 datasheet](https://www.infineon.com/assets/row/public/documents/24/49/infineon-ir2101-ds-en.pdf)
+provides the driver pin assignments. U1's opposite-side placement needs short
+gate/source transitions and a thermal-via plan that leaves room for its body and
+lands. It trades a slightly wider half-bridge gap for much shorter gate access.
+
+Canonical pad-center distances, before → after, are C2-to-VDD 6.76 → 1.76 mm,
+HO-to-QAH gate 9.30 → 1.78 mm, and LO-to-QAL gate 11.96 → 5.72 mm. Both C3
+connections are now 2.72 mm from their driver pins, and both C4 connections
+2.42 mm. These are placement distances, not routed trace lengths or loop
+inductance estimates. C1 is closer to the drain row, but one shared 10 μF
+capacitor does not establish adequate local bypassing for all three phases.
+
+The VS route intent now starts at QAH's source rather than the motor terminal.
+Motor copper must reach the junction between each high-side source and low-side
+drain without sharing the driver's sense pickup. The shunt corridors approach
+the MCU along the left edge; they are placeholders for Kelvin routing and future
+conditioning. The buffer at x = 11.5–12.7, y = 14–27 excludes components,
+tracks and vias while permitting reference-plane copper. It does not create a
+split ground plane. These constraints remain intent and are not enforced as
+realized routing by the current compiler.
+
 ## Inspection policy and coverage
 
 [`footprints/index.ts`](footprints/index.ts) declares example thresholds: copper
@@ -129,6 +175,8 @@ connectors/regulators. Bootstrap charging diodes, gate resistors/pulldowns,
 reset/debug connections, full decoupling, current-sense conditioning/protection,
 and phase-voltage sensing are not designed. The MCU logical definition remains
 explicitly partial even though its physical footprint contains every land.
+Driver COM remains connected to battery-side GND while low-side sources use
+SHUNT_N; the driver return reference across the shunt needs electrical review.
 
 The IR's route and zone declarations express intent; no actual traces, power
 planes, thermal vias or fabrication outputs have been synthesized. The 10 μF bus
