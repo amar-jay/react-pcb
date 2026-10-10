@@ -1,13 +1,13 @@
 export type DeclarationNode = {
-  type: string;
-  sourceKey?: string;
-  props: Record<string, unknown>;
-  children: DeclarationNode[];
+	type: string;
+	sourceKey?: string;
+	props: Record<string, unknown>;
+	children: DeclarationNode[];
 };
 
 export type DeclarationTree = {
-  kind: 'react-pcb-declarations';
-  children: DeclarationNode[];
+	kind: "react-pcb-declarations";
+	children: DeclarationNode[];
 };
 
-export type RendererRoot = DeclarationTree & {onCommit: () => void};
+export type RendererRoot = DeclarationTree & { onCommit: () => void };

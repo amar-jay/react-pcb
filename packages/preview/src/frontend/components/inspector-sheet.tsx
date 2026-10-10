@@ -1,108 +1,108 @@
-import { CircuitBoard, PanelRight } from 'lucide-react';
-import type { IrPart } from '@react-pcb/core';
-import type { PreviewSnapshot } from '../../index.ts';
-import { Inspector } from './inspector.tsx';
-import { Button } from './ui/button';
+import { CircuitBoard, PanelRight } from "lucide-react";
+import type { IrPart } from "@react-pcb/core";
+import type { PreviewSnapshot } from "../../index.ts";
+import { Inspector } from "./inspector.tsx";
+import { Button } from "./ui/button";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from './ui/sheet';
-import { ScrollArea } from './ui/scroll-area';
+	Sheet,
+	SheetContent,
+	SheetDescription,
+	SheetHeader,
+	SheetTitle,
+	SheetTrigger,
+} from "./ui/sheet";
+import { ScrollArea } from "./ui/scroll-area";
 
 export function InspectorSheet({
-  snapshot,
-  part,
-  net,
-  onNet,
-  open,
-  onOpenChange,
-  compact,
-  onBack,
+	snapshot,
+	part,
+	net,
+	onNet,
+	open,
+	onOpenChange,
+	compact,
+	onBack,
 }: {
-  snapshot: PreviewSnapshot;
-  part: IrPart | undefined;
-  net: string;
-  onNet: (id: string) => void;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  compact: boolean;
-  onBack: () => void;
+	snapshot: PreviewSnapshot;
+	part: IrPart | undefined;
+	net: string;
+	onNet: (id: string) => void;
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	compact: boolean;
+	onBack: () => void;
 }) {
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange} modal={compact}>
-      <SheetTrigger asChild>
-        <Button
-          id="overview-trigger"
-          variant="outline"
-          className="gap-2 px-3 max-md:px-2 max-md:text-[12px]"
-        >
-          <PanelRight size={15} />
-          <span>{part ? part.reference : 'Board overview'}</span>
-        </Button>
-      </SheetTrigger>
-      <SheetContent
-        className="w-[min(100vw,390px)] max-w-[390px] gap-0 animate-panel-right sm:max-w-[390px] data-[docked=true]:top-[14px] data-[docked=true]:right-4 data-[docked=true]:bottom-[14px] data-[docked=true]:h-auto data-[docked=true]:rounded-lg data-[docked=true]:border data-[docked=true]:shadow-[0_2px_3px_#171d3004]"
-        data-docked={!compact}
-        onInteractOutside={(event) => {
-          if (!compact) event.preventDefault();
-        }}
-        onCloseAutoFocus={(event) => {
-          event.preventDefault();
-          document
-            .querySelector<HTMLButtonElement>('#overview-trigger')
-            ?.focus();
-        }}
-      >
-        <SheetHeader
-          data-kind={part ? 'part' : 'board'}
-          className="border-b py-3.5 pr-11 pl-5"
-        >
-          <div className="flex items-center gap-2">
-            {part && (
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Back to board overview"
-                title="Back to board overview"
-                className="-ml-1 shrink-0 text-muted-foreground"
-                onClick={onBack}
-              >
-                <CircuitBoard size={15} />
-              </Button>
-            )}
-            <SheetTitle className="text-[18px]">
-              {part ? 'Part inspection' : 'Board overview'}
-            </SheetTitle>
-          </div>
-          <SheetDescription
-            className={`text-[12px] leading-[1.65] ${!snapshot.error ? 'sr-only' : ''}`}
-          >
-            {snapshot.error
-              ? 'Details from the last successful build.'
-              : part
-                ? 'Placement, connections, and footprint checks.'
-                : 'Dimensions, manufacturing checks, and layer stackup.'}
-          </SheetDescription>
-        </SheetHeader>
-        <ScrollArea className="min-h-0 flex-1">
-          <div
-            id="part-details"
-            className="min-h-0 flex-1 overflow-visible px-5 py-4 [scrollbar-width:thin]"
-            data-kind={part ? 'part' : 'board'}
-          >
-            <Inspector
-              snapshot={snapshot}
-              part={part}
-              net={net}
-              onNet={onNet}
-            />
-          </div>
-        </ScrollArea>
-      </SheetContent>
-    </Sheet>
-  );
+	return (
+		<Sheet open={open} onOpenChange={onOpenChange} modal={compact}>
+			<SheetTrigger asChild>
+				<Button
+					id="overview-trigger"
+					variant="outline"
+					className="gap-2 px-3 max-md:px-2 max-md:text-[12px]"
+				>
+					<PanelRight size={15} />
+					<span>{part ? part.reference : "Board overview"}</span>
+				</Button>
+			</SheetTrigger>
+			<SheetContent
+				className="w-[min(100vw,390px)] max-w-[390px] gap-0 animate-panel-right sm:max-w-[390px] data-[docked=true]:top-[14px] data-[docked=true]:right-4 data-[docked=true]:bottom-[14px] data-[docked=true]:h-auto data-[docked=true]:rounded-lg data-[docked=true]:border data-[docked=true]:shadow-[0_2px_3px_#171d3004]"
+				data-docked={!compact}
+				onInteractOutside={(event) => {
+					if (!compact) event.preventDefault();
+				}}
+				onCloseAutoFocus={(event) => {
+					event.preventDefault();
+					document
+						.querySelector<HTMLButtonElement>("#overview-trigger")
+						?.focus();
+				}}
+			>
+				<SheetHeader
+					data-kind={part ? "part" : "board"}
+					className="border-b py-3.5 pr-11 pl-5"
+				>
+					<div className="flex items-center gap-2">
+						{part && (
+							<Button
+								variant="ghost"
+								size="icon-sm"
+								aria-label="Back to board overview"
+								title="Back to board overview"
+								className="-ml-1 shrink-0 text-muted-foreground"
+								onClick={onBack}
+							>
+								<CircuitBoard size={15} />
+							</Button>
+						)}
+						<SheetTitle className="text-[18px]">
+							{part ? "Part inspection" : "Board overview"}
+						</SheetTitle>
+					</div>
+					<SheetDescription
+						className={`text-[12px] leading-[1.65] ${!snapshot.error ? "sr-only" : ""}`}
+					>
+						{snapshot.error
+							? "Details from the last successful build."
+							: part
+								? "Placement, connections, and footprint checks."
+								: "Dimensions, manufacturing checks, and layer stackup."}
+					</SheetDescription>
+				</SheetHeader>
+				<ScrollArea className="min-h-0 flex-1">
+					<div
+						id="part-details"
+						className="min-h-0 flex-1 overflow-visible px-5 py-4 [scrollbar-width:thin]"
+						data-kind={part ? "part" : "board"}
+					>
+						<Inspector
+							snapshot={snapshot}
+							part={part}
+							net={net}
+							onNet={onNet}
+						/>
+					</div>
+				</ScrollArea>
+			</SheetContent>
+		</Sheet>
+	);
 }

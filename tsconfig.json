@@ -1,25 +1,25 @@
 {
-  "compilerOptions": {
-    "lib": ["ESNext"],
-    "target": "ESNext",
-    "module": "Preserve",
-    "moduleDetection": "force",
-    "moduleResolution": "bundler",
-    "paths": {
-      "@react-pcb/core": ["./packages/react-pcb/src/index.ts"],
-      "@react-pcb/preview": ["./packages/preview/src/index.ts"],
-      "@preview/*": ["./packages/preview/src/frontend/*"]
-    },
-    "jsx": "react-jsx",
-    "types": ["bun"],
-    "verbatimModuleSyntax": true,
-    "allowImportingTsExtensions": true,
-    "noEmit": true,
-    "strict": true,
-    "skipLibCheck": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true
-  },
-  "include": ["examples", "packages"]
+	"compilerOptions": {
+		"lib": ["ESNext"],
+		"target": "ESNext",
+		"module": "Preserve",
+		"moduleDetection": "force",
+		"moduleResolution": "bundler",
+		"paths": {
+			"@react-pcb/core": ["./packages/react-pcb/src/index.ts"],
+			"@react-pcb/preview": ["./packages/preview/src/index.ts"],
+			"@preview/*": ["./packages/preview/src/frontend/*"]
+		},
+		"jsx": "react-jsx",
+		"types": ["bun"],
+		"verbatimModuleSyntax": true,
+		"allowImportingTsExtensions": true,
+		"noEmit": true,
+		"strict": true,
+		"skipLibCheck": true,
+		"noFallthroughCasesInSwitch": true,
+		"noUncheckedIndexedAccess": true,
+		"noImplicitOverride": true
+	},
+	"include": ["examples", "packages"]
 }
