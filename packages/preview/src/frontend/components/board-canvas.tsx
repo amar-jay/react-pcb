@@ -2,6 +2,7 @@ import {
   useCallback,
   useImperativeHandle,
   type Ref,
+  type CSSProperties,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -125,6 +126,11 @@ export function BoardCanvas({
       .split(/\s+/)
       .map(Number) as View;
   }, [markup]);
+  // SVG world coordinates use millimetres: keep a 1 mm grid anchored at (0, 0).
+  const gridWidth = canvasViewport ? Math.abs(canvasViewport.transform.a) : 20;
+  const gridHeight = canvasViewport ? Math.abs(canvasViewport.transform.d) : 20;
+  const dotRadius = Math.min(1.1, gridWidth / 10, gridHeight / 10);
+
   const measurementTarget =
     measurementEnd ?? (measurementStart && measuring ? cursor : null);
   const measurement =
@@ -263,8 +269,17 @@ export function BoardCanvas({
     <>
       <div
         id="canvas-surface"
-        className="relative min-h-[340px] flex-1 overflow-hidden bg-canvas bg-[radial-gradient(var(--canvas-dot)_1.1px,transparent_1.1px)] bg-size-[20px_20px] max-[701px]:min-h-[400px]"
+        className="relative min-h-[340px] flex-1 overflow-hidden bg-canvas bg-[radial-gradient(var(--canvas-dot)_var(--canvas-dot-radius),transparent_var(--canvas-dot-radius))] max-[701px]:min-h-[400px]"
         ref={shell}
+        style={
+          {
+            '--canvas-dot-radius': `${dotRadius}px`,
+            backgroundSize: `${gridWidth}px ${gridHeight}px`,
+            backgroundPosition: canvasViewport
+              ? `${canvasViewport.transform.e - gridWidth / 2}px ${canvasViewport.transform.f - gridHeight / 2}px`
+              : '0px 0px',
+          } as CSSProperties
+        }
       >
         <div
           className="absolute top-0 left-0 z-2 grid size-7 place-items-center border-r border-b bg-card font-mono text-[10px] leading-normal text-muted-foreground"

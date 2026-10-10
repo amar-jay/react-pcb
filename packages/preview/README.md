@@ -9,7 +9,7 @@ The UI uses React, Bun's HTML bundler, Tailwind CSS, shadcn sidebar/sheet/dialog
 primitives, and controls from the `@amarjay-ui` registry. It includes a board
 canvas, layer/overlay controls, searchable parts, an inspector, diagnostics,
 an export menu, and light/dark themes.
-The workbench groups layers into copper, technical front/back pairs, and overlays.
+The workbench groups layers into copper, technical types, and overlays. Each technical type has a visibility menu for Hidden, Front, Back or Both, limited to the sides present in the board.
 Canvas rulers follow actual millimetre coordinates through pan and zoom; the
 inspector displays board dimensions and stackup or the selected part's details.
 The design sidebar collapses with its toggle or `Ctrl/Cmd+B`. Board/part details
@@ -102,3 +102,5 @@ contracts, rebuild behavior, and verification coverage.
 The canvas uses a dotted background. Use the ruler button (or press `R` while the canvas is focused), then click two points to measure their distance in millimetres. The measurement stays aligned when you pan or zoom. Alt-drag pans while measuring; `Escape` clears the measurement and exits the tool.
 
 Open the shadcn command palette with the toolbar search button or `Ctrl/Cmd+K`. Search canvas actions, parts, nets, layers, diagnostics, theme settings and exports; use arrow keys and Enter to run a command, or Escape to close it.
+
+The Layers tab includes Front, Back, Copper only, Fabrication and All layers presets, also searchable in the command palette. Front/Back show the corresponding copper and silkscreen with drills and references; Fabrication shows fabrication and courtyard drawings with drills and references. Manual toggles display Custom unless they match a preset. A selected preset is reapplied when the live board rebuilds.

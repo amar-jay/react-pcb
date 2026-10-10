@@ -7,6 +7,8 @@ import { Box, Layers3, Moon, Sun } from 'lucide-react';
 import type { BoardIr } from '@react-pcb/core';
 import type { SceneLayer } from '../lib/scene.ts';
 import { PartsList } from './parts-list.tsx';
+import { LayerPresetSelect } from './layer-preset-select.tsx';
+import type { LayerPresetId } from '../lib/layer-presets.ts';
 import { LayerGroup } from './layer-group.tsx';
 import {
   Sidebar,
@@ -28,6 +30,8 @@ type Props = {
   layers: SceneLayer[];
   visibility: Record<string, boolean>;
   onSelect: (id: string) => void;
+  preset: LayerPresetId | 'custom';
+  onPreset: (preset: LayerPresetId) => void;
   onToggle: (key: string, visible: boolean) => void;
 };
 
@@ -42,6 +46,8 @@ export function NavigationPanel({
   visibility,
   onSelect,
   onToggle,
+  preset,
+  onPreset,
 }: Props) {
   const [tab, setTab] = useState<'layers' | 'parts'>('layers');
   const { setOpenMobile } = useSidebar();
@@ -87,6 +93,11 @@ export function NavigationPanel({
             forceMount
             className="min-h-0 flex-1 px-4 pt-2 pb-4 [scrollbar-width:thin] data-[state=inactive]:hidden"
           >
+            <LayerPresetSelect
+              value={preset}
+              onSelect={onPreset}
+              disabled={!layers.length}
+            />
             <div id="layers">
               <LayerGroup
                 title="Copper"
@@ -100,10 +111,7 @@ export function NavigationPanel({
                   onToggle={onToggle}
                 />
               </LayerGroup>
-              <LayerGroup
-                title="Technical"
-                legend={<span title="F: front · B: back">F · B</span>}
-              >
+              <LayerGroup title="Technical">
                 <TechnicalLayers
                   items={layers.filter(
                     (layer) => layer.category === 'technical',

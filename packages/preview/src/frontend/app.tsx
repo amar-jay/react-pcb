@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { usePreview } from './hooks/use-preview.ts';
 import { useIsMobile } from './hooks/use-mobile';
+import {
+  matchingLayerPreset,
+  presetVisibility,
+  type LayerPresetId,
+} from './lib/layer-presets.ts';
 import { sceneLayers } from './lib/scene.ts';
 import { previewFindings } from './lib/findings.ts';
 import { NavigationPanel } from './components/navigation-panel.tsx';
@@ -45,6 +50,19 @@ export function App() {
     () => sceneLayers(snapshot.projection?.svg ?? null, ir),
     [snapshot.projection?.svg, ir],
   );
+  const [chosenPreset, setChosenPreset] = useState<LayerPresetId | null>(null);
+  const applyPreset = (preset: LayerPresetId) => {
+    setChosenPreset(preset);
+    setVisibility(presetVisibility(layers, preset));
+  };
+  const toggleLayer = (key: string, visible: boolean) => {
+    setChosenPreset(null);
+    setVisibility((previous) => ({ ...previous, [key]: visible }));
+  };
+  useEffect(() => {
+    if (chosenPreset) setVisibility(presetVisibility(layers, chosenPreset));
+  }, [layers, chosenPreset]);
+  const preset = chosenPreset ?? matchingLayerPreset(layers, visibility);
   const part = ir?.parts.find((part) => part.id === selected);
   const activeNet = ir?.nets.some((item) => item.id === net) ? net : '';
   const title =
@@ -95,9 +113,9 @@ export function App() {
             layers={layers}
             visibility={visibility}
             onSelect={selectPart}
-            onToggle={(key, value) =>
-              setVisibility((previous) => ({ ...previous, [key]: value }))
-            }
+            onToggle={toggleLayer}
+            preset={preset}
+            onPreset={applyPreset}
           />
 
           <main className="mx-4 my-3.5 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border bg-card group-data-[inspector-open=true]/workbench:mr-[422px] max-md:m-2">
@@ -119,9 +137,8 @@ export function App() {
                 }
                 onSelect={selectPart}
                 onNet={setNet}
-                onToggleLayer={(key, visible) =>
-                  setVisibility((previous) => ({ ...previous, [key]: visible }))
-                }
+                onToggleLayer={toggleLayer}
+                onPreset={applyPreset}
                 onOverview={() => {
                   setSelected(null);
                   setInspectorOpen(true);

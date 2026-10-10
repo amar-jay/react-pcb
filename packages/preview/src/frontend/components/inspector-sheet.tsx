@@ -57,11 +57,30 @@ export function InspectorSheet({
             ?.focus();
         }}
       >
-        <SheetHeader className="border-b pt-6 pr-11 pb-5 pl-[22px]">
-          <SheetTitle className="text-[18px]">
-            {part ? 'Part inspection' : 'Board overview'}
-          </SheetTitle>
-          <SheetDescription className="text-[12px] leading-[1.65]">
+        <SheetHeader
+          data-kind={part ? 'part' : 'board'}
+          className="border-b py-3.5 pr-11 pl-5"
+        >
+          <div className="flex items-center gap-2">
+            {part && (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Back to board overview"
+                title="Back to board overview"
+                className="-ml-1 shrink-0 text-muted-foreground"
+                onClick={onBack}
+              >
+                <CircuitBoard size={15} />
+              </Button>
+            )}
+            <SheetTitle className="text-[18px]">
+              {part ? 'Part inspection' : 'Board overview'}
+            </SheetTitle>
+          </div>
+          <SheetDescription
+            className={`text-[12px] leading-[1.65] ${!snapshot.error ? 'sr-only' : ''}`}
+          >
             {snapshot.error
               ? 'Details from the last successful build.'
               : part
@@ -69,18 +88,10 @@ export function InspectorSheet({
                 : 'Dimensions, manufacturing checks, and layer stackup.'}
           </SheetDescription>
         </SheetHeader>
-        {part && (
-          <div className="px-3.5 pt-2.5 [&_button]:gap-2 [&_button]:text-[12px] [&_button]:text-muted-foreground">
-            <Button variant="ghost" onClick={onBack}>
-              <CircuitBoard size={14} />
-              Back to board overview
-            </Button>
-          </div>
-        )}
         <ScrollArea className="min-h-0 flex-1">
           <div
             id="part-details"
-            className="min-h-0 flex-1 overflow-visible px-5 py-[22px] [scrollbar-width:thin]"
+            className="min-h-0 flex-1 overflow-visible px-5 py-4 [scrollbar-width:thin]"
             data-kind={part ? 'part' : 'board'}
           >
             <Inspector

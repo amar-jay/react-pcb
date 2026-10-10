@@ -19,6 +19,7 @@ import {
   X,
 } from 'lucide-react';
 import type { PreviewSnapshot } from '../../index.ts';
+import { layerPresets, type LayerPresetId } from '../lib/layer-presets.ts';
 import { download, type SceneLayer } from '../lib/scene.ts';
 import type { CanvasActions } from './board-canvas.tsx';
 import { IconButton } from './icon-button.tsx';
@@ -43,6 +44,7 @@ type Props = {
   onSelect: (id: string) => void;
   onNet: (id: string) => void;
   onToggleLayer: (key: string, visible: boolean) => void;
+  onPreset: (preset: LayerPresetId) => void;
   onOverview: () => void;
   onDiagnostics: () => void;
   onFailure: () => void;
@@ -58,6 +60,7 @@ export function WorkbenchCommand({
   onSelect,
   onNet,
   onToggleLayer,
+  onPreset,
   onOverview,
   onDiagnostics,
   onFailure,
@@ -166,6 +169,21 @@ export function WorkbenchCommand({
               <X />
               Clear measurement
             </CommandItem>
+          </CommandGroup>
+          <CommandSeparator />
+          <CommandGroup heading="Layer presets">
+            {layerPresets.map((preset) => (
+              <CommandItem
+                key={preset.id}
+                value={`preset:${preset.id}`}
+                keywords={[`Layer preset ${preset.label}`, preset.description]}
+                disabled={!layers.length}
+                onSelect={() => run(() => onPreset(preset.id))}
+              >
+                <Layers />
+                {preset.label}
+              </CommandItem>
+            ))}
           </CommandGroup>
           <CommandSeparator />
           <CommandGroup heading="Workbench">

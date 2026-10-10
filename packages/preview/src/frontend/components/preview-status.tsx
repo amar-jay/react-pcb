@@ -1,4 +1,4 @@
-import { SquareCheck, SquareX } from 'lucide-react';
+import { CircleCheck, CircleX } from 'lucide-react';
 import type { PreviewSnapshot } from '../../index.ts';
 import type { PreviewConnection } from '../hooks/use-preview.ts';
 import { IconButton } from './icon-button.tsx';
@@ -44,7 +44,7 @@ export function PreviewStatus({
         className="size-7 shrink-0 text-destructive hover:text-destructive"
         onClick={onViewFailure}
       >
-        <SquareX className="size-5" aria-hidden="true" />
+        <CircleX className="size-5" aria-hidden="true" />
       </IconButton>
     );
   }
@@ -64,7 +64,7 @@ export function PreviewStatus({
         data-state="ready"
         className="grid size-7 shrink-0 place-items-center text-emerald-600 dark:text-emerald-400"
       >
-        <SquareCheck className="size-5" aria-hidden="true" />
+        <CircleCheck className="size-5" aria-hidden="true" />
       </span>
     );
   }

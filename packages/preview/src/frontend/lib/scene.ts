@@ -11,6 +11,8 @@ export type SceneLayer = {
   group: string;
   side: 'front' | 'back' | null;
   detail: string;
+  kind: string;
+  purpose?: string;
 };
 
 export function boardSize(ir: BoardIr) {
@@ -88,6 +90,12 @@ export function sceneLayers(
       key: `${overlay ? 'overlay' : 'layer'}:${id}`,
       id,
       name,
+      kind: overlay
+        ? id
+        : depth >= 0
+          ? 'copper'
+          : (technical?.kind ?? 'unknown'),
+      purpose: technical?.kind === 'mechanical' ? technical.purpose : undefined,
       overlay,
       color,
       category,

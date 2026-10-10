@@ -4,12 +4,10 @@ import {
   Check,
   ChevronDown,
   Crosshair,
-  MousePointer2,
 } from 'lucide-react';
 import type { BoardIr, IrPart } from '@react-pcb/core';
 import type { PreviewSnapshot } from '../../index.ts';
 import { Badge } from './ui/badge';
-import { Card, CardContent } from './ui/card';
 import { InspectorSection, DetailRow } from './inspector-section.tsx';
 import { LayerStackup } from './layer-stackup.tsx';
 
@@ -72,56 +70,43 @@ function BoardOverview({
   ];
   return (
     <>
-      <Card className="rounded-lg bg-muted py-4">
-        <CardContent>
-          <span className="text-[12px] text-muted-foreground">
-            Board dimensions
-          </span>
-          <p className="mt-[5px] flex flex-wrap items-baseline gap-[9px]">
-            {outline ? (
-              <>
-                <strong className="font-mono text-[25px] leading-[1.5] font-normal tracking-[-1px] wrap-anywhere">
-                  {outline.width}{' '}
-                  <span className="text-[19px] text-muted-foreground">×</span>{' '}
-                  {outline.height}
-                </strong>
-                <small className="font-mono text-[12px] [line-height:normal] text-muted-foreground">
-                  {ir.units}
-                </small>
-              </>
-            ) : (
-              'Unresolved outline'
-            )}
-          </p>
-          {outline && (
-            <small className="mt-1 block font-mono text-[11px] leading-[1.5] text-muted-foreground wrap-anywhere">
-              Origin {outline.x}, {outline.y} {ir.units}
-            </small>
-          )}
-        </CardContent>
-      </Card>
-      <dl className="mt-5 grid grid-cols-2 gap-x-5 gap-y-3">
-        {metrics.map(({ label, value, total }) => (
-          <div key={label}>
-            <dt className="text-[12px] text-muted-foreground">{label}</dt>
-            <dd className="mt-0.5 font-mono text-[21px] leading-[1.4]">
-              {value}
-              {total !== undefined && (
-                <small className="text-[13px] text-muted-foreground">
-                  {' '}
-                  / {total}
-                </small>
-              )}
+      <div className="rounded-md border bg-muted/50 p-3">
+        <dl>
+          <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+            <dt className="text-[12px] text-muted-foreground">Dimensions</dt>
+            <dd className="font-mono text-[16px] leading-6 wrap-anywhere">
+              {outline
+                ? `${outline.width} × ${outline.height} ${ir.units}`
+                : 'Unresolved outline'}
             </dd>
           </div>
-        ))}
-      </dl>
-      <div className="mt-4 flex gap-2.5 border-t pt-4 text-muted-foreground">
-        <MousePointer2 size={16} className="mt-[3px] shrink-0" />
-        <p className="text-[12px] leading-[1.7]">
-          Select a part on the board or in the parts list to inspect it.
-        </p>
+          {outline && (
+            <div className="mt-1 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+              <dt>Origin</dt>
+              <dd className="font-mono wrap-anywhere">
+                {outline.x}, {outline.y} {ir.units}
+              </dd>
+            </div>
+          )}
+        </dl>
+        <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 border-t pt-3">
+          {metrics.map(({ label, value, total }) => (
+            <div
+              key={label}
+              className="flex min-w-0 items-baseline justify-between gap-2"
+            >
+              <dt className="text-[11px] text-muted-foreground">{label}</dt>
+              <dd className="shrink-0 font-mono text-[13px] leading-5">
+                {value}
+                {total !== undefined && (
+                  <span className="text-muted-foreground"> / {total}</span>
+                )}
+              </dd>
+            </div>
+          ))}
+        </dl>
       </div>
+      <LayerStackup ir={ir} />
       {report && (
         <InspectorSection
           title={
@@ -149,7 +134,6 @@ function BoardOverview({
           </p>
         </InspectorSection>
       )}
-      <LayerStackup ir={ir} />
     </>
   );
 }
@@ -170,23 +154,23 @@ function PartDetails({
   const component = ir.componentDefinitions[part.component];
   const report = snapshot.result?.manufacturingReports[part.footprint];
   return (
-    <>
+    <div className="[&>section]:mt-4 [&>section]:pt-3 [&>section>h4]:mb-2 [&>section>h4]:text-[13px]">
       <div className="flex items-center justify-between gap-3">
-        <h3 className="min-w-0 font-mono text-[30px] leading-[1.3] wrap-anywhere">
+        <h3 className="min-w-0 font-mono text-[20px] leading-6 wrap-anywhere">
           {part.reference}
         </h3>
         <Badge
           variant="outline"
-          className="rounded-[5px] px-[7px] py-1 text-[11px] text-muted-foreground"
+          className="rounded-[5px] px-[7px] py-0.5 text-[11px] text-muted-foreground"
         >
           {part.side === 'front' ? 'Front' : 'Back'} side
         </Badge>
       </div>
-      <p className="mt-2.5 text-[15px] wrap-anywhere">
+      <p className="mt-1 text-[13px] wrap-anywhere">
         {component?.mpn ?? component?.value ?? part.component}
       </p>
       {component?.manufacturer && (
-        <p className="mt-1 text-[12px] text-muted-foreground">
+        <p className="mt-0.5 text-[11px] text-muted-foreground">
           {component.manufacturer}
         </p>
       )}
@@ -197,34 +181,29 @@ function PartDetails({
           </>
         }
       >
-        {part.at ? (
-          <dl className="mb-3 grid grid-cols-2 gap-2.5">
-            {part.at.map((position, index) => (
-              <div key={index} className="min-w-0 rounded-md bg-muted p-3">
-                <dt className="text-[11px] text-muted-foreground">
-                  {index === 0 ? 'X' : 'Y'} position
-                </dt>
-                <dd className="font-mono text-[19px] leading-[1.6] wrap-anywhere">
-                  {position}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        ) : (
-          <p className="py-2.5 text-[13px] leading-[1.7] text-muted-foreground">
-            Unplaced
-          </p>
-        )}
-        <dl>
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-1 [&>div]:gap-2 [&>div]:py-1 [&>div]:text-[12px]">
+          {part.at ? (
+            part.at.map((position, index) => (
+              <DetailRow
+                key={index}
+                label={index === 0 ? 'X position' : 'Y position'}
+                value={String(position)}
+              />
+            ))
+          ) : (
+            <div className="col-span-2 py-1 text-[12px] text-muted-foreground">
+              Unplaced
+            </div>
+          )}
           <DetailRow label="Rotation" value={`${part.rotation}°`} />
           <DetailRow
-            label="Physical features"
+            label="Features"
             value={String(Object.keys(part.physicalFeatures).length)}
           />
         </dl>
       </InspectorSection>
       <InspectorSection title="Footprint">
-        <p className="rounded-md border bg-muted px-3 py-2.5 font-mono text-[12px] leading-[1.7] wrap-anywhere">
+        <p className="rounded-md border bg-muted px-2.5 py-1.5 font-mono text-[11px] leading-[1.6] wrap-anywhere">
           {part.footprint}
         </p>
       </InspectorSection>
@@ -235,7 +214,7 @@ function PartDetails({
           </>
         }
       >
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1">
           {Object.entries(part.connections).map(([pin, id]) => (
             <ConnectionButton
               key={pin}
@@ -260,7 +239,7 @@ function PartDetails({
             open={!report.conformsToCheckedRules}
           >
             <summary
-              className="flex list-none items-center gap-2 bg-[color-mix(in_srgb,var(--success)_5%,var(--card))] p-[11px] text-[12px] text-success data-[state=failed]:bg-[color-mix(in_srgb,var(--destructive)_5%,var(--card))] data-[state=failed]:text-destructive [&::-webkit-details-marker]:hidden"
+              className="flex list-none items-center gap-2 bg-[color-mix(in_srgb,var(--success)_5%,var(--card))] px-2.5 py-2 text-[12px] text-success data-[state=failed]:bg-[color-mix(in_srgb,var(--destructive)_5%,var(--card))] data-[state=failed]:text-destructive [&::-webkit-details-marker]:hidden"
               data-state={report.conformsToCheckedRules ? 'passed' : 'failed'}
             >
               {report.conformsToCheckedRules ? (
@@ -303,7 +282,7 @@ function PartDetails({
           </p>
         )}
       </InspectorSection>
-    </>
+    </div>
   );
 }
 
@@ -321,16 +300,16 @@ function ConnectionButton({
   return (
     <button
       type="button"
-      className="flex min-h-[39px] w-full items-center gap-2.5 rounded-md border bg-card px-[11px] py-2 text-left hover:border-primary aria-pressed:border-[color-mix(in_srgb,var(--primary)_40%,var(--border))] aria-pressed:bg-secondary"
+      className="flex min-h-[32px] w-full items-center gap-2 rounded-md border bg-card px-2.5 py-1.5 text-left hover:border-primary aria-pressed:border-[color-mix(in_srgb,var(--primary)_40%,var(--border))] aria-pressed:bg-secondary"
       aria-pressed={active}
       onClick={onClick}
       title={`Highlight ${name}`}
     >
-      <span className="min-w-[26px] font-mono text-[12px] [line-height:normal] text-muted-foreground wrap-anywhere">
+      <span className="min-w-[26px] font-mono text-[11px] [line-height:normal] text-muted-foreground wrap-anywhere">
         {pin}
       </span>
       <ArrowRight size={14} className="shrink-0 text-muted-foreground" />
-      <span className="ml-auto min-w-0 text-[13px] text-primary wrap-anywhere">
+      <span className="ml-auto min-w-0 text-[12px] text-primary wrap-anywhere">
         {name}
       </span>
     </button>
