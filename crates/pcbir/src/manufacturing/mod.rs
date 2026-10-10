@@ -1,11 +1,10 @@
 //! Profile-driven footprint checks. Reports retain explicit coverage and never
 //! claim board-level DRC, land-pattern verification, or fabrication approval.
 mod board;
-mod geometry;
+use crate::geometry::Solid;
 use crate::physical::{Feature, PhysicalFootprint, Purpose, Role};
 use crate::{CompileError, Diagnostic};
 pub use board::{BoardReport, BoardValidationInput, validate_board};
-use geometry::Solid;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Deserialize)]

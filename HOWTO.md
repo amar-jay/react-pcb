@@ -422,6 +422,7 @@ ordinary errors, rather than structured compiler diagnostics.
 | `PCBIR006` / `PCBIR023` | Duplicate instance IDs or conflicting definitions claiming one footprint key. |
 | `PCBIR024` | A named footprint has no resolved physical geometry. Supply its definition. |
 | `PCBIR026` | Missing pin-to-pad mapping, an unknown logical pin, or a referenced physical pad that does not exist. |
+| `PCBIR040` / `PCBIR041` | Proven keepout overlap / incomplete keepout coverage. Inspect the constraint, region, part, feature and selected layer/side; supply missing canonical geometry, placement or explicit courtyards. Tracks, vias and fill remain unverified. |
 | `PCBIR031` | A placed physical feature extends outside the board outline. Inspect the named part/features, placement, rotation, board units, and outline dimensions. |
 | `PCBIR002`–`PCBIR005` | Route endpoints: unknown part/pin, mismatched net, or unconnected pin. |
 | `PCBMFG001` | Invalid manufacturing policy or malformed validator input. |

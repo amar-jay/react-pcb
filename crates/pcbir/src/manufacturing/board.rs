@@ -1,5 +1,6 @@
 //! Checks on canonical placed geometry, concrete board layers and stable net IDs.
-use super::{Check, Profile, ProfileInput, Status, copper, geometry::Solid, invalid};
+use super::{Check, Profile, ProfileInput, Status, copper};
+use crate::geometry::Solid;
 use crate::physical::{PlacedFeature, Purpose};
 use crate::{
     BoardIr, BoardSide, CompileError, MechanicalPurpose, NetId, PartInstance, StackupLayer,
@@ -31,75 +32,25 @@ struct Object<'a> {
     solid: Solid,
     net: Option<&'a NetId>,
 }
-fn pad_net<'a>(part: &'a PartInstance, id: &str) -> Option<&'a NetId> {
-    let nets: BTreeSet<_> = part
-        .pin_map
-        .iter()
-        .filter(|(_, pads)| pads.iter().any(|pad| pad == id))
-        .filter_map(|(pin, _)| part.connections.get(pin))
-        .collect();
-    (nets.len() == 1).then(|| *nets.first().unwrap())
-}
-fn validate_realization(ir: &BoardIr) -> Result<(), CompileError> {
-    if ir.schema_version != crate::SCHEMA_VERSION || ir.board.id.trim().is_empty() {
-        return Err(invalid(
-            "board checks require current canonical board IR and a nonempty board ID",
-        ));
-    }
-    crate::compiler::validate::validate_instances(
-        &ir.parts,
-        &ir.component_definitions,
-        &ir.footprint_definitions,
-    )?;
-    for part in &ir.parts {
-        match (&ir.footprint_definitions[&part.footprint].physical, part.at) {
-            (Some(physical), Some(at)) => {
-                if ![0.0, 90.0, 180.0, 270.0].contains(&part.rotation) {
-                    return Err(invalid(
-                        "physical board checks require quarter-turn placement",
-                    ));
-                }
-                let at = [
-                    crate::ir::regions::board_length(at[0], ir.units)?,
-                    crate::ir::regions::board_length(at[1], ir.units)?,
-                ];
-                let expected = physical.place(
-                    at,
-                    part.rotation as u16,
-                    part.side == BoardSide::Back,
-                    &ir.board.layers,
-                )?;
-                if expected != part.physical_features {
-                    return Err(invalid(
-                        "placed geometry does not match its footprint, transform and concrete layers",
-                    ));
-                }
-            }
-            _ if !part.physical_features.is_empty() => {
-                return Err(invalid(
-                    "world geometry requires a placed part and a canonical physical footprint",
-                ));
-            }
-            _ => {}
-        }
-    }
-    let outline = ir
-        .regions
-        .get(&ir.board.outline)
-        .ok_or_else(|| invalid("board outline region is missing"))?;
-    let mut outside =
-        crate::compiler::validate::validate_board_outline(&ir.parts, &outline.geometry, ir.units)?;
-    if !outside.is_empty() {
-        let fatal = outside.remove(0);
-        return Err(CompileError::diagnostic(fatal).with_diagnostics(outside));
-    }
-    Ok(())
-}
 
 pub fn validate_board(ir: &BoardIr, profile: &Profile) -> Result<BoardReport, CompileError> {
     profile.validate()?;
     let checked = crate::ir::regions::validate_regions(ir)?;
-    validate_realization(ir)?;
+    crate::realization::validate_realization(ir)?;
+    let mut outside = crate::compiler::validate::validate_board_outline(
+        &ir.parts,
+        &ir.regions[&ir.board.outline].geometry,
+        ir.units,
+    )?;
+    if !outside.is_empty() {
+        let fatal = outside.remove(0);
+        return Err(CompileError::diagnostic(fatal).with_diagnostics(outside));
+    }
+    let findings = crate::constraint_validation::validate_keepouts(ir, &checked);
+    let mut keepouts = Check::new("constraint-keepouts");
+    keepouts.evaluated = findings.evaluated;
+    keepouts.skipped = findings.skipped;
+    keepouts.diagnostics = findings.diagnostics;
     let mut regions = Check::new("constraint-regions");
     regions.evaluated = checked.on_board.len();
     regions.diagnostics = checked.diagnostics;
@@ -157,7 +108,7 @@ pub fn validate_board(ir: &BoardIr, profile: &Profile) -> Result<BoardReport, Co
         for placed in part.physical_features.values() {
             if copper(&placed.geometry) {
                 let net = if placed.geometry.purpose == Purpose::Pad {
-                    pad_net(part, &placed.geometry.id)
+                    crate::realization::pad_net(part, &placed.geometry.id)
                 } else {
                     None
                 };
@@ -252,6 +203,7 @@ pub fn validate_board(ir: &BoardIr, profile: &Profile) -> Result<BoardReport, Co
     unverified.skip("board-edge manufacturing clearances, routed traces/vias, realized zones, board-level mask/paste, NPTH isolation, and 3D package bodies are not checked", &ir.board.id);
     let checks = vec![
         regions.finish(),
+        keepouts.finish(),
         spacing.finish(),
         courtyard.finish(),
         unverified.finish(),

@@ -108,7 +108,7 @@ test("JSX without constraint IDs compiles to stable IR identities and normalized
 		expect(region.id).toBe(id);
 	expect(JSON.stringify(after)).not.toContain("sourceKey");
 	expect(secondResult.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(
-		["PCBIR024"],
+		["PCBIR024", "PCBIR041"],
 	);
 });
 

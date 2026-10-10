@@ -1,19 +1,19 @@
 # Constraint region implementation plan
 
-Status: phases 1–3 complete and verified. Phases 4–7 are pending.
+Status: phases 1–4 complete and verified. Phases 5–7 are pending.
 
 ## Progress and resume checkpoint
 
 Work is being completed one phase at a time. This checkpoint records the
-implemented boundary so subsequent work can resume at phase 4.
+implemented boundary so subsequent work can resume at phase 5.
 
 | Phase | Status |
 | --- | --- |
 | 1. Define and version the contract | Complete and verified. |
 | 2. Centralize region and reference validation | Complete and verified. |
 | 3. Make declaration identity predictable | Complete and verified. |
-| 4. Enforce keepouts against available geometry | Next. |
-| 5. Check route-region feasibility and report coverage | Pending. |
+| 4. Enforce keepouts against available geometry | Complete and verified. |
+| 5. Check route-region feasibility and report coverage | Next. |
 | 6. Make all constraint types inspectable | Pending. |
 | 7. Regression fixtures, documentation and completion | Pending; tests are added alongside each completed phase. |
 
@@ -43,18 +43,45 @@ properties match or differ. The contract/HOWTO document per-owner key rules and
 repeated keepout/zone examples. Existing basic/ESC waypoint keys are annotated
 without changing them or introducing new identities.
 
-Resume with phase 4 below. Reuse `ir/regions.rs` for checked declared rectangles
-and effective on-board intersections, and the existing exact primitive
-intersection utilities for placed copper and explicit courtyard reservations.
-Keep structural enforcement independent of manufacturing profiles and report
-missing geometry/placement/reservations and unresolved tracks/vias as unverified.
-Do not infer ownership from ID spelling, regenerate IDs or rewrite off-board
-geometry. Region sharing and repeated ordered visits remain valid in serialized IR.
+Phase 4 adds `constraint_validation.rs`, independent of manufacturing profiles.
+The former manufacturing geometry module is now shared `geometry.rs`; it compares
+checked effective on-board rectangles with exact placed primitives. Copper checks
+use concrete layer IDs and authoritative pad net bindings. Courtyard reservations
+use their enclosed shapes (not documentation stroke), reflected/rotated world
+coordinates and mechanical-layer side metadata. Round/slotted drill voids do not
+count as pad copper. `realization.rs` shares stored-world-geometry verification
+and pin-to-pad net lookup between physical consumers.
 
-Known remaining gaps: keepout geometry is not enforced; on-board waypoints may
-still be blocked or otherwise impossible; zone boundaries are not drawn.
-Multiple anonymous declarations require stable keys, with actionable diagnostics.
-The schema version records semantics and scope, not a claim of physical validation.
+Compilation and SVG projection reject proven violations with `PCBIR040`, naming
+the constraint, region, part, feature and layer/side. Standalone board validation
+returns the same findings in `constraint-keepouts`, which contributes to
+`conformsToCheckedRules`. `PCBIR041` warns once per keepout/unavailable category
+or missing part for placement, canonical physical geometry, courtyard reservations,
+and unresolved tracks/vias/fills. Compiler warnings are retained with fatal findings
+and are not duplicated by manufacturing reports. Decoding/upgrading still validate
+structure without certifying physical constraint satisfaction.
+
+The basic example's original 8 mm-wide copper keepout overlapped connector lands.
+Its region now reserves the board-edge strip through x=0.745 mm, exactly touching
+the nearest contact. Restrictions and canonical IDs are preserved; a regression
+retains the original violation. ESC geometry passes, with explicit unresolved
+track/via coverage warnings. Legacy numeric pads remain unverified until explicit
+migration supplies canonical physical geometry.
+
+Resume with phase 5 below. Reuse `ir/regions.rs` for checked declared rectangles
+and effective on-board intersections, and `constraint_validation.rs` for shared
+constraint checks. Account for exceptions and every eligible copper layer before
+claiming a waypoint impossible; disjoint waypoints and partial keepout overlap are
+valid intent. Keep route traversal/width/gap/transitions explicitly unverified
+without router geometry. Do not infer ownership from ID spelling, regenerate IDs
+or rewrite off-board geometry. Region sharing and repeated ordered visits remain
+valid in serialized IR. Preserve accumulated warnings when another check is fatal.
+
+Known remaining gaps: on-board waypoints may still be blocked or otherwise
+impossible; zone boundaries are not drawn. Anonymous repeated declarations require
+stable keys, with actionable diagnostics. Full region inspection and current
+constraint/violation diagnostic geometry are pending phase 6. The schema version
+records semantics and scope, not a claim of full physical validation.
 
 Evidence: phase 2 adds eight Rust regression tests and four Bun JSX/CLI tests
 covering unit equivalence, exact nm edges, sub-nm and overflow rejection,
@@ -71,7 +98,18 @@ live preview and basic/ESC examples, plus TypeScript, formatting/checking and Cl
 with warnings denied.
 
 Live preview tests require permission to bind local ports outside the sandbox.
-Phase 3 changes are local; no commit was created by this phase.
+Phase 4 adds ten Rust regressions and six Bun JSX/CLI regressions covering
+profile-independent enforcement, exact contact and odd-nm edges, curved primitives,
+rotated/reflected scopes, authoritative exceptions and unknown-net copper, distinct
+restrictions, missing geometry/reservations, deduplicated coverage, effective
+on-board regions, custom IDs, immutable serialized validation, forged realization,
+round/slotted drill voids, retained fatal findings and the basic example's original
+keepout violation. Existing identity and ESC tests now expect coverage warnings.
+The final `bun run check` passed **96 Rust tests** and **147 Bun tests**, including
+live preview and basic/ESC examples, plus TypeScript, formatting/checking and Clippy
+with warnings denied. Both example builds also passed.
+
+Phase 4 changes are local; no commit was created by this phase.
 
 ## Objective
 

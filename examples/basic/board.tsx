@@ -194,7 +194,9 @@ export default function MyBoard() {
 				boundary="board"
 				clearance={0.2}
 			/>
-			<Keepout region={rect(0, 14, 8, 12)} disallow={["vias", "copper"]} />
+			{/* Reserve the board-edge strip. The nearest USB contact begins at
+			    x=0.745 mm after placement; exact boundary contact is permitted. */}
+			<Keepout region={rect(0, 14, 0.745, 12)} disallow={["vias", "copper"]} />
 		</Board>
 	);
 }

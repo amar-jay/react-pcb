@@ -14,12 +14,13 @@ the remaining phases.
 | Unsupported constraint properties and malformed serialized scopes rejected | Implemented. |
 | Uniform exact region precision, constraint reference checks and off-board policy | Implemented across compilation, decoding, projection and standalone board validation. |
 | Predictable declaration identity and actionable collision diagnostics | Implemented. Existing IDs are preserved; errors name the declaration and owner and provide a matching key example. |
-| Physical keepout enforcement and incomplete-coverage diagnostics | Pending phase 4. Scopes are retained but violations are not yet evaluated. |
+| Physical keepout enforcement and incomplete-coverage diagnostics | Implemented for canonical placed pads/copper and explicit courtyard reservations. Missing realization reports incomplete coverage. |
 | Route waypoint feasibility and realized traversal checks | Empty on-board waypoints reject. Keepout feasibility is pending phase 5; realized traversal requires future routing geometry. |
 | Zone overlays, region selection and full constraint inspection | Pending phase 6. Current preview draws keepouts and route waypoints as one overlay. |
 
-The semantic rules below define how later validators must interpret this intent.
-A successful compile today does not establish physical constraint satisfaction.
+The semantic rules below define constraint intent and the available checks.
+A successful compile rejects proven keepout violations but does not establish
+complete physical constraint satisfaction; read the coverage warnings.
 
 ## Geometry and ownership
 
@@ -157,6 +158,36 @@ Exact boundary contact is permitted. Interior overlap violates a keepout.
 Manufacturing clearances are a separate policy and do not change this structural
 rule. Enforcement must work without selecting a manufacturing profile.
 
+Compilation and board SVG projection reject proven overlaps with `PCBIR040`,
+identifying the constraint, region, part, feature and affected concrete layer or
+component side. Standalone `validateBoardManufacturing` / `pcbir validate-board`
+returns the same findings in its `constraint-keepouts` check; violations make
+`conformsToCheckedRules` false. This check uses the structural rule regardless of
+the supplied profile and does not add process clearances. All supported shapes
+(rectangles, rounded rectangles, circles and ovals) use exact primitive
+intersections; overlapping bounding boxes alone are insufficient proof. Courtyard
+shapes reserve their enclosed area at the declared centerline; documentation
+stroke does not add a reservation margin. Explicit round/slotted pad drill voids
+are excluded from copper: a region contained in the void may touch its boundary.
+
+`PCBIR041` reports incomplete coverage per keepout: missing part placement or
+canonical physical geometry, missing courtyard on a selected placement side,
+and unavailable realized tracks, vias or zone fills. A mixed restriction reports
+each unavailable object category once, and each missing part once, independent
+of the number of selected layers. `tracks`/`vias` alone do not check pad copper
+or component reservations. Legacy numeric pads require explicit physical
+migration before these checks; the compiler does not invent canonical geometry.
+Missing reservations remain unverified even when pads overlap a component keepout.
+Completely off-board keepouts have no on-board enforcement or coverage work.
+Warnings and other violations survive a fatal keepout finding, and selecting a
+manufacturing profile does not duplicate the compiler's keepout warnings.
+
+Serialized physical consumers verify the world geometry against its footprint,
+placement and concrete layers and validate logical-pin-to-pad bindings before
+checking exceptions. Decoding and upgrading still check structure rather than
+constraint satisfaction; they can retain a structurally valid design with a
+physical keepout violation for subsequent inspection/validation.
+
 ## Zones, board intersections and feasibility
 
 A zone declares its intended fill boundary, net, copper layers and clearance.
@@ -213,11 +244,13 @@ Legacy documents containing schema-3 scope fields are rejected rather than
 overwritten. Unsupported versions require a separate migration.
 
 Migration does not compile declarations, move parts, synthesize routing, prove
-physical connectivity or certify constraint satisfaction. The next validator
-phases evaluate additional structure and available physical geometry.
+physical connectivity or certify constraint satisfaction. Physical consumers evaluate available placed geometry; later validator
+phases add route-region feasibility and further inspection.
 
 `PCBIR035` identifies an invalid keepout scope. `PCBIR036` identifies incompatible
 or malformed board IR at decoding/upgrade boundaries. `PCBIR037` identifies invalid
 exact region geometry, `PCBIR038` invalid identity or references, and `PCBIR039`
 an empty on-board region (error for waypoints, warning for keepouts and zones).
-Existing declaration-property diagnostics retain their codes.
+`PCBIR040` identifies a proven physical keepout violation and `PCBIR041`
+incomplete keepout coverage. Existing declaration-property diagnostics retain
+their codes.

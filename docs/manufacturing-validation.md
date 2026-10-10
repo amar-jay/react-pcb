@@ -60,6 +60,16 @@ the board ID, normalized profile, coverage counts, diagnostics, and
 `conformsToCheckedRules`; `complete` remains `false`. Without a board profile,
 the compiler returns `boardManufacturingReport: null`.
 
+`constraint-keepouts` enforces structural prohibitions against canonical placed
+copper and explicit courtyard reservations, using selected concrete layers and
+component sides. It retains `PCBIR040` violations and `PCBIR041` coverage warnings
+from the shared [constraint validator](constraint-regions.md#keepout-restrictions-and-scope).
+Compilation and projection apply these rules even without a profile. Missing
+placement/geometry/reservations and unresolved tracks, vias and fills remain
+unverified; net exceptions only exempt authoritatively bound electrical objects.
+Standalone validation returns proven violations as a failed check, while board
+compilation rejects them. Compiler diagnostics are not duplicated by the report.
+
 `board-copper-spacing` compares placed pads and copper primitives on each shared
 concrete copper layer ID using `minCopperSpacing`. It checks both different parts
 and concrete-layer aliases within a part, including single-copper-layer boards.
@@ -166,8 +176,9 @@ compilation and projection. Invalid region precision, bounds or references rejec
 with `PCBIR037`/`PCBIR038`; an off-board route or differential-pair waypoint rejects
 with `PCBIR039`. The board report's `constraint-regions` check carries `PCBIR039`
 warnings for keepouts and zones with no positive-area board intersection.
-Partially off-board regions retain authored geometry. This structural check does
-not establish keepout compliance, route feasibility or realized zone fills.
+Partially off-board regions retain authored geometry. The separate
+`constraint-keepouts` check enforces available physical geometry; route feasibility
+and realized zone fills remain unverified.
 
 Pad mask roles create nominal apertures using the pad's shape. Explicit
 `mask-opening` features contribute their own exact aperture shapes. Expansion
@@ -262,7 +273,10 @@ clearance. `inspectionProfile` names illustrative limits. `examples/basic/board.
 reuses it and selects an illustrative board profile with zero mask expansion
 for the USB/MCU's nominal openings. All three board footprints have canonical
 physical definitions and instance geometry. The board emits three footprint reports and a board report,
-including warnings about remaining unverified coverage.
+including warnings about remaining unverified coverage. The copper/via keepout
+reserves the board-edge strip up to x=0.745 mm, touching the nearest USB contact
+without overlapping it. Its original 8 mm width overlapped connector copper and
+is retained as a keepout regression.
 The capacitor now sits at `[23, 18]` mm, outside the MCU courtyard. Its previous
 `[27, 18]` placement is a regression case that fails both new board checks.
 

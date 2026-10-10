@@ -20,6 +20,8 @@ use parse::{constraint_key, parse_board, parse_part, parse_units};
 use validate::{validate_board_outline, validate_instances, validate_route_endpoint};
 
 #[cfg(test)]
+mod keepout_tests;
+#[cfg(test)]
 mod tests;
 
 #[derive(Debug, Serialize)]
@@ -252,7 +254,11 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
         regions: context.physical.regions,
     };
     match crate::ir::regions::validate_regions(&ir) {
-        Ok(checked) => diagnostics.extend(checked.diagnostics),
+        Ok(checked) => {
+            let findings = crate::constraint_validation::validate_keepouts(&ir, &checked);
+            diagnostics.extend(checked.diagnostics);
+            diagnostics.extend(findings.diagnostics);
+        }
         Err(mut error) => {
             let mut previous = context.compiler_diagnostics;
             previous.extend(diagnostics);
@@ -266,7 +272,12 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
             report
                 .checks
                 .iter()
-                .filter(|check| check.id != "constraint-regions")
+                .filter(|check| {
+                    !matches!(
+                        check.id.as_str(),
+                        "constraint-regions" | "constraint-keepouts"
+                    )
+                })
                 .flat_map(|check| check.diagnostics.iter().cloned()),
         );
         Some(report)

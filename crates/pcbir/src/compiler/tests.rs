@@ -3,7 +3,7 @@ use serde_json::{Value, json};
 use super::compile;
 use crate::protocol::DeclarationTransaction;
 
-fn transaction(children: Vec<Value>) -> DeclarationTransaction {
+pub(super) fn transaction(children: Vec<Value>) -> DeclarationTransaction {
     serde_json::from_value(json!({
         "protocolVersion": crate::PROTOCOL_VERSION,
         "declarations": {"kind": "react-pcb-declarations", "children": [{
@@ -23,7 +23,7 @@ fn transaction(children: Vec<Value>) -> DeclarationTransaction {
     .unwrap()
 }
 
-fn part(id: &str, footprint: &str, connect: Value) -> Value {
+pub(super) fn part(id: &str, footprint: &str, connect: Value) -> Value {
     json!({"type": "pcb-part", "props": {
         "id": {"id": id, "reference": id}, "footprint": footprint, "connect": connect
     }, "children": []})
@@ -1156,7 +1156,7 @@ fn intent_design() -> Vec<Value> {
     ]
 }
 
-fn region_test_profile() -> crate::manufacturing::Profile {
+pub(super) fn region_test_profile() -> crate::manufacturing::Profile {
     serde_json::from_value::<crate::manufacturing::ProfileInput>(json!({
         "schemaVersion": 1, "key": "region-test", "minCopperFeature": "1nm", "minCopperSpacing": "1nm",
         "minDrillDiameter": "1nm", "minAnnularRing": "0nm"
@@ -1181,7 +1181,7 @@ fn exact_regions_are_unit_independent_and_preserve_authored_geometry() {
         }))]);
         input.declarations.children[0].props["units"] = json!(unit);
         let output = compile(input).unwrap();
-        assert!(output.diagnostics.is_empty());
+        assert!(output.diagnostics.iter().all(|d| d.code == "PCBIR041"));
         let id = &output.ir.keepouts[0].region;
         assert_eq!(output.ir.regions[id].geometry.x, -step);
         let regions = crate::ir::regions::validate_regions(&output.ir).unwrap();
@@ -1542,7 +1542,7 @@ fn assigns_ids_in_ir_and_retains_all_supported_intent() {
     let serialized = serde_json::to_string(ir).unwrap();
     assert!(!serialized.contains("pcb-"));
     assert!(!serialized.contains("sourceKey"));
-    assert!(output.diagnostics.is_empty());
+    assert!(output.diagnostics.iter().all(|d| d.code == "PCBIR041"));
 }
 
 #[test]

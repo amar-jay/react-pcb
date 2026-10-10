@@ -3,13 +3,22 @@
 use crate::physical::{Feature, Shape};
 
 #[derive(Clone, Copy)]
-pub(super) struct Solid {
+pub(crate) struct Solid {
     center: [i128; 2],
     core: [i128; 2],
     radius: i128,
 }
 impl Solid {
-    pub(super) fn feature(feature: &Feature) -> Self {
+    /// A checked rectangle, including odd-nm sizes and clipped board intersections.
+    pub(crate) fn rectangle(rect: crate::ir::regions::CheckedRect) -> Self {
+        Self {
+            center: [0, 1].map(|axis| (rect.min2[axis] + rect.max2[axis]) / 2),
+            core: [0, 1].map(|axis| (rect.max2[axis] - rect.min2[axis]) / 2),
+            radius: 0,
+        }
+    }
+
+    pub(crate) fn feature(feature: &Feature) -> Self {
         let mut size = feature.shape.size().map(i128::from);
         let radius = match feature.shape {
             Shape::Rect { .. } => 0,
@@ -26,7 +35,7 @@ impl Solid {
             radius,
         }
     }
-    pub(super) fn drill(feature: &Feature) -> Self {
+    pub(crate) fn drill(feature: &Feature) -> Self {
         let drill = feature.drill.as_ref().expect("caller selects a drill");
         let mut size = drill.slot.unwrap_or([drill.diameter; 2]).map(i128::from);
         if feature.rotation % 180 == 90 {
@@ -42,10 +51,10 @@ impl Solid {
     /// Exact containment, including an outward Euclidean margin on the inner solid.
     /// Maximize the difference of support functions in each quadrant. If the
     /// radius difference is negative, axis endpoints give the limiting support.
-    pub(super) fn contains(self, inner: Self, margin: i64) -> bool {
+    pub(crate) fn contains(self, inner: Self, margin: i64) -> bool {
         self.contains2(inner, i128::from(margin) * 2)
     }
-    pub(super) fn contains2(self, inner: Self, margin2: i128) -> bool {
+    pub(crate) fn contains2(self, inner: Self, margin2: i128) -> bool {
         let delta = [0, 1].map(|axis| {
             (self.center[axis] - inner.center[axis]).abs() + inner.core[axis] - self.core[axis]
         });
@@ -57,7 +66,7 @@ impl Solid {
         }
     }
     /// Touching at zero clearance is permitted; actual interior overlap is not.
-    pub(super) fn separated(self, other: Self, clearance: i64) -> bool {
+    pub(crate) fn separated(self, other: Self, clearance: i64) -> bool {
         let delta = [0, 1].map(|axis| {
             (self.center[axis] - other.center[axis]).abs() - self.core[axis] - other.core[axis]
         });

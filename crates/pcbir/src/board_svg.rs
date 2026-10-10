@@ -20,6 +20,7 @@ pub fn board_svg(ir: &BoardIr) -> Result<BoardProjection, CompileError> {
         return Err(invalid("unsupported board IR version for preview"));
     }
     let checked = crate::ir::regions::validate_regions(ir)?;
+    crate::realization::validate_realization(ir)?;
     let outline = ir
         .regions
         .get(&ir.board.outline)
@@ -27,7 +28,16 @@ pub fn board_svg(ir: &BoardIr) -> Result<BoardProjection, CompileError> {
     let [x, y, w, h] = checked.declared[&ir.board.outline].xywh2();
     let mut min = [x, y];
     let mut max = [x + w, y + h];
+    let findings = crate::constraint_validation::validate_keepouts(ir, &checked);
     let mut diagnostics = checked.diagnostics;
+    diagnostics.extend(findings.diagnostics);
+    if let Some(index) = diagnostics
+        .iter()
+        .position(|d| matches!(d.severity, crate::Severity::Error))
+    {
+        let fatal = diagnostics.remove(index);
+        return Err(CompileError::diagnostic(fatal).with_diagnostics(diagnostics));
+    }
     let mut parts: Vec<_> = ir.parts.iter().collect();
     parts.sort_by(|a, b| a.id.cmp(&b.id));
     let mut ids = BTreeSet::new();
@@ -36,36 +46,6 @@ pub fn board_svg(ir: &BoardIr) -> Result<BoardProjection, CompileError> {
             return Err(invalid("duplicate placed part ID"));
         }
         escape(&part.id)?;
-        let definition = ir
-            .footprint_definitions
-            .get(&part.footprint)
-            .ok_or_else(|| invalid("part footprint definition is missing"))?;
-        // Verify submitted realization against its authoritative definition and placement.
-        if let Some(physical) = &definition.physical {
-            physical.validate()?;
-            if let Some(at) = part.at {
-                if ![0.0, 90.0, 180.0, 270.0].contains(&part.rotation) {
-                    return Err(invalid("physical preview requires quarter-turn placement"));
-                }
-                let expected = physical.place(
-                    [nm(at[0], ir.units)?, nm(at[1], ir.units)?],
-                    part.rotation as u16,
-                    part.side == BoardSide::Back,
-                    &ir.board.layers,
-                )?;
-                if expected != part.physical_features {
-                    return Err(invalid(
-                        "placed geometry does not match its footprint and placement",
-                    ));
-                }
-            } else if !part.physical_features.is_empty() {
-                return Err(invalid("unplaced part cannot have world geometry"));
-            }
-        } else if !part.physical_features.is_empty() {
-            return Err(invalid(
-                "world geometry requires a physical footprint definition",
-            ));
-        }
         if part.physical_features.is_empty() {
             diagnostics.push(
                 Diagnostic::warning(

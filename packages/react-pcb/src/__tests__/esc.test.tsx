@@ -198,6 +198,12 @@ test("ESC uses real part bindings, all 48 MCU lands and collision-free placed ge
 			"inverter/GATE_CH",
 			"inverter/GATE_CL",
 		].map((entity) => ({ code: "PCBIR033", severity: "warning", entity })),
+		...["tracks", "vias"].map((kind) => ({
+			code: "PCBIR041",
+			severity: "warning",
+			entity: assertDefined(result.ir.keepouts[0]).id,
+			message: expect.stringContaining(`realized ${kind} are unavailable`),
+		})),
 	]);
 	expect(result.ir.parts).toHaveLength(17);
 	expect(Object.values(result.ir.footprintDefinitions)).toHaveLength(8);

@@ -1,10 +1,13 @@
 //! Canonical PCB intermediate representation and compiler.
 
 mod compiler;
+mod constraint_validation;
 mod diagnostic;
+mod geometry;
 mod ir;
 pub mod physical;
 mod protocol;
+mod realization;
 
 pub use compiler::{CompileError, CompileOutput, compile};
 pub use diagnostic::{
