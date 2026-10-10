@@ -1,9 +1,10 @@
 import { expect, test } from "bun:test";
 import {
-	rulerTicks,
 	measureDistance,
 	projectPoint,
+	rulerTicks,
 } from "../frontend/lib/ruler.ts";
+import { assertDefined } from "./fixtures.ts";
 
 test("rulers retain world-coordinate alignment when the board is panned and zoomed", () => {
 	for (const [scale, offset] of [
@@ -29,7 +30,8 @@ test("rulers show distinct fractional coordinates at high zoom and remain readab
 		expect(new Set(ticks.map((tick) => tick.label)).size).toBe(ticks.length);
 		for (let index = 1; index < ticks.length; index++) {
 			expect(
-				ticks[index]!.position - ticks[index - 1]!.position,
+				assertDefined(ticks[index]).position -
+					assertDefined(ticks[index - 1]).position,
 			).toBeGreaterThanOrEqual(79.99);
 		}
 	}

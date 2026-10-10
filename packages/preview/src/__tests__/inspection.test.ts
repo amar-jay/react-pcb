@@ -1,12 +1,13 @@
 import { expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { DOMParser } from "linkedom";
 import { compileFootprint, footprintSvg } from "@react-pcb/core";
-import { buildBoardInspection, exportBoardInspection } from "../index.ts";
-import { inspectionFootprintSvg } from "../inspection-svg.ts";
+import { DOMParser } from "linkedom";
 import { footprintSceneLayer } from "../frontend/lib/footprint-scene.ts";
 import { presetVisibility } from "../frontend/lib/layer-presets.ts";
+import { buildBoardInspection, exportBoardInspection } from "../index.ts";
+import { inspectionFootprintSvg } from "../inspection-svg.ts";
+import { assertDefined } from "./fixtures.ts";
 
 const cwd = resolve(import.meta.dir, "../../../..");
 const unsafeKey = "../odd/path & shared";
@@ -36,14 +37,14 @@ test("inspection derives unique definitions from placed and unplaced parts, pres
 			unsafeKey,
 			"unresolved",
 		]);
-		const physical = first.footprints[0]!;
+		const physical = assertDefined(first.footprints[0]);
 		expect(physical.parts.map((part) => part.id)).toEqual(["B", "F", "U"]);
 		expect(
 			physical.parts.filter((part) => part.reference === "Shared"),
 		).toHaveLength(2);
 		expect(physical.parts.find((part) => part.id === "U")?.at).toBeNull();
 		expect(physical.physical).toEqual(
-			first.result.ir.footprintDefinitions[unsafeKey]!.physical,
+			assertDefined(first.result.ir.footprintDefinitions[unsafeKey]).physical,
 		);
 		expect(physical.svg).toContain("translate(1 2)");
 		expect(physical.svg).not.toContain("translate(8 21)");
@@ -99,7 +100,7 @@ test("inspection converts exact half-nm edges, transforms and strokes to browser
 	const output = inspectionFootprintSvg(canonical);
 	const document = new DOMParser().parseFromString(output.svg, "image/svg+xml");
 	const svg = document.documentElement;
-	const pad = svg.querySelector('[data-feature-id="P"]')!;
+	const pad = assertDefined(svg.querySelector('[data-feature-id="P"]'));
 	expect(svg.getAttribute("data-units")).toBe("mm");
 	expect(pad.getAttribute("x")).toBe("-0.0000015");
 	expect(pad.getAttribute("y")).toBe("-0.0000025");
@@ -108,14 +109,14 @@ test("inspection converts exact half-nm edges, transforms and strokes to browser
 		"translate(-0.000001 0.000002) rotate(90)",
 	);
 	expect(
-		svg
-			.querySelector('[data-feature-id="outline"]')!
-			.getAttribute("stroke-width"),
+		assertDefined(
+			svg.querySelector('[data-feature-id="outline"]'),
+		).getAttribute("stroke-width"),
 	).toBe("0.000001");
 	expect(
-		svg
-			.querySelector('g[data-layer-id="front-courtyard"]')!
-			.getAttribute("data-layer"),
+		assertDefined(
+			svg.querySelector('g[data-layer-id="front-courtyard"]'),
+		).getAttribute("data-layer"),
 	).toBe("front-courtyard");
 	expect(canonical).toContain('data-units="half-nm"');
 	expect(JSON.stringify(physical)).toBe(original);
@@ -162,13 +163,13 @@ test("inspection export is small static HTML with escaped labels and linked cano
 		expect(stdout).toContain(index);
 		const html = await Bun.file(index).text();
 		const document = new DOMParser().parseFromString(html, "text/html");
-		expect(document.querySelector("h1")!.textContent).toBe(
+		expect(assertDefined(document.querySelector("h1")).textContent).toBe(
 			`${title} / Footprints`,
 		);
 		expect(
-			document
-				.querySelector("[data-footprint-key]")!
-				.getAttribute("data-footprint-key"),
+			assertDefined(
+				document.querySelector("[data-footprint-key]"),
+			).getAttribute("data-footprint-key"),
 		).toBe(unsafeKey);
 		expect(
 			document.querySelectorAll('script, svg, link[rel="stylesheet"]').length,
@@ -186,15 +187,17 @@ test("inspection export is small static HTML with escaped labels and linked cano
 			(item: { key: string }) => item.key === unsafeKey,
 		);
 		expect(physical.parts).toEqual(["B", "F", "U"]);
-		expect(document.querySelector("img")!.getAttribute("src")).toBe(
-			physical.files.svg,
-		);
+		expect(
+			assertDefined(document.querySelector("img")).getAttribute("src"),
+		).toBe(physical.files.svg);
 		expect(document.querySelectorAll("article").length).toBe(
 			manifest.footprints.length,
 		);
 		for (const anchor of document.querySelectorAll("a")) {
 			expect(
-				await Bun.file(join(output, anchor.getAttribute("href")!)).exists(),
+				await Bun.file(
+					join(output, assertDefined(anchor.getAttribute("href"))),
+				).exists(),
 			).toBe(true);
 		}
 		for (const item of manifest.footprints) {
@@ -228,7 +231,7 @@ test("inspection export is small static HTML with escaped labels and linked cano
 
 test("inspection keeps the board-selected manufacturing reports and thresholds", async () => {
 	const inspection = await buildBoardInspection(
-		join(cwd, "examples/basic.tsx"),
+		join(cwd, "examples/basic/board.tsx"),
 	);
 	expect(inspection.footprints).toHaveLength(3);
 	expect(
@@ -236,10 +239,10 @@ test("inspection keeps the board-selected manufacturing reports and thresholds",
 	).toBe(true);
 	for (const item of inspection.footprints) {
 		expect(item.report).toEqual(
-			inspection.result.manufacturingReports[item.key]!,
+			assertDefined(inspection.result.manufacturingReports[item.key]),
 		);
 		expect(item.report?.profile).toEqual(
-			inspection.result.boardManufacturingReport!.profile,
+			assertDefined(inspection.result.boardManufacturingReport).profile,
 		);
 	}
 });

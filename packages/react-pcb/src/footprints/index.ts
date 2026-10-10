@@ -1,15 +1,15 @@
-import type { FootprintDeclarations } from "./jsx.tsx";
 import type {
 	CopperLayerInput,
 	PasteLayerInput,
 	SolderMaskLayerInput,
 } from "../layers/index.ts";
-import type { PhysicalFootprint, PhysicalFootprintInput } from "./physical.ts";
 import {
 	assertFinite,
 	assertName,
 	assertPositive,
 } from "../validation/index.ts";
+import type { FootprintDeclarations } from "./jsx.tsx";
+import type { PhysicalFootprint, PhysicalFootprintInput } from "./physical.ts";
 
 /** A board layer object, its ID, or an explicit selector for through-hole copper. */
 export type PadLayer =
@@ -60,8 +60,12 @@ export function defineFootprint(
 			throw new Error("pad position and size must have two values");
 		if (!["rect", "circle", "oval"].includes(pad.shape))
 			throw new Error("unsupported pad shape");
-		pad.at.forEach((value) => assertFinite(value, "pad position"));
-		pad.size.forEach((value) => assertPositive(value, "pad size"));
+		pad.at.forEach((value) => {
+			assertFinite(value, "pad position");
+		});
+		pad.size.forEach((value) => {
+			assertPositive(value, "pad size");
+		});
 		if (pad.rotation !== undefined) assertFinite(pad.rotation, "pad rotation");
 		if (!pad.layers.length)
 			throw new Error("a pad must target at least one layer");
@@ -83,9 +87,9 @@ export function defineFootprint(
 			if (pad.drill.slot) {
 				if (pad.drill.slot.length !== 2)
 					throw new Error("drill slot must contain two dimensions");
-				pad.drill.slot.forEach((n) =>
-					assertPositive(n, "drill slot dimension"),
-				);
+				pad.drill.slot.forEach((n) => {
+					assertPositive(n, "drill slot dimension");
+				});
 				if (
 					pad.drill.slot[0] === pad.drill.slot[1] ||
 					Math.min(...pad.drill.slot) !== pad.drill.diameter
@@ -94,7 +98,7 @@ export function defineFootprint(
 						"slot requires distinct dimensions and diameter equal to its minor dimension",
 					);
 				}
-				if (pad.drill.slot.some((n, axis) => n > pad.size[axis]!))
+				if (pad.drill.slot[0] > pad.size[0] || pad.drill.slot[1] > pad.size[1])
 					throw new Error("slot exceeds pad dimensions");
 			}
 		}

@@ -1,9 +1,8 @@
-import { BoardViewSelect } from "./board-view-select.tsx";
-import type { BoardView } from "../lib/scene-presentation.ts";
-import type { ReactNode } from "react";
 import type { BoardIr } from "@react-pcb/core";
 import { FileCode2, Network } from "lucide-react";
-import { SidebarTrigger } from "./ui/sidebar";
+import type { ReactNode } from "react";
+import type { BoardView } from "../lib/scene-presentation.ts";
+import { BoardViewSelect } from "./board-view-select.tsx";
 import {
 	Select,
 	SelectContent,
@@ -11,6 +10,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "./ui/select";
+import { SidebarTrigger } from "./ui/sidebar";
 
 export function CanvasToolbar({
 	ir,

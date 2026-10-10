@@ -1,7 +1,7 @@
-import React from "react";
 import { dirname, resolve } from "node:path";
-import { pathToFileURL, fileURLToPath } from "node:url";
-import { compile, boardSvg, PcbCompileError } from "@react-pcb/core";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { boardSvg, compile, PcbCompileError } from "@react-pcb/core";
+import React from "react";
 import type { PreviewBuild, PreviewBuildOptions } from "./build.ts";
 import { fingerprint } from "./watch.ts";
 
@@ -10,6 +10,8 @@ const { entry, output, options } = (await Bun.stdin.json()) as {
 	output: string;
 	options: PreviewBuildOptions;
 };
+if (!options.cwd)
+	throw new Error("Preview worker requires a working directory");
 const dependencies = new Set<string>([entry]);
 const directories = new Set<string>([dirname(entry)]);
 const inputs: Record<string, string> = {};
@@ -21,7 +23,7 @@ for (const name of [
 	"Cargo.toml",
 	"Cargo.lock",
 ]) {
-	dependencies.add(resolve(options.cwd!, name));
+	dependencies.add(resolve(options.cwd, name));
 }
 let response: PreviewBuild;
 try {

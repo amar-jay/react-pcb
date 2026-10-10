@@ -16,22 +16,30 @@ export function previewFindings(
 		...snapshot.error.matchAll(
 			/(?:^|\n)(error|warning)\[([^\]]+)\]:\s*([\s\S]*?)(?=\n(?:error|warning)\[|$)/g,
 		),
-	].map((match): CompilerDiagnostic => {
-		const lines = match[3]!.split("\n");
+	].flatMap((match): CompilerDiagnostic[] => {
+		const [, severity, code, message] = match;
+		if (
+			(severity !== "error" && severity !== "warning") ||
+			code === undefined ||
+			message === undefined
+		)
+			return [];
+		const lines = message.split("\n");
 		const entityIndex = lines.findIndex((line) =>
 			line.trim().startsWith("-->"),
 		);
-		return {
-			code: match[2]!,
-			severity: match[1] as "error" | "warning",
-			message: (entityIndex >= 0 ? lines.slice(0, entityIndex) : lines)
-				.join("\n")
-				.trim(),
-			entity:
-				entityIndex >= 0
-					? lines[entityIndex]!.trim().replace(/^-->\s*/, "")
-					: null,
-		};
+		const entity = lines[entityIndex];
+		return [
+			{
+				code,
+				severity,
+				message: (entityIndex >= 0 ? lines.slice(0, entityIndex) : lines)
+					.join("\n")
+					.trim(),
+				entity:
+					entity === undefined ? null : entity.trim().replace(/^-->\s*/, ""),
+			},
+		];
 	});
 	if (parsed.some((item) => item.severity === "error")) return parsed;
 	return [

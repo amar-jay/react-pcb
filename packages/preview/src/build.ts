@@ -1,9 +1,9 @@
-import { mkdtemp, mkdir, rm, rename } from "node:fs/promises";
+import { mkdir, mkdtemp, rename, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { resolve, dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import type { CompileOptions } from "@react-pcb/core";
-import type { PreviewSnapshot } from "./index.ts";
 import { previewHtml } from "./html.ts";
+import type { PreviewSnapshot } from "./index.ts";
 
 export type PreviewBuildOptions = Pick<CompileOptions, "cwd" | "command">;
 export type PreviewBuild = Pick<

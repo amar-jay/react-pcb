@@ -1,21 +1,20 @@
 import { expect, test } from "bun:test";
-import React from "react";
 import {
+	Board,
 	compile,
 	copperLayer,
 	defineFootprint,
 	defineLayerSet,
 	definePart,
 	defineStackup,
-	part,
 	net,
-	Board,
+	PcbCompileError,
+	part,
 	pasteLayer,
 	rect,
 	solderMaskLayer,
-	PcbCompileError,
 } from "../index.ts";
-import { testLayers } from "./fixtures.ts";
+import { assertDefined, testLayers } from "./fixtures.ts";
 
 const footprint = defineFootprint({
 	key: "TEST-SMD",
@@ -60,7 +59,7 @@ test("compiles reusable footprints and many-pad pin bindings end to end", async 
 			/>
 			<Device id={part("J2")} connect={{ GND: net("GND") }} />
 		</Board>,
-		{ cwd: import.meta.dir + "/../../../.." },
+		{ cwd: `${import.meta.dir}/../../../..` },
 	);
 	const componentKey = 'part:["Test","TEST"]';
 	expect(result.ir).toMatchObject({
@@ -113,7 +112,7 @@ test("rejects a binding to a nonexistent physical pad through the compiler bridg
 			<Board outline={rect(0, 0, 10, 10)} layers={testLayers}>
 				<BadDevice id={part("J1")} connect={{ GND: net("GND") }} />
 			</Board>,
-			{ cwd: import.meta.dir + "/../../../.." },
+			{ cwd: `${import.meta.dir}/../../../..` },
 		);
 		throw new Error("expected compilation to fail");
 	} catch (error) {
@@ -172,13 +171,16 @@ test("validates and snapshots footprint geometry", () => {
 	expect(() =>
 		defineFootprint({
 			key: "BAD",
-			pads: [{ ...footprint.pads[0]!, size: [0, 1] }],
+			pads: [{ ...assertDefined(footprint.pads[0]), size: [0, 1] }],
 		}),
 	).toThrow("pad size");
 	expect(() =>
 		defineFootprint({
 			key: "BAD",
-			pads: [footprint.pads[0]!, footprint.pads[0]!],
+			pads: [
+				assertDefined(footprint.pads[0]),
+				assertDefined(footprint.pads[0]),
+			],
 		}),
 	).toThrow("duplicate");
 	expect(Object.isFrozen(footprint.pads[0]?.at)).toBe(true);

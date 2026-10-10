@@ -1,9 +1,9 @@
-import React from "react";
 import {
 	Part,
-	renderFootprintDeclarations,
 	type PartProps,
+	renderFootprintDeclarations,
 } from "@react-pcb/core";
+import React from "react";
 import { PhaseTerminalFootprint } from "../footprints/terminals.tsx";
 import type { Net } from "./shared.ts";
 

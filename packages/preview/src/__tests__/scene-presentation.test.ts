@@ -1,11 +1,13 @@
 import { expect, test } from "bun:test";
 import { DOMParser } from "linkedom";
+import type { SceneLayer } from "../frontend/lib/scene.ts";
 import {
 	analysisLayerColor,
 	applyScenePresentation,
 	exportBoardSvg,
 } from "../frontend/lib/scene-presentation.ts";
-import type { SceneLayer } from "../frontend/lib/scene.ts";
+import { assertDefined } from "./fixtures.ts";
+
 const layer = (
 	kind: string,
 	side: SceneLayer["side"] = null,
@@ -28,7 +30,11 @@ const luminance = (hex: string) => {
 	const rgb = [1, 3, 5]
 		.map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
 		.map((v) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
-	return 0.2126 * rgb[0]! + 0.7152 * rgb[1]! + 0.0722 * rgb[2]!;
+	return (
+		0.2126 * assertDefined(rgb[0]) +
+		0.7152 * assertDefined(rgb[1]) +
+		0.0722 * assertDefined(rgb[2])
+	);
 };
 test("analysis feature colors contrast with the substrate in both themes", () => {
 	const features = [
@@ -48,8 +54,8 @@ test("analysis feature colors contrast with the substrate in both themes", () =>
 				(Math.min(color, background) + 0.05);
 			expect(ratio).toBeGreaterThanOrEqual(4.5);
 		}
-		expect(analysisLayerColor(features[0]!, dark)).not.toBe(
-			analysisLayerColor(features[1]!, dark),
+		expect(analysisLayerColor(assertDefined(features[0]), dark)).not.toBe(
+			analysisLayerColor(assertDefined(features[1]), dark),
 		);
 	}
 });
@@ -114,10 +120,12 @@ test("canvas and SVG export draw mask/paste boundaries without filling over copp
 		for (const theme of ["dark", "light"] as const) {
 			applyScenePresentation(svg, layers, {}, { view, theme });
 			for (const kind of ["solder-mask", "paste"]) {
-				const group = svg.querySelector<SVGGElement>(
-					`g[data-layer-id="${kind}"]`,
-				)!;
-				const feature = group.querySelector<SVGElement>("[data-feature-id]")!;
+				const group = assertDefined(
+					svg.querySelector<SVGGElement>(`g[data-layer-id="${kind}"]`),
+				);
+				const feature = assertDefined(
+					group.querySelector<SVGElement>("[data-feature-id]"),
+				);
 				expect(group.style.fill).toBe("none");
 				expect(group.style.opacity).toBe("");
 				expect(feature.style.fill).toBe("none");

@@ -1,5 +1,5 @@
-import { compilerError, type CompilerDiagnostic } from "./diagnostics.ts";
 import type { BoardIr } from "../ir/index.ts";
+import { type CompilerDiagnostic, compilerError } from "./diagnostics.ts";
 
 export type BoardProjection = {
 	svg: string;

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useMemo } from "react";
-import { net, part, type Children } from "../model/index.ts";
+import { type Children, net, part } from "../model/index.ts";
 import { assertName } from "../validation/index.ts";
 
 const ScopeContext = createContext<readonly string[]>([]);

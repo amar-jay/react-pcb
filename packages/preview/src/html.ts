@@ -1,5 +1,5 @@
-import type { PreviewSnapshot } from "./index.ts";
 import { bundleFrontend } from "./frontend/build.ts";
+import type { PreviewSnapshot } from "./index.ts";
 
 let frontend: Promise<string> | undefined;
 

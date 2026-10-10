@@ -40,13 +40,15 @@ export function sceneLayers(
 		...document.querySelectorAll<SVGGElement>(
 			"g[data-layer-id],g[data-overlay]",
 		),
-	].map((group) => {
+	].flatMap((group): SceneLayer[] => {
 		const overlay = !!group.dataset.overlay;
-		const id = group.dataset.layerId ?? group.dataset.overlay!;
+		const id = group.dataset.layerId ?? group.dataset.overlay;
+		if (id === undefined) return [];
 		const technical = ir.board.layers.technical.find(
 			(layer) => layer.id === id,
 		);
 		const depth = copper.findIndex((layer) => layer.id === id);
+		const copperLayer = copper[depth];
 		const name = overlay
 			? ({
 					references: "Part references",
@@ -96,17 +98,16 @@ export function sceneLayers(
 						? "Copper"
 						: "Overlays",
 			side,
-			detail:
-				depth >= 0
-					? `${copper[depth]!.usage} · ${copper[depth]!.thickness} ${ir.units}`
-					: id,
+			detail: copperLayer
+				? `${copperLayer.usage} · ${copperLayer.thickness} ${ir.units}`
+				: id,
 			visible: overlay
 				? ["references", "drills"].includes(id)
 				: depth === 0 ||
 					(technical?.kind === "silkscreen" && technical.side === "front"),
 		};
 		layer.color = boardLayerColor(layer);
-		return layer;
+		return [layer];
 	});
 }
 

@@ -1,3 +1,4 @@
+import { useId } from "react";
 import type { SceneLayer } from "../lib/scene.ts";
 import { cn } from "../lib/utils";
 import { CircularChoice } from "./ui/circular-choice";
@@ -16,9 +17,11 @@ type LayerControlsProps = {
 };
 
 export function LayerList({ items, visibility, onToggle }: LayerControlsProps) {
+	const prefix = useId();
 	return items.map((layer) => (
 		<label
 			key={layer.key}
+			htmlFor={`${prefix}-${layer.key}`}
 			title={layer.id}
 			className={cn(
 				"flex min-h-[38px] cursor-pointer items-center gap-2.5 rounded-md px-1.5 py-[7px] hover:bg-muted",
@@ -26,6 +29,7 @@ export function LayerList({ items, visibility, onToggle }: LayerControlsProps) {
 			)}
 		>
 			<CircularChoice
+				id={`${prefix}-${layer.key}`}
 				aria-label={layer.name}
 				checked={visibility[layer.key] ?? layer.visible}
 				onChange={(event) => onToggle(layer.key, event.target.checked)}
@@ -51,6 +55,8 @@ export function TechnicalLayers({
 }: LayerControlsProps) {
 	return [...new Set(items.map((layer) => layer.group))].map((name) => {
 		const pair = items.filter((layer) => layer.group === name);
+		const first = pair[0];
+		if (!first) return null;
 		// Shared layers and duplicate sides keep their independent stable-ID controls.
 		if (
 			pair.some((layer) => !layer.side || layer.allSides) ||
@@ -81,7 +87,7 @@ export function TechnicalLayers({
 			>
 				<span
 					className="size-[9px] shrink-0 rounded-[3px] border border-[#343b4820]"
-					style={{ background: pair[0]!.color }}
+					style={{ background: first.color }}
 				/>
 				<span className="min-w-0 flex-1 wrap-anywhere">{name}</span>
 				<Select

@@ -1,40 +1,40 @@
 import { expect, test } from "bun:test";
-import React from "react";
+import { Esc } from "../../../../examples/esc/board.tsx";
+import {
+	Capacitor0402Footprint,
+	Capacitor1210Footprint,
+	escFootprints,
+	escInspectionProfile,
+	footprintProfile,
+	LFPAK56Footprint,
+	PhaseTerminalFootprint,
+	Shunt2512Footprint,
+	SOIC8Footprint,
+	XT30UPBFootprint,
+} from "../../../../examples/esc/footprints/index.ts";
+import { boardLayers } from "../../../../examples/esc/layers.ts";
+import { Battery, Mosfet } from "../../../../examples/esc/parts/index.ts";
 import {
 	Board,
 	compile,
 	compileFootprint,
 	footprintSvg,
 	net,
+	type PhysicalFootprint,
 	part,
 	rect,
 	validateBoardManufacturing,
 	validateFootprintManufacturing,
-	type PhysicalFootprint,
 } from "../index.ts";
-import { Esc } from "../../../../examples/esc/board.tsx";
-import { boardLayers } from "../../../../examples/esc/layers.ts";
-import { Battery, Mosfet } from "../../../../examples/esc/parts/index.ts";
-import {
-	Capacitor0402Footprint,
-	Capacitor1210Footprint,
-	Shunt2512Footprint,
-	SOIC8Footprint,
-	LFPAK56Footprint,
-	XT30UPBFootprint,
-	PhaseTerminalFootprint,
-	escFootprints,
-	escInspectionProfile,
-	footprintProfile,
-} from "../../../../examples/esc/footprints/index.ts";
+import { assertDefined } from "./fixtures.ts";
 
-const options = { cwd: import.meta.dir + "/../../../..", hideWarnings: true };
+const options = { cwd: `${import.meta.dir}/../../../..`, hideWarnings: true };
 const pads = (ir: PhysicalFootprint) =>
 	ir.features
 		.filter((f) => f.purpose === "pad")
 		.sort((a, b) => a.id.localeCompare(b.id));
 const feature = (ir: PhysicalFootprint, id: string) =>
-	ir.features.find((f) => f.id === id)!;
+	assertDefined(ir.features.find((f) => f.id === id));
 
 // Expected coordinates below are independent transcriptions of the drawings,
 // rather than imports of implementation constants or layout calculations.
@@ -183,7 +183,9 @@ test("ESC uses real part bindings, all 48 MCU lands and collision-free placed ge
 	expect(
 		result.ir.footprintDefinitions["LQFP-48_7x7mm_P0.5mm"]?.pads,
 	).toHaveLength(48);
-	const driver = result.ir.parts.find((p) => p.id === "drive/U1")!;
+	const driver = assertDefined(
+		result.ir.parts.find((p) => p.id === "drive/U1"),
+	);
 	expect(driver.pinMap).toEqual({
 		VCC: ["1"],
 		HIN: ["2"],
@@ -194,7 +196,7 @@ test("ESC uses real part bindings, all 48 MCU lands and collision-free placed ge
 		HO: ["7"],
 		VB: ["8"],
 	});
-	const mcu = result.ir.parts.find((p) => p.id === "control/U2")!;
+	const mcu = assertDefined(result.ir.parts.find((p) => p.id === "control/U2"));
 	expect(mcu.pinMap).toMatchObject({
 		PA8: ["28"],
 		PB13: ["25"],
@@ -209,7 +211,9 @@ test("ESC uses real part bindings, all 48 MCU lands and collision-free placed ge
 		VDDIO2: ["31"],
 	});
 	expect(mcu.connections.PA2).toBeUndefined(); // No unconditioned phase voltage on an ADC.
-	const battery = result.ir.parts.find((p) => p.id === "power/J1")!;
+	const battery = assertDefined(
+		result.ir.parts.find((p) => p.id === "power/J1"),
+	);
 	expect(battery.pinMap).toEqual({ "+": ["2"], "-": ["1"] });
 	for (const component of Object.values(result.ir.componentDefinitions)) {
 		expect(component.manufacturer).not.toBe("Generic");

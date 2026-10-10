@@ -1,5 +1,5 @@
 {
-	"name": "react-pcb-workspace",
+	"name": "react-pcb",
 	"private": true,
 	"version": "0.0.0",
 	"type": "module",
@@ -7,21 +7,20 @@
 		"packages/*"
 	],
 	"scripts": {
-		"example": "bun run examples/basic.tsx",
+		"example": "bun run examples/basic/board.tsx",
 		"example:esc": "bun run examples/esc/index.tsx",
-		"footprints:inspect": "bun run preview inspect examples/basic.tsx",
+		"footprints:inspect": "bun run preview inspect examples/basic/board.tsx",
 		"footprints:esc:inspect": "bun run preview inspect examples/esc/index.tsx",
 		"board:inspect": "bun run preview inspect",
 		"board:build": "bun run preview build",
 		"board:dev": "bun run preview dev",
 		"test": "bun test",
-		"typecheck": "bunx tsc --noEmit",
+		"rust:fmt": "cargo fmt --all -- --check",
 		"rust:check": "cargo check --workspace --all-targets",
 		"rust:lint": "cargo clippy --workspace --all-targets -- -D warnings",
 		"rust:test": "cargo test --workspace",
-		"check": "bun run rust:fmt && bun run typecheck && bun run rust:check && bun run rust:lint && bun run rust:test && bun test",
-		"prettify": "bunx biome format --write .",
-		"rust:fmt": "cargo fmt --all -- --check"
+		"check": "bunx tsc --noEmit && bun run rust:fmt && bun run rust:check && bun run rust:lint && bun run rust:test && bun test",
+		"prettify": "bunx biome check --write ."
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.15",

@@ -25,7 +25,8 @@ try {
 		console.log(usage);
 	} else {
 		if (
-			!["build", "png", "inspect", "dev"].includes(mode ?? "") ||
+			!mode ||
+			!["build", "png", "inspect", "dev"].includes(mode) ||
 			!entry ||
 			entry.startsWith("--")
 		)
@@ -46,25 +47,25 @@ try {
 			else if (flag === "--watch" && mode === "dev") watch.push(value);
 			else if (
 				flag === "--view" &&
-				["build", "png"].includes(mode!) &&
+				["build", "png"].includes(mode) &&
 				["board", "analysis", "both"].includes(value)
 			)
 				png.view = value as PngExportOptions["view"];
 			else if (
 				flag === "--theme" &&
-				["build", "png"].includes(mode!) &&
+				["build", "png"].includes(mode) &&
 				["light", "dark"].includes(value)
 			)
 				png.theme = value as PngExportOptions["theme"];
 			else if (
 				flag === "--layers" &&
-				["build", "png"].includes(mode!) &&
+				["build", "png"].includes(mode) &&
 				["front", "back", "copper", "fabrication", "all"].includes(value)
 			)
 				png.layers = value as PngExportOptions["layers"];
 			else if (
 				flag === "--width" &&
-				["build", "png"].includes(mode!) &&
+				["build", "png"].includes(mode) &&
 				/^\d+$/.test(value)
 			)
 				png.width = Number(value);

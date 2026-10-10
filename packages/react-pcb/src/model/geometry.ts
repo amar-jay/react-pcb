@@ -1,5 +1,5 @@
-import type { Point, Rect } from "./types.ts";
 import { assertFinite, assertPositive } from "../validation/index.ts";
+import type { Point, Rect } from "./types.ts";
 
 export function point(x: number, y: number): Point {
 	assertFinite(x, "point x");

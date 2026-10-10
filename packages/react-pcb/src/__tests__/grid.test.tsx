@@ -1,30 +1,29 @@
 import { expect, test } from "bun:test";
-import React from "react";
-import {
-	Board,
-	Footprint,
-	FootprintGroup,
-	Graphic,
-	Pad,
-	Part,
-	PcbCompileError,
-	compile,
-	compileFootprint,
-	definePhysicalFootprint,
-	footprintSvg,
-	net,
-	part,
-	rect,
-	renderFootprintDeclarations,
-	type PhysicalLength,
-} from "../index.ts";
 import {
 	GridPadRows,
 	GridPinHeader,
 } from "../../../../examples/basic/footprints/grid.tsx";
-import { testLayers } from "./fixtures.ts";
+import {
+	Board,
+	compile,
+	compileFootprint,
+	definePhysicalFootprint,
+	Footprint,
+	FootprintGroup,
+	footprintSvg,
+	Graphic,
+	net,
+	Pad,
+	Part,
+	PcbCompileError,
+	type PhysicalLength,
+	part,
+	rect,
+	renderFootprintDeclarations,
+} from "../index.ts";
+import { assertDefined, testLayers } from "./fixtures.ts";
 
-const options = { cwd: import.meta.dir + "/../../../..", hideWarnings: true };
+const options = { cwd: `${import.meta.dir}/../../../..`, hideWarnings: true };
 
 test("two-sided pad rows equal explicit geometry, including every center, size and bounds", async () => {
 	const ir = await compileFootprint(<GridPadRows />, options);
@@ -54,9 +53,9 @@ test("two-sided pad rows equal explicit geometry, including every center, size a
 		max2: [5500000, 4460000],
 	});
 	const left = ir.features.filter((f) => Number(f.id) <= 4);
-	expect(left.slice(1).map((f, i) => f.at[1] - left[i]!.at[1])).toEqual([
-		1270000, 1270000, 1270000,
-	]);
+	expect(
+		left.slice(1).map((f, i) => f.at[1] - assertDefined(left[i]).at[1]),
+	).toEqual([1270000, 1270000, 1270000]);
 	expect(await footprintSvg(ir, options)).toBe(
 		await footprintSvg(await compileFootprint(explicit, options), options),
 	);
@@ -362,7 +361,9 @@ test("invalid grid intent fails explicitly with container or child source diagno
 	];
 	for (const [child, patch, message] of cases) {
 		const declaration = structuredClone(base);
-		const node = child ? declaration.root.children[0]! : declaration.root;
+		const node = child
+			? assertDefined(declaration.root.children[0])
+			: declaration.root;
 		node.props.style = { ...(node.props.style as object), ...patch };
 		try {
 			await compileFootprint(declaration, options);

@@ -12,7 +12,7 @@ The broader routing and fabrication synthesis described above remains future wor
 bun install --frozen-lockfile
 bun run check
 bun run example
-bun run board:inspect examples/basic.tsx --out /tmp/react-pcb-footprints
+bun run board:inspect examples/basic/board.tsx --out /tmp/react-pcb-footprints
 ```
 
 The basic example compiles three physical footprint definitions and returns scoped
@@ -35,8 +35,8 @@ authored aperture choices, source gaps, and the remaining electrical design.
 To view board JSX in a browser or export one offline HTML file:
 
 ```sh
-bun run board:dev examples/basic.tsx
-bun run board:build examples/basic.tsx --out dist/index.html
+bun run board:dev examples/basic/board.tsx
+bun run board:build examples/basic/board.tsx --out dist/index.html
 ```
 
 The [`@react-pcb/preview` package](packages/preview/README.md) owns the board viewer,

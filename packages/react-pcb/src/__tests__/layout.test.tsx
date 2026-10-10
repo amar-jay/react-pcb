@@ -1,28 +1,27 @@
 import { expect, test } from "bun:test";
-import React from "react";
 import {
 	Board,
-	Footprint,
-	FootprintGroup,
-	Pad,
-	Hole,
-	Graphic,
-	Part,
 	compile,
 	compileFootprint,
 	definePhysicalFootprint,
+	Footprint,
+	type FootprintDeclarations,
+	FootprintGroup,
+	type FootprintStyle,
 	footprintSvg,
-	part,
+	Graphic,
+	Hole,
 	net,
+	Pad,
+	Part,
+	PcbCompileError,
+	part,
 	rect,
 	renderFootprintDeclarations,
-	PcbCompileError,
-	type FootprintDeclarations,
-	type FootprintStyle,
 } from "../index.ts";
-import { testLayers } from "./fixtures.ts";
+import { assertDefined, testLayers } from "./fixtures.ts";
 
-const options = { cwd: import.meta.dir + "/../../../..", hideWarnings: true };
+const options = { cwd: `${import.meta.dir}/../../../..`, hideWarnings: true };
 const style: FootprintStyle = {
 	position: "absolute",
 	width: "0.6mm",
@@ -295,7 +294,7 @@ test("unsupported and ambiguous inputs produce feature-scoped diagnostics with s
 	];
 	for (const [invalidStyle, message] of invalidStyles) {
 		const input = structuredClone(declaration);
-		input.root.children[0]!.props.style = invalidStyle;
+		assertDefined(input.root.children[0]).props.style = invalidStyle;
 		try {
 			await compileFootprint(input, options);
 			throw new Error(`expected rejection for ${message}`);
@@ -310,12 +309,16 @@ test("unsupported and ambiguous inputs produce feature-scoped diagnostics with s
 		}
 	}
 	const duplicate = structuredClone(declaration);
-	duplicate.root.children.push(structuredClone(duplicate.root.children[0]!));
+	duplicate.root.children.push(
+		structuredClone(assertDefined(duplicate.root.children[0])),
+	);
 	await expect(compileFootprint(duplicate, options)).rejects.toThrow(
 		"ambiguous feature identity",
 	);
 	const invalidLayer = structuredClone(declaration);
-	invalidLayer.root.children[0]!.props.layers = ["front-courtyard"];
+	assertDefined(invalidLayer.root.children[0]).props.layers = [
+		"front-courtyard",
+	];
 	await expect(compileFootprint(invalidLayer, options)).rejects.toThrow(
 		"incompatible",
 	);

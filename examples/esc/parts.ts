@@ -1,3 +1,4 @@
+export type { Net } from "./parts/index.ts";
 export {
 	Battery,
 	BulkCapacitor,
@@ -8,4 +9,3 @@ export {
 	PhasePad,
 	Shunt,
 } from "./parts/index.ts";
-export type { Net } from "./parts/index.ts";

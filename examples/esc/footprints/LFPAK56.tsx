@@ -1,5 +1,5 @@
-import React from "react";
 import { Footprint, Graphic, Pad } from "@react-pcb/core";
+import React from "react";
 import { box, Documentation } from "./shared.tsx";
 
 // Nexperia SOT669, 20 March 2025, Fig.2. The T-shaped mounting-base copper
@@ -28,7 +28,7 @@ export function LFPAK56Footprint() {
 				style={box(0, -1200, 4850, 4750)}
 			/>
 			{[-1905, -635, 635, 1905].map((x, index) => (
-				<React.Fragment key={index + 1}>
+				<React.Fragment key={x}>
 					<Pad
 						name={String(index + 1)}
 						layers={["front-copper"]}
@@ -57,7 +57,7 @@ export function LFPAK56Footprint() {
 			{[-1150, 0, 1150].flatMap((x, column) =>
 				[-1150, -300, 550].map((y, row) => (
 					<Graphic
-						key={`${column}/${row}`}
+						key={`${x}/${y}`}
 						name={`paste-mb-${column + 1}-${row + 1}`}
 						purpose="paste-opening"
 						layers={["front-paste"]}

@@ -5,7 +5,7 @@ import {
 	footprintSvg,
 } from "../index.ts";
 
-const options = { cwd: import.meta.dir + "/../../../.." };
+const options = { cwd: `${import.meta.dir}/../../../..` };
 const declaration = definePhysicalFootprint({
 	key: 'test:<&"',
 	features: [

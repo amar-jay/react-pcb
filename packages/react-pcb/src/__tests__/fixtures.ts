@@ -1,10 +1,11 @@
+import assert from "node:assert/strict";
 import {
 	copperLayer,
 	defineLayerSet,
 	defineStackup,
 	dielectricLayer,
-	solderMaskLayer,
 	pasteLayer,
+	solderMaskLayer,
 } from "../layers/index.ts";
 
 export const testLayers = defineLayerSet({
@@ -25,3 +26,12 @@ export const testLayers = defineLayerSet({
 		pasteLayer({ id: "paste/back", side: "back" }),
 	],
 });
+
+/** Assert fixture presence before accessing its contents. */
+export function assertDefined<T>(value: T | null | undefined): T {
+	assert(
+		value !== undefined && value !== null,
+		"Expected a defined fixture value",
+	);
+	return value;
+}

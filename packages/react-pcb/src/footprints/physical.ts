@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
-import {
-	renderFootprintDeclarations,
-	type FootprintDeclarations,
-} from "./jsx.tsx";
 import { compilerError } from "../compiler/diagnostics.ts";
 import type { FootprintDefinition } from "./index.ts";
+import {
+	type FootprintDeclarations,
+	renderFootprintDeclarations,
+} from "./jsx.tsx";
 
 export const FOOTPRINT_SCHEMA_VERSION = 2 as const;
 export type PhysicalLength = `${number}${"nm" | "um" | "mm" | "mil" | "in"}`;

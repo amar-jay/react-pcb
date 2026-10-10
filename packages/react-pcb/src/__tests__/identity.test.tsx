@@ -1,28 +1,27 @@
 import { expect, test } from "bun:test";
-import React from "react";
 import {
 	Board,
+	compile,
 	DifferentialPair,
 	Keepout,
-	Part,
-	Route,
-	RouteThrough,
-	Zone,
-	compile,
 	net,
+	Part,
+	PcbCompileError,
 	pad,
 	part,
+	Route,
+	RouteThrough,
 	rect,
-	PcbCompileError,
+	Zone,
 } from "../index.ts";
-import { testLayers } from "./fixtures.ts";
+import { assertDefined, testLayers } from "./fixtures.ts";
 
 const positive = net("P");
 const negative = net("N");
 const first = part("U1");
 const second = part("U2");
 const options = {
-	cwd: import.meta.dir + "/../../../..",
+	cwd: `${import.meta.dir}/../../../..`,
 	hideWarnings: true,
 	baseRevision: 10,
 };
@@ -94,14 +93,16 @@ test("JSX without constraint IDs compiles to stable IR identities and normalized
 	expect(after.board).toEqual(before.board);
 	expect(after.routeConstraints[0]?.id).toBe(before.routeConstraints[0]?.id);
 	expect(after.routeConstraints[0]?.through).toEqual(
-		[...before.routeConstraints[0]!.through].reverse(),
+		[...assertDefined(before.routeConstraints[0]).through].reverse(),
 	);
 	expect(after.differentialPairs[0]?.id).toBe(before.differentialPairs[0]?.id);
 	expect(after.zones[0]?.id).toBe(before.zones[0]?.id);
 	expect(after.keepouts[0]?.id).toBe(before.keepouts[0]?.id);
 	expect(after.zones[0]?.layers).toEqual(["copper/1"]);
 	expect(after.zones[0]?.boundary).toBe(after.board.outline);
-	expect(after.regions[after.keepouts[0]!.region]?.geometry.width).toBe(3);
+	expect(
+		after.regions[assertDefined(after.keepouts[0]).region]?.geometry.width,
+	).toBe(3);
 	for (const [id, region] of Object.entries(after.regions))
 		expect(region.id).toBe(id);
 	expect(JSON.stringify(after)).not.toContain("sourceKey");

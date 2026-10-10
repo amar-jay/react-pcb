@@ -1,4 +1,3 @@
-import React from "react";
 import { Footprint, Pad } from "@react-pcb/core";
 
 // Illustrative fixtures; dimensions are independently checked in grid.test.tsx.

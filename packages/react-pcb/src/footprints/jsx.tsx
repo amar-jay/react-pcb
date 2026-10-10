@@ -1,5 +1,5 @@
 import React, { type ReactNode } from "react";
-import { renderDeclarations, type DeclarationNode } from "../renderer/index.ts";
+import { type DeclarationNode, renderDeclarations } from "../renderer/index.ts";
 import type {
 	FeaturePurpose,
 	FootprintRole,

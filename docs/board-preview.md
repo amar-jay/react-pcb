@@ -15,17 +15,17 @@ Bun bundles its HTML entry for development and for production export.
 
 ```sh
 # Local preview; open the printed URL (default http://127.0.0.1:3000).
-bun run board:dev examples/basic.tsx
-bun run board:dev examples/basic.tsx --port 3100
+bun run board:dev examples/basic/board.tsx
+bun run board:dev examples/basic/board.tsx --port 3100
 
 # One self-contained file; open it directly in a browser.
-bun run board:build examples/basic.tsx
-bun run board:build examples/basic.tsx --out dist/board/index.html
+bun run board:build examples/basic/board.tsx
+bun run board:build examples/basic/board.tsx --out dist/board/index.html
 
 # PNG images for AI visual inspection; no browser or preview server required.
-bun run preview png examples/basic.tsx --view both --out dist/basic.png
+bun run preview png examples/basic/board.tsx --view both --out dist/basic.png
 # Writes dist/basic.board.png and dist/basic.analysis.png.
-bun run board:build examples/basic.tsx --out dist/analysis.png --view analysis --layers all --width 4096
+bun run board:build examples/basic/board.tsx --out dist/analysis.png --view analysis --layers all --width 4096
 ```
 
 The default export destination is `dist/index.html`. `--port 0` lets the OS choose
@@ -53,7 +53,7 @@ files. Run `bun run preview --help` for usage.
 ## Footprint inspection derived from a board
 
 ```sh
-bun run preview inspect examples/basic.tsx --out dist/basic-inspect
+bun run preview inspect examples/basic/board.tsx --out dist/basic-inspect
 bun run board:inspect examples/esc/index.tsx --out dist/esc-inspect
 ```
 
@@ -110,7 +110,7 @@ if (import.meta.main) {
 }
 ```
 
-`examples/basic.tsx` follows this contract and continues to print the compiled board
+`examples/basic/board.tsx` follows this contract and continues to print the compiled board
 when executed directly. An entry with no supported default export fails with a
 specific message. Entry code runs in Bun with normal project imports; JSX/React
 and package resolution use the project's existing setup. In this workspace, the
@@ -223,7 +223,7 @@ Files loaded dynamically through filesystem calls or computed imports cannot be
 fully discovered statically. Add explicit files or directories:
 
 ```sh
-bun run board:dev examples/basic.tsx --watch ./board-data --watch ./custom-rules.json
+bun run board:dev examples/basic/board.tsx --watch ./board-data --watch ./custom-rules.json
 ```
 
 Explicit directories are watched recursively; generated `dist`, Rust `target`,

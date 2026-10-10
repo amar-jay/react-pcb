@@ -1,29 +1,29 @@
+import type { BoardIr } from "@react-pcb/core";
+import { Crosshair, Maximize, Minus, Plus, Ruler, X } from "lucide-react";
 import {
-	useCallback,
-	useImperativeHandle,
-	type Ref,
 	type CSSProperties,
+	type ReactNode,
+	type Ref,
+	useCallback,
 	useEffect,
+	useImperativeHandle,
 	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState,
-	type ReactNode,
 } from "react";
-import { Crosshair, Maximize, Minus, Plus, Ruler, X } from "lucide-react";
-import type { BoardIr } from "@react-pcb/core";
+import {
+	type CanvasPoint,
+	measureDistance,
+	type RulerTick,
+	rulerTicks,
+} from "../lib/ruler.ts";
 import type { SceneLayer } from "../lib/scene.ts";
 import { boardSize } from "../lib/scene.ts";
 import {
 	applyScenePresentation,
 	type ScenePresentation,
 } from "../lib/scene-presentation.ts";
-import {
-	rulerTicks,
-	measureDistance,
-	type RulerTick,
-	type CanvasPoint,
-} from "../lib/ruler.ts";
 import {
 	CanvasMeasurement,
 	type CanvasViewport,
@@ -65,7 +65,7 @@ export function BoardCanvas({
 	statusControls,
 	presentation,
 }: Props) {
-	const scene = useRef<HTMLDivElement>(null);
+	const scene = useRef<HTMLElement>(null);
 	const shell = useRef<HTMLDivElement>(null);
 	const viewport = useRef<View | null>(null);
 	const fitted = useRef<View | null>(null);
@@ -125,12 +125,22 @@ export function BoardCanvas({
 	}, []);
 	const fitView = useMemo(() => {
 		if (!markup) return null;
-		return new DOMParser()
+		const raw = new DOMParser()
 			.parseFromString(markup, "image/svg+xml")
-			.documentElement.getAttribute("viewBox")!
-			.trim()
-			.split(/\s+/)
-			.map(Number) as View;
+			.documentElement.getAttribute("viewBox");
+		if (!raw) return null;
+		const [x, y, width, height] = raw.trim().split(/\s+/).map(Number);
+		if (
+			x === undefined ||
+			y === undefined ||
+			width === undefined ||
+			height === undefined ||
+			![x, y, width, height].every(Number.isFinite) ||
+			width <= 0 ||
+			height <= 0
+		)
+			return null;
+		return [x, y, width, height] as View;
 	}, [markup]);
 	// SVG world coordinates use millimetres: keep a 1 mm grid anchored at (0, 0).
 	const gridWidth = canvasViewport ? Math.abs(canvasViewport.transform.a) : 20;
@@ -150,7 +160,8 @@ export function BoardCanvas({
 		if (!markup) setMeasuring(false);
 	}, [markup]);
 
-	const getSvg = () => scene.current?.querySelector("svg");
+	const getSvg = useCallback(() => scene.current?.querySelector("svg"), []);
+	const { view: boardView, theme } = presentation;
 	const view = useCallback(
 		(values: View) => {
 			const svg = scene.current?.querySelector("svg");
@@ -206,18 +217,20 @@ export function BoardCanvas({
 
 	useLayoutEffect(() => {
 		const svg = getSvg();
-		if (!svg || !fitView) return;
+		if (!markup || !svg || !fitView) return;
 		fitted.current = fitView;
 		view(viewport.current ?? fitted.current);
-	}, [fitView, markup, view]);
+	}, [getSvg, fitView, markup, view]);
 
 	useLayoutEffect(() => {
 		const svg = getSvg();
-		if (!svg || !ir) return;
-		applyScenePresentation(svg, layers, visibility, presentation);
+		if (!markup || !svg || !ir) return;
+		applyScenePresentation(svg, layers, visibility, { view: boardView, theme });
 		const parts = new Map(ir.parts.map((part) => [part.id, part]));
 		for (const feature of svg.querySelectorAll<SVGElement>("[data-part-id]")) {
-			const part = parts.get(feature.dataset.partId!);
+			const partId = feature.dataset.partId;
+			if (partId === undefined) continue;
+			const part = parts.get(partId);
 			const matches =
 				!!net &&
 				!!part &&
@@ -233,16 +246,7 @@ export function BoardCanvas({
 				!!net && !matches && feature.tagName !== "text",
 			);
 		}
-	}, [
-		markup,
-		ir,
-		layers,
-		visibility,
-		selected,
-		net,
-		presentation.view,
-		presentation.theme,
-	]);
+	}, [markup, ir, layers, visibility, selected, net, boardView, theme, getSvg]);
 
 	useEffect(() => {
 		if (!shell.current) return;
@@ -268,7 +272,7 @@ export function BoardCanvas({
 		};
 		element.addEventListener("wheel", wheel, { passive: false });
 		return () => element.removeEventListener("wheel", wheel);
-	}, [zoom]);
+	}, [getSvg, zoom]);
 
 	return (
 		<>
@@ -325,14 +329,14 @@ export function BoardCanvas({
 						{boardSize(ir)}
 					</div>
 				)}
-				<div
+				<section
 					id="scene"
 					data-view={presentation.view}
 					ref={scene}
 					className="absolute top-[66px] right-[42px] bottom-[54px] left-[54px] touch-none cursor-grab data-[measuring=true]:cursor-crosshair data-[measuring=true]:[&_[data-part-id]]:cursor-crosshair data-[dragging=true]:cursor-grabbing focus-visible:rounded-[2px] focus-visible:outline-offset-[5px] max-[701px]:top-[72px] max-[701px]:right-3 max-[701px]:bottom-[62px] max-[701px]:left-10 [&_svg]:block [&_svg]:size-full [&_svg]:overflow-visible data-[view=board]:[&_svg]:drop-shadow-[0_9px_12px_#233d3426] [&_[data-part-id]]:cursor-pointer [&_.selected]:[filter:drop-shadow(0_0_0.18px_#c6e6ff)_drop-shadow(0_0_0.28px_#8fc3ef)] [&_.net-match]:drop-shadow-[0_0_0.4px_#fff0af] [&_.dimmed]:opacity-[0.19] data-[view=analysis]:[&_.dimmed]:opacity-50 data-[view=analysis]:[&_.selected]:[filter:drop-shadow(0_0_0.1px_#555bd5)_drop-shadow(0_0_0.2px_#555bd5)]"
 					data-measuring={measuring}
+					// biome-ignore lint/a11y/noNoninteractiveTabindex: Canvas keyboard controls need focus for panning, zooming and measurement.
 					tabIndex={0}
-					role="region"
 					aria-label="Board canvas. Drag to pan, scroll to zoom. Arrow keys pan; plus and minus zoom; F fits the board. R toggles distance measurement; Escape clears it. Alt-drag pans while measuring."
 					onKeyDown={(event) => {
 						if (event.key.toLowerCase() === "r" && markup) {
@@ -354,9 +358,10 @@ export function BoardCanvas({
 							ArrowUp: [x, y - h / 20, w, h],
 							ArrowDown: [x, y + h / 20, w, h],
 						};
-						if (moves[event.key]) {
+						const move = moves[event.key];
+						if (move) {
 							event.preventDefault();
-							view(moves[event.key]!);
+							view(move);
 						} else if (["+", "=", "-"].includes(event.key)) {
 							event.preventDefault();
 							zoom(event.key === "-" ? 1.25 : 1 / 1.25);
@@ -448,6 +453,7 @@ export function BoardCanvas({
 						delete event.currentTarget.dataset.dragging;
 					}}
 					onPointerLeave={() => setCursor(null)}
+					// biome-ignore lint/security/noDangerouslySetInnerHtml: Core-generated SVG validates geometry and escapes all source labels.
 					dangerouslySetInnerHTML={{ __html: markup ?? "" }}
 				/>
 				{!markup && (
@@ -457,8 +463,8 @@ export function BoardCanvas({
 						<p>A compiled board will appear here.</p>
 					</div>
 				)}
-				<div
-					className="absolute bottom-[19px] left-1/2 z-3 flex -translate-x-1/2 items-center rounded-[9px] border bg-card px-1.5 py-[5px] whitespace-nowrap shadow-[0_4px_12px_#202c3f16] max-[701px]:bottom-[17px] max-[701px]:p-1 [&_[data-slot=button]]:gap-2 [&_[data-slot=button]]:text-[12px]"
+				<fieldset
+					className="min-w-0 absolute bottom-[19px] left-1/2 z-3 flex -translate-x-1/2 items-center rounded-[9px] border bg-card px-1.5 py-[5px] whitespace-nowrap shadow-[0_4px_12px_#202c3f16] max-[701px]:bottom-[17px] max-[701px]:p-1 [&_[data-slot=button]]:gap-2 [&_[data-slot=button]]:text-[12px]"
 					aria-label="Canvas controls"
 				>
 					<IconButton
@@ -515,7 +521,7 @@ export function BoardCanvas({
 							<X />
 						</IconButton>
 					)}
-				</div>
+				</fieldset>
 			</div>
 			<div
 				id="canvas-status-bar"

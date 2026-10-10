@@ -9,7 +9,7 @@ claim that any fixture or board is ready to manufacture.
 
 ```tsx
 import {compileFootprint, validateFootprintManufacturing} from '@react-pcb/core';
-import {ManufacturingPassive, inspectionProfile} from '../examples/footprints/manufacturing.tsx';
+import {ManufacturingPassive, inspectionProfile} from '../examples/basic/footprints/manufacturing.tsx';
 
 const footprint = await compileFootprint(<ManufacturingPassive />);
 const report = await validateFootprintManufacturing(footprint, inspectionProfile);
@@ -230,9 +230,9 @@ sources and the actual assembly/fabrication process before using a design.
 
 ## Fixtures and required checks
 
-`examples/footprints/manufacturing.tsx` provides a Grid-authored passive with
+`examples/basic/footprints/manufacturing.tsx` provides a Grid-authored passive with
 0.05 mm expanded mask openings, 0.05 mm paste inset, and a 0.20 mm courtyard
-clearance. `inspectionProfile` names illustrative limits. `examples/basic.tsx`
+clearance. `inspectionProfile` names illustrative limits. `examples/basic/board.tsx`
 reuses it and selects an illustrative board profile with zero mask expansion
 for the USB/MCU's nominal openings. All three board footprints have canonical
 physical definitions and instance geometry. The board emits three footprint reports and a board report,
@@ -240,7 +240,7 @@ including warnings about remaining unverified coverage.
 The capacitor now sits at `[23, 18]` mm, outside the MCU courtyard. Its previous
 `[27, 18]` placement is a regression case that fails both new board checks.
 
-`bun run board:inspect examples/basic.tsx --out dist/basic-inspect` derives its
+`bun run board:inspect examples/basic/board.tsx --out dist/basic-inspect` derives its
 three used footprints from the board and writes the actual board-selected
 `.manufacturing.json` reports beside their JSON/SVG previews. The inspection
 command does not select an independent profile. Generic Grid/Flexbox fixtures

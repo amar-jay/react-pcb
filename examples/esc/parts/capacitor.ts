@@ -1,5 +1,5 @@
-import React from "react";
 import { definePart, renderFootprintDeclarations } from "@react-pcb/core";
+import React from "react";
 import { Capacitor0402Footprint } from "../footprints/passives.tsx";
 import { passivePins } from "./shared.ts";
 

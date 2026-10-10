@@ -1,5 +1,9 @@
 import { expect, test } from "bun:test";
-import React from "react";
+import {
+	USB4105_FOOTPRINT_KEY,
+	USB4105Footprint,
+} from "../../../../examples/basic/footprints/USB4105.tsx";
+import { USB4105GFA } from "../../../../examples/basic/parts/USB4105GFA.ts";
 import {
 	Board,
 	compile,
@@ -8,19 +12,14 @@ import {
 	footprintSvg,
 	mechanicalLayer,
 	net,
+	type PhysicalFootprint,
 	part,
 	rect,
 	silkscreenLayer,
-	type PhysicalFootprint,
 } from "../index.ts";
-import {
-	USB4105Footprint,
-	USB4105_FOOTPRINT_KEY,
-} from "../../../../examples/basic/footprints/USB4105.tsx";
-import { USB4105GFA } from "../../../../examples/parts/USB4105GFA.ts";
-import { testLayers } from "./fixtures.ts";
+import { assertDefined, testLayers } from "./fixtures.ts";
 
-const options = { cwd: import.meta.dir + "/../../../..", hideWarnings: true };
+const options = { cwd: `${import.meta.dir}/../../../..`, hideWarnings: true };
 const layers = defineLayerSet({
 	stackup: testLayers.stackup,
 	technical: [
@@ -157,15 +156,11 @@ test("all contacts bind to unique physical lands and shell pads on both board si
 		"SHELL3",
 		"SHELL4",
 	]);
-	const mapped = Object.values(front!.pinMap).flat();
+	const mapped = Object.values(assertDefined(front).pinMap).flat();
 	expect(mapped).toHaveLength(16);
 	expect(new Set(mapped).size).toBe(16);
-	expect(front?.physicalFeatures["A6"]?.geometry.at).toEqual([
-		13680000, 9750000,
-	]);
-	expect(back?.physicalFeatures["A6"]?.geometry.at).toEqual([
-		23680000, 10250000,
-	]);
+	expect(front?.physicalFeatures.A6?.geometry.at).toEqual([13680000, 9750000]);
+	expect(back?.physicalFeatures.A6?.geometry.at).toEqual([23680000, 10250000]);
 	expect(front?.physicalFeatures.SHELL1?.geometry).toMatchObject({
 		at: [13105000, 5680000],
 		rotation: 90,
@@ -192,6 +187,9 @@ test("all contacts bind to unique physical lands and shell pads on both board si
 			(p) => p.id === "SHELL1",
 		)?.drill,
 	).toEqual({ diameter: 0.6, slot: [0.6, 1.7], plated: true });
-	const ir = result.ir.footprintDefinitions[USB4105_FOOTPRINT_KEY]!.physical!;
+	const ir = assertDefined(
+		assertDefined(result.ir.footprintDefinitions[USB4105_FOOTPRINT_KEY])
+			.physical,
+	);
 	expect(ir.features.find((f) => f.id === "SHELL1")?.rotation).toBe(0);
 });

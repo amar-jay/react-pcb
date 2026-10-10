@@ -5,8 +5,6 @@ import {
 	CheckCircle2,
 	ChevronDown,
 } from "lucide-react";
-import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
 import {
 	AlertDialog,
 	AlertDialogCancel,
@@ -16,6 +14,8 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "./ui/alert-dialog";
+import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
 import {
 	Collapsible,
 	CollapsibleContent,
@@ -35,6 +35,13 @@ export function DiagnosticList({
 }: {
 	findings: readonly CompilerDiagnostic[];
 }) {
+	const occurrences = new Map<string, number>();
+	const entries = findings.map((item) => {
+		const identity = JSON.stringify(item);
+		const occurrence = occurrences.get(identity) ?? 0;
+		occurrences.set(identity, occurrence + 1);
+		return { item, key: `${identity}:${occurrence}` };
+	});
 	return (
 		<div>
 			{!findings.length && (
@@ -43,11 +50,11 @@ export function DiagnosticList({
 					<p>No findings in this category.</p>
 				</div>
 			)}
-			{findings.map((item, index) => (
+			{entries.map(({ item, key }) => (
 				<article
 					className="flex items-start gap-3 border-b py-4 last:border-b-0 [&>svg]:mt-0.5 [&>svg]:shrink-0 [&>svg]:text-[#aa7a32] [&[data-severity=error]>svg]:text-destructive [&>div]:min-w-0 [&>div]:text-[13px] [&>div]:wrap-anywhere [&_p]:mt-[7px] [&_p]:leading-[1.65] [&_p]:whitespace-pre-wrap [&_small]:mt-1.5 [&_small]:block [&_small]:text-[12px] [&_small]:text-muted-foreground"
 					data-severity={item.severity}
-					key={`${item.code}:${item.entity}:${index}`}
+					key={key}
 				>
 					{item.severity === "error" ? (
 						<AlertCircle size={17} />

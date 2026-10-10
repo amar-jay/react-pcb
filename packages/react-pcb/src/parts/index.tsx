@@ -1,4 +1,3 @@
-import React from "react";
 import { Part, type PartProps } from "../components/index.ts";
 import type { FootprintBinding } from "../footprints/index.ts";
 import type { Net } from "../model/index.ts";

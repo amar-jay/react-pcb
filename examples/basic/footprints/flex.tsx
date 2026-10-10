@@ -1,4 +1,3 @@
-import React from "react";
 import { Footprint, FootprintGroup, Graphic, Pad } from "@react-pcb/core";
 
 // Small analytic fixtures; dimensions are illustrative land patterns.

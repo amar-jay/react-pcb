@@ -1,7 +1,11 @@
 import { resolve } from "node:path";
-import { buildBoardPreview, type PreviewBuildOptions } from "./build.ts";
-import type { PreviewSnapshot } from "./index.ts";
+import {
+	buildBoardPreview,
+	type PreviewBuild,
+	type PreviewBuildOptions,
+} from "./build.ts";
 import frontend from "./frontend/index.html";
+import type { PreviewSnapshot } from "./index.ts";
 import { fingerprint } from "./watch.ts";
 
 export type PreviewServerOptions = PreviewBuildOptions & {
@@ -43,7 +47,7 @@ export async function startBoardPreview(
 				const beforeExtra = new Map<string, string>();
 				for (const path of extra)
 					beforeExtra.set(path, await fingerprint(path, true));
-				let build;
+				let build: PreviewBuild;
 				try {
 					build = await buildBoardPreview(absolute, options);
 				} catch (error) {

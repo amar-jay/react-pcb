@@ -1,5 +1,5 @@
-import React from "react";
 import { Footprint, Graphic, Pad } from "@react-pcb/core";
+import React from "react";
 import { box, Documentation, SmdOpenings } from "./shared.tsx";
 
 // IR2101(S), PD60043 Rev O, p.13: 6.46 outer span, 1.78 × 0.72 lands.

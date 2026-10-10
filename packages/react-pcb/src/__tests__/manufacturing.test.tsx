@@ -1,31 +1,30 @@
 import { expect, test } from "bun:test";
-import React from "react";
+import { GridPinHeader } from "../../../../examples/basic/footprints/grid.tsx";
+import {
+	inspectionProfile,
+	ManufacturingPassive,
+} from "../../../../examples/basic/footprints/manufacturing.tsx";
 import {
 	Board,
-	Part,
-	PcbCompileError,
 	compile,
 	compileFootprint,
 	definePhysicalFootprint,
 	footprintSvg,
+	type ManufacturingProfileInput,
+	type ManufacturingReport,
 	net,
+	Part,
+	PcbCompileError,
+	type PhysicalFootprint,
 	part,
 	rect,
 	validateFootprintManufacturing,
-	type ManufacturingProfileInput,
-	type ManufacturingReport,
-	type PhysicalFootprint,
 } from "../index.ts";
-import {
-	ManufacturingPassive,
-	inspectionProfile,
-} from "../../../../examples/basic/footprints/manufacturing.tsx";
-import { GridPinHeader } from "../../../../examples/basic/footprints/grid.tsx";
-import { testLayers } from "./fixtures.ts";
+import { assertDefined, testLayers } from "./fixtures.ts";
 
-const options = { cwd: import.meta.dir + "/../../../..", hideWarnings: true };
+const options = { cwd: `${import.meta.dir}/../../../..`, hideWarnings: true };
 const status = (report: ManufacturingReport, id: string) =>
-	report.checks.find((c) => c.id === id)!;
+	assertDefined(report.checks.find((c) => c.id === id));
 const tinyProfile: ManufacturingProfileInput = {
 	schemaVersion: 1,
 	key: "test:exact",
@@ -146,7 +145,7 @@ test("each selected minimum has exact threshold failures with the implicated fea
 		expect(status(report, rule).status).toBe("failed");
 		expect(status(report, rule).diagnostics[0]?.code).toBe("PCBMFG002");
 		expect(status(report, rule).diagnostics[0]?.entity).toStartWith(
-			ir.key + "/",
+			`${ir.key}/`,
 		);
 		expect(status(report, rule).diagnostics[0]?.help).toContain(rule);
 	}
@@ -270,7 +269,7 @@ test("curved primitive spacing uses exact Euclidean distances rather than envelo
 	const differentLayers = structuredClone(ir) as unknown as {
 		features: { layers: string[] }[];
 	};
-	differentLayers.features[1]!.layers = ["back-copper"];
+	assertDefined(differentLayers.features[1]).layers = ["back-copper"];
 	expect(
 		status(
 			await validateFootprintManufacturing(
@@ -461,7 +460,10 @@ test("malformed profiles and incomplete or corrupted physical definitions fail e
 			options,
 		),
 	).rejects.toMatchObject({ diagnostic: { code: "PCBMFG001" } });
-	const duplicate = { ...ir, features: [...ir.features, ir.features[0]!] };
+	const duplicate = {
+		...ir,
+		features: [...ir.features, assertDefined(ir.features[0])],
+	};
 	await expect(
 		validateFootprintManufacturing(duplicate, inspectionProfile, options),
 	).rejects.toThrow("unique");
@@ -517,7 +519,7 @@ test("malformed profiles and incomplete or corrupted physical definitions fail e
 				options,
 			),
 		).rejects.toMatchObject({
-			diagnostic: { code: "PCBFP001", entity: ir.key + "/1" },
+			diagnostic: { code: "PCBFP001", entity: `${ir.key}/1` },
 		});
 	}
 });
@@ -590,7 +592,7 @@ test("board profile enforces checked rules, preserves its normalized policy and 
 });
 
 test("basic example is a required end-to-end check with physical geometry and explicit manufacturing reports", async () => {
-	const process = Bun.spawn(["bun", "run", "examples/basic.tsx"], {
+	const process = Bun.spawn(["bun", "run", "examples/basic/board.tsx"], {
 		cwd: options.cwd,
 		stdout: "pipe",
 		stderr: "pipe",

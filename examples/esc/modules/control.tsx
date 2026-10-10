@@ -1,4 +1,4 @@
-import { Module, Route, pad, part, usePart } from "@react-pcb/core";
+import { Module, pad, part, Route, usePart } from "@react-pcb/core";
 import { Capacitor, Controller, type Net } from "../parts/index.ts";
 
 const scope = "control";

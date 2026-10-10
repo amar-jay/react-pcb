@@ -1,5 +1,4 @@
 import { expect, test } from "bun:test";
-import React from "react";
 
 import { Board, Part } from "../components/index.ts";
 import { rect } from "../model/index.ts";

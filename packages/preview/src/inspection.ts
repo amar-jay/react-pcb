@@ -2,9 +2,9 @@ import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, rename, rm } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import {
-	footprintSvg,
 	type CompileResult,
 	type CompilerDiagnostic,
+	footprintSvg,
 	type IrPart,
 	type ManufacturingReport,
 	type PhysicalFootprint,
@@ -15,10 +15,10 @@ import {
 	compilerRoot,
 	type PreviewBuildOptions,
 } from "./build.ts";
+import { type SceneLayer, sceneLayers } from "./frontend/lib/scene.ts";
+import { exportBoardSvg } from "./frontend/lib/scene-presentation.ts";
 import { inspectionHtml } from "./inspection-html.ts";
 import { inspectionFootprintSvg } from "./inspection-svg.ts";
-import { exportBoardSvg } from "./frontend/lib/scene-presentation.ts";
-import { sceneLayers, type SceneLayer } from "./frontend/lib/scene.ts";
 
 export type InspectedFootprint = {
 	key: string;
@@ -146,7 +146,11 @@ export async function exportBoardInspection(
 		files.set(footprint.files.manufacturing, json(footprint.report));
 		if (footprint.files.geometry)
 			files.set(footprint.files.geometry, json(footprint.physical));
-		if (footprint.files.svg) files.set(footprint.files.svg, footprint.svg!);
+		if (footprint.files.svg) {
+			if (footprint.svg === null)
+				throw new Error(`Missing SVG for footprint ${footprint.key}`);
+			files.set(footprint.files.svg, footprint.svg);
+		}
 	}
 	files.set(
 		"manifest.json",

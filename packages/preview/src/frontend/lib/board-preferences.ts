@@ -1,4 +1,4 @@
-import { layerPresets, type LayerPresetId } from "./layer-presets.ts";
+import { type LayerPresetId, layerPresets } from "./layer-presets.ts";
 import type { BoardView } from "./scene-presentation.ts";
 
 export type BoardPreferences = {

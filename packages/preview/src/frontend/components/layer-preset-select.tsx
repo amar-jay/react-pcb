@@ -1,4 +1,4 @@
-import { layerPresets, type LayerPresetId } from "../lib/layer-presets.ts";
+import { type LayerPresetId, layerPresets } from "../lib/layer-presets.ts";
 import {
 	Select,
 	SelectContent,

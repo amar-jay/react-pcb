@@ -1,13 +1,13 @@
 import {
 	Module,
-	Route,
+	type PartProps,
 	pad,
 	part,
+	Route,
 	useNet,
 	usePart,
-	type PartProps,
 } from "@react-pcb/core";
-import { Mosfet, PhasePad, type Net } from "../parts/index.ts";
+import { Mosfet, type Net, PhasePad } from "../parts/index.ts";
 
 const scope = "inverter";
 

@@ -1,4 +1,3 @@
-import { useEffect, useRef, useState, type RefObject } from "react";
 import {
 	AlertCircle,
 	ArrowDownToLine,
@@ -8,23 +7,23 @@ import {
 	Code2,
 	Layers,
 	Maximize,
+	Minus,
 	Moon,
 	Network,
 	PanelLeft,
 	Plus,
-	Minus,
 	Ruler,
 	Search,
 	Sun,
 	X,
 } from "lucide-react";
+import { type RefObject, useEffect, useRef, useState } from "react";
 import type { PreviewSnapshot } from "../../index.ts";
-import { layerPresets, type LayerPresetId } from "../lib/layer-presets.ts";
-import type { BoardView } from "../lib/scene-presentation.ts";
+import { type LayerPresetId, layerPresets } from "../lib/layer-presets.ts";
 import { download, type SceneLayer } from "../lib/scene.ts";
+import type { BoardView } from "../lib/scene-presentation.ts";
 import type { CanvasActions } from "./board-canvas.tsx";
 import { IconButton } from "./icon-button.tsx";
-import { useSidebar } from "./ui/sidebar";
 import {
 	CommandDialog,
 	CommandEmpty,
@@ -34,6 +33,7 @@ import {
 	CommandList,
 	CommandSeparator,
 } from "./ui/command";
+import { useSidebar } from "./ui/sidebar";
 
 type Props = {
 	snapshot: PreviewSnapshot;
@@ -252,7 +252,7 @@ export function WorkbenchCommand({
 										snapshot.result &&
 										download(
 											"board.json",
-											JSON.stringify(snapshot.result, null, 2) + "\n",
+											`${JSON.stringify(snapshot.result, null, 2)}\n`,
 											"application/json",
 										),
 								)

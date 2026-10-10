@@ -1,3 +1,4 @@
+import type { BoardIr, IrPart } from "@react-pcb/core";
 import {
 	AlertCircle,
 	ArrowRight,
@@ -5,11 +6,10 @@ import {
 	ChevronDown,
 	Crosshair,
 } from "lucide-react";
-import type { BoardIr, IrPart } from "@react-pcb/core";
 import type { PreviewSnapshot } from "../../index.ts";
-import { Badge } from "./ui/badge";
-import { InspectorSection, DetailRow } from "./inspector-section.tsx";
+import { DetailRow, InspectorSection } from "./inspector-section.tsx";
 import { LayerStackup } from "./layer-stackup.tsx";
+import { Badge } from "./ui/badge";
 
 export function Inspector({
 	snapshot,
@@ -183,12 +183,13 @@ function PartDetails({
 			>
 				<dl className="grid grid-cols-2 gap-x-4 gap-y-1 [&>div]:gap-2 [&>div]:py-1 [&>div]:text-[12px]">
 					{part.at ? (
-						part.at.map((position, index) => (
-							<DetailRow
-								key={index}
-								label={index === 0 ? "X position" : "Y position"}
-								value={String(position)}
-							/>
+						(
+							[
+								["X position", part.at[0]],
+								["Y position", part.at[1]],
+							] as const
+						).map(([label, position]) => (
+							<DetailRow key={label} label={label} value={String(position)} />
 						))
 					) : (
 						<div className="col-span-2 py-1 text-[12px] text-muted-foreground">

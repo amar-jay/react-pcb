@@ -21,15 +21,15 @@ From the repository root:
 
 ```sh
 bun install --frozen-lockfile
-bun run board:dev examples/basic.tsx
-bun run board:build examples/basic.tsx --out dist/index.html
+bun run board:dev examples/basic/board.tsx
+bun run board:build examples/basic/board.tsx --out dist/index.html
 ```
 
 The package also provides its own executable:
 
 ```sh
-bun run preview dev examples/basic.tsx --port 0 --watch ./board-data
-bun run preview build examples/basic.tsx --out dist/index.html
+bun run preview dev examples/basic/board.tsx --port 0 --watch ./board-data
+bun run preview build examples/basic/board.tsx --out dist/index.html
 ```
 
 Default-export a synchronous board component or JSX element from your entry.
@@ -43,9 +43,9 @@ Export Board and Analysis images directly from the CLI, without starting a serve
 or installing a browser:
 
 ```sh
-bun run preview png examples/basic.tsx --view both --out dist/basic.png
+bun run preview png examples/basic/board.tsx --view both --out dist/basic.png
 # Writes dist/basic.board.png and dist/basic.analysis.png.
-bun run board:build examples/basic.tsx --out dist/analysis.png --view analysis --layers all --width 4096
+bun run board:build examples/basic/board.tsx --out dist/analysis.png --view analysis --layers all --width 4096
 ```
 
 PNG defaults are Board view, All layers, light theme, 2048 pixels wide, and
@@ -67,7 +67,7 @@ these exports. `preview --help` lists the options.
 ## Footprint inspection derived from a board
 
 ```sh
-bun run preview inspect examples/basic.tsx --out dist/basic-inspect
+bun run preview inspect examples/basic/board.tsx --out dist/basic-inspect
 bun run board:inspect examples/esc/index.tsx --out dist/esc-inspect
 ```
 
@@ -110,7 +110,7 @@ layer choices, zoom/pan, selection, and net highlighting.
 # Build the React site shell into the repository's dist/ directory.
 bun run preview:build
 # Embed a compiled board in the same React UI, also in dist/ by default.
-bun run board:build examples/basic.tsx
+bun run board:build examples/basic/board.tsx
 ```
 
 The package's `bun run build` also writes to the repository's `dist/` directory.

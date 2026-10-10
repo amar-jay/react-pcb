@@ -14,7 +14,10 @@ export function rulerTicks(
 		return [];
 	const desired = 80 / scale;
 	const power = 10 ** Math.floor(Math.log10(desired));
-	const step = [1, 2, 5, 10].find((value) => value * power >= desired)! * power;
+	const multiplier = [1, 2, 5, 10].find((value) => value * power >= desired);
+	if (multiplier === undefined) return [];
+	const step = multiplier * power;
+	if (!Number.isFinite(step) || step <= 0) return [];
 	const first = Math.ceil((28 - offset) / scale / step) * step;
 	const last = (length - offset) / scale;
 	const format = new Intl.NumberFormat("en", {

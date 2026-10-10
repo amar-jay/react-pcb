@@ -1,9 +1,8 @@
-import React from "react";
 import {
 	Footprint,
 	FootprintGroup,
-	Pad,
 	type FootprintStyle,
+	Pad,
 } from "@react-pcb/core";
 
 // Illustrative fixture: verify actual manufacturer land patterns before fabrication.

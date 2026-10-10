@@ -1,5 +1,4 @@
-import React from "react";
-import { Graphic, type FootprintStyle } from "@react-pcb/core";
+import { type FootprintStyle, Graphic } from "@react-pcb/core";
 
 // Integer micrometres; component-side view, +x right and +y down.
 // Roots start at (0, 0); absolute children may extend on either side of it.

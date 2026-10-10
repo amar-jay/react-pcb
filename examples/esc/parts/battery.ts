@@ -1,5 +1,5 @@
-import React from "react";
 import { definePart, renderFootprintDeclarations } from "@react-pcb/core";
+import React from "react";
 import { XT30UPBFootprint } from "../footprints/terminals.tsx";
 
 const footprint = await renderFootprintDeclarations(

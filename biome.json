@@ -9,5 +9,30 @@
 		"parser": {
 			"tailwindDirectives": true
 		}
+	},
+	"linter": {
+		"rules": {
+			"correctness": {
+				"noUnusedImports": {
+					"level": "warn",
+					"fix": "safe"
+				}
+			},
+			"style": {
+				"useTemplate": {
+					"level": "info",
+					"fix": "safe"
+				}
+			},
+			"complexity": {
+				"useLiteralKeys": {
+					"level": "info",
+					"fix": "safe"
+				}
+			}
+		},
+		"domains": {
+			"react": "recommended"
+		}
 	}
 }

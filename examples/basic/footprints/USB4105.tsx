@@ -1,10 +1,9 @@
-import React from "react";
 import {
 	Footprint,
+	type FootprintStyle,
 	Graphic,
 	Hole,
 	Pad,
-	type FootprintStyle,
 } from "@react-pcb/core";
 
 export const USB4105_FOOTPRINT_KEY = "USB-C_Receptacle_GCT_USB4105";

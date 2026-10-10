@@ -1,26 +1,26 @@
-import { useEffect, useMemo, useState, useRef } from "react";
-import { usePreview } from "./hooks/use-preview.ts";
-import { useBoardPreferences } from "./hooks/use-board-preferences.ts";
-import { useIsMobile } from "./hooks/use-mobile";
-import {
-	exportBoardSvg,
-	analysisLayerColor,
-} from "./lib/scene-presentation.ts";
-import { sceneLayers, download } from "./lib/scene.ts";
-import { previewFindings } from "./lib/findings.ts";
-import { NavigationPanel } from "./components/navigation-panel.tsx";
-import { WorkbenchCommand } from "./components/workbench-command.tsx";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BoardCanvas, type CanvasActions } from "./components/board-canvas.tsx";
-import { PreviewStatus } from "./components/preview-status.tsx";
 import { CanvasToolbar } from "./components/canvas-toolbar.tsx";
-import { InspectorSheet } from "./components/inspector-sheet.tsx";
 import {
 	BuildFailureDialog,
 	DiagnosticsPanel,
 	DiagnosticsTrigger,
 } from "./components/diagnostics-panel.tsx";
+import { InspectorSheet } from "./components/inspector-sheet.tsx";
+import { NavigationPanel } from "./components/navigation-panel.tsx";
+import { PreviewStatus } from "./components/preview-status.tsx";
 import { SidebarProvider } from "./components/ui/sidebar";
 import { TooltipProvider } from "./components/ui/tooltip";
+import { WorkbenchCommand } from "./components/workbench-command.tsx";
+import { useBoardPreferences } from "./hooks/use-board-preferences.ts";
+import { useIsMobile } from "./hooks/use-mobile";
+import { usePreview } from "./hooks/use-preview.ts";
+import { previewFindings } from "./lib/findings.ts";
+import { download, sceneLayers } from "./lib/scene.ts";
+import {
+	analysisLayerColor,
+	exportBoardSvg,
+} from "./lib/scene-presentation.ts";
 
 export function App() {
 	const { snapshot, connection } = usePreview();
@@ -93,6 +93,7 @@ export function App() {
 		if (net && !ir?.nets.some((item) => item.id === net)) setNet("");
 	}, [ir, selected, net]);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: Every build closes stale failure details, even when its error text is unchanged.
 	useEffect(() => {
 		setFailureOpen(false);
 		if (snapshot.error) {

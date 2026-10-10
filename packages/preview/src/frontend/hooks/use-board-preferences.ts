@@ -4,9 +4,9 @@ import {
 	writeBoardPreferences,
 } from "../lib/board-preferences.ts";
 import {
+	type LayerPresetId,
 	matchingLayerPreset,
 	presetVisibility,
-	type LayerPresetId,
 } from "../lib/layer-presets.ts";
 import type { SceneLayer } from "../lib/scene.ts";
 import type { BoardView } from "../lib/scene-presentation.ts";

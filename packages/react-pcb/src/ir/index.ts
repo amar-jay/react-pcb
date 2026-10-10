@@ -1,11 +1,11 @@
 import type { ManufacturingProfile } from "../footprints/manufacturing.ts";
-import type { BoardSide, CopperUsage } from "../layers/index.ts";
-import type { DatasheetSource, ElectricalType } from "../parts/index.tsx";
 import type {
 	FootprintRole,
 	PhysicalFootprint,
 	PlacedPhysicalFeature,
 } from "../footprints/physical.ts";
+import type { BoardSide, CopperUsage } from "../layers/index.ts";
+import type { DatasheetSource, ElectricalType } from "../parts/index.tsx";
 
 export const PCB_IR_SCHEMA_VERSION = 2 as const;
 

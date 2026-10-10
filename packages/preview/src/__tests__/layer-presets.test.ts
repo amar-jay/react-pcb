@@ -4,6 +4,8 @@ import {
 	presetVisibility,
 } from "../frontend/lib/layer-presets.ts";
 import type { SceneLayer } from "../frontend/lib/scene.ts";
+import { assertDefined } from "./fixtures.ts";
+
 const layer = (
 	id: string,
 	category: SceneLayer["category"],
@@ -95,7 +97,7 @@ test("manual visibility changes are detected without letting stale or colliding 
 test("presets include newly added layers and never invent unavailable sides", () => {
 	const added = layer("new-inner", "copper", "copper");
 	expect(presetVisibility([...layers, added], "copper")[added.key]).toBe(true);
-	expect(presetVisibility([layers[0]!], "back")).toEqual({
+	expect(presetVisibility([assertDefined(layers[0])], "back")).toEqual({
 		"layer:outer-a": false,
 	});
 	expect(presetVisibility([], "all")).toEqual({});

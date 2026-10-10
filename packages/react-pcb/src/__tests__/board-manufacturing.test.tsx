@@ -1,32 +1,31 @@
 import { expect, test } from "bun:test";
-import React from "react";
+import { LQFP48Footprint } from "../../../../examples/basic/footprints/LQFP48.tsx";
+import { ManufacturingPassive } from "../../../../examples/basic/footprints/manufacturing.tsx";
 import {
 	Board,
+	type BoardManufacturingReport,
+	compile,
+	copperLayer,
+	defineLayerSet,
+	definePhysicalFootprint,
+	defineStackup,
+	type FeatureInput,
+	type ManufacturingProfileInput,
 	Module,
+	mechanicalLayer,
+	net,
 	Part,
 	PcbCompileError,
-	compile,
-	definePhysicalFootprint,
-	defineLayerSet,
-	mechanicalLayer,
-	copperLayer,
-	defineStackup,
-	net,
 	part,
 	rect,
 	renderFootprintDeclarations,
-	validateBoardManufacturing,
 	useNet,
 	usePart,
-	type BoardManufacturingReport,
-	type ManufacturingProfileInput,
-	type FeatureInput,
+	validateBoardManufacturing,
 } from "../index.ts";
-import { LQFP48Footprint } from "../../../../examples/basic/footprints/LQFP48.tsx";
-import { ManufacturingPassive } from "../../../../examples/basic/footprints/manufacturing.tsx";
-import { testLayers } from "./fixtures.ts";
+import { assertDefined, testLayers } from "./fixtures.ts";
 
-const options = { cwd: import.meta.dir + "/../../../..", hideWarnings: true };
+const options = { cwd: `${import.meta.dir}/../../../..`, hideWarnings: true };
 const layers = defineLayerSet({
 	...testLayers,
 	technical: [
@@ -66,7 +65,7 @@ const policy: ManufacturingProfileInput = {
 	minCourtyardClearance: "0nm",
 };
 const check = (report: BoardManufacturingReport, id: string) =>
-	report.checks.find((item) => item.id === id)!;
+	assertDefined(report.checks.find((item) => item.id === id));
 function land(
 	key = "land",
 	role: "front-copper" | "all-copper" = "front-copper",

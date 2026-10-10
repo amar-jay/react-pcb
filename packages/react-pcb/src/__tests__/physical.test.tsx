@@ -1,21 +1,20 @@
 import { expect, test } from "bun:test";
-import React from "react";
 import {
 	Board,
-	Part,
 	compile,
 	compileFootprint,
 	defineFootprint,
 	definePhysicalFootprint,
-	migrateFootprint,
 	footprintLayer,
-	part,
+	migrateFootprint,
 	net,
+	Part,
+	part,
 	rect,
 } from "../index.ts";
-import { testLayers } from "./fixtures.ts";
+import { assertDefined, testLayers } from "./fixtures.ts";
 
-const options = { cwd: import.meta.dir + "/../../../..", hideWarnings: true };
+const options = { cwd: `${import.meta.dir}/../../../..`, hideWarnings: true };
 const definition = definePhysicalFootprint({
 	key: "physical:test",
 	features: [
@@ -95,7 +94,7 @@ test("independent physical compilation and per-part placement retain exact geome
 		"paste/back",
 		"solder-mask/back",
 	]);
-	expect(result.ir.parts[1]?.physicalFeatures["mount"]?.layers).toEqual([]);
+	expect(result.ir.parts[1]?.physicalFeatures.mount?.layers).toEqual([]);
 	expect(result.diagnostics).toEqual([]);
 });
 
@@ -119,7 +118,10 @@ test("sub-nanometre inputs and duplicate identities reject through the Rust brid
 		compileFootprint(
 			{
 				...definition,
-				features: [definition.features[0]!, definition.features[0]!],
+				features: [
+					assertDefined(definition.features[0]),
+					assertDefined(definition.features[0]),
+				],
 			},
 			options,
 		),
@@ -164,7 +166,7 @@ test("legacy migration requires layer meaning and preserves feature identities",
 		</Board>,
 		options,
 	);
-	expect(result.ir.parts[0]?.physicalFeatures["P"]?.geometry.at).toEqual([
+	expect(result.ir.parts[0]?.physicalFeatures.P?.geometry.at).toEqual([
 		2540000, 5080000,
 	]);
 });

@@ -2,13 +2,13 @@ import { expect, test } from "bun:test";
 
 import {
 	copperLayer,
-	dielectricLayer,
-	mechanicalLayer,
-	silkscreenLayer,
-	solderMaskLayer,
 	defineLayerSet,
 	defineStackup,
+	dielectricLayer,
+	mechanicalLayer,
 	pasteLayer,
+	silkscreenLayer,
+	solderMaskLayer,
 } from "../layers/index.ts";
 import { net, pad, part, point, rect } from "../model/index.ts";
 

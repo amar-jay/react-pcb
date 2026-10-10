@@ -1,5 +1,5 @@
-import type { Net, Part, Pin } from "./types.ts";
 import { assertName } from "../validation/index.ts";
+import type { Net, Part, Pin } from "./types.ts";
 
 export function net(name: string, id = name): Net {
 	assertName(name, "net name", true);

@@ -1,5 +1,9 @@
 import { expect, test } from "bun:test";
-import React from "react";
+import {
+	LQFP48_FOOTPRINT_KEY,
+	LQFP48Footprint,
+} from "../../../../examples/basic/footprints/LQFP48.tsx";
+import { STM32G0B1CBT6 } from "../../../../examples/basic/parts/STM32G0B1CBT6.ts";
 import {
 	Board,
 	compile,
@@ -12,14 +16,9 @@ import {
 	rect,
 	silkscreenLayer,
 } from "../index.ts";
-import {
-	LQFP48Footprint,
-	LQFP48_FOOTPRINT_KEY,
-} from "../../../../examples/basic/footprints/LQFP48.tsx";
-import { STM32G0B1CBT6 } from "../../../../examples/parts/STM32G0B1CBT6.ts";
-import { testLayers } from "./fixtures.ts";
+import { assertDefined, testLayers } from "./fixtures.ts";
 
-const options = { cwd: import.meta.dir + "/../../../..", hideWarnings: true };
+const options = { cwd: `${import.meta.dir}/../../../..`, hideWarnings: true };
 const layers = defineLayerSet({
 	stackup: testLayers.stackup,
 	technical: [
@@ -49,15 +48,15 @@ test("LQFP48 follows ST Figure 44 dimensions and counterclockwise pin numbering"
 		[25, positions.toReversed().map((y) => [4250000, y]), [1200000, 300000]],
 		[37, positions.toReversed().map((x) => [x, -4250000]), [300000, 1200000]],
 	] as const) {
-		centers.forEach((at, index) =>
+		centers.forEach((at, index) => {
 			expect(pads.find((p) => p.id === String(start + index))).toMatchObject({
 				at,
 				shape: { kind: "rect", size },
 				rotation: 0,
 				drill: null,
 				layers: ["front-copper", "front-mask", "front-paste"],
-			}),
-		);
+			});
+		});
 	}
 	expect(ir.features.find((f) => f.id === "body")?.shape).toEqual({
 		kind: "rect",
@@ -130,5 +129,7 @@ test("STM32 pin bindings and footprint realization work on both board sides", as
 		"paste/back",
 		"solder-mask/back",
 	]);
-	expect(Object.keys(front!.physicalFeatures).length).toBeGreaterThan(48);
+	expect(
+		Object.keys(assertDefined(front).physicalFeatures).length,
+	).toBeGreaterThan(48);
 });

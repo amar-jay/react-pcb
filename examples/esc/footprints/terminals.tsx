@@ -1,4 +1,3 @@
-import React from "react";
 import { Footprint, Graphic, Pad } from "@react-pcb/core";
 import { box, Documentation } from "./shared.tsx";
 
@@ -26,7 +25,7 @@ export function XT30UPBFootprint() {
 			/>
 			{[-2500, 2500].map((x, index) => (
 				<Graphic
-					key={index}
+					key={x}
 					name={`mask-${index + 1}`}
 					purpose="mask-opening"
 					shape={index === 0 ? "rect" : "circle"}

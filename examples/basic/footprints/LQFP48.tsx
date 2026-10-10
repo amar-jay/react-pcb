@@ -1,5 +1,5 @@
+import { Footprint, type FootprintStyle, Graphic, Pad } from "@react-pcb/core";
 import React from "react";
-import { Footprint, Graphic, Pad, type FootprintStyle } from "@react-pcb/core";
 
 export const LQFP48_FOOTPRINT_KEY = "LQFP-48_7x7mm_P0.5mm";
 
@@ -20,6 +20,8 @@ function box(
 	};
 }
 
+const padNumbers = Array.from({ length: 48 }, (_, index) => index + 1);
+
 export function LQFP48Footprint() {
 	return (
 		<Footprint
@@ -31,7 +33,8 @@ export function LQFP48Footprint() {
 				top: "-5.1mm",
 			}}
 		>
-			{Array.from({ length: 48 }, (_, index) => {
+			{padNumbers.map((padNumber) => {
+				const index = padNumber - 1;
 				const side = Math.floor(index / 12);
 				const along = -2750 + (index % 12) * 500;
 				const [x, y]: [number, number] =
@@ -44,8 +47,8 @@ export function LQFP48Footprint() {
 								: [-along, -4250];
 				return (
 					<Pad
-						key={index + 1}
-						name={String(index + 1)}
+						key={padNumber}
+						name={String(padNumber)}
 						style={box(
 							x,
 							y,

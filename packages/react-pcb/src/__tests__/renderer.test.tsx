@@ -1,5 +1,4 @@
 import { expect, test } from "bun:test";
-import React from "react";
 
 import { Board, Part, Route, RouteThrough } from "../components/index.ts";
 import { net, pad, part, rect } from "../model/index.ts";

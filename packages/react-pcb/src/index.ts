@@ -11,6 +11,19 @@ export {
 } from "./components/index.ts";
 export const Part = PartComponent;
 export type Part = PartModel;
+export type { BoardProjection } from "./compiler/board-svg.ts";
+export { boardSvg } from "./compiler/board-svg.ts";
+export type {
+	CompileOptions,
+	CompileResult,
+	CompilerDiagnostic,
+	DiagnosticSeverity,
+} from "./compiler/index.ts";
+export {
+	compile,
+	formatDiagnostic,
+	PcbCompileError,
+} from "./compiler/index.ts";
 export type {
 	BoardProps,
 	DifferentialPairProps,
@@ -21,18 +34,63 @@ export type {
 	RouteThroughProps,
 	ZoneProps,
 } from "./components/index.ts";
-export {
-	compile,
-	formatDiagnostic,
-	PcbCompileError,
-} from "./compiler/index.ts";
 export type {
-	CompileOptions,
-	CompileResult,
-	CompilerDiagnostic,
-	DiagnosticSeverity,
-} from "./compiler/index.ts";
-export { PCB_IR_SCHEMA_VERSION } from "./ir/index.ts";
+	FootprintBinding,
+	FootprintDefinition,
+	FootprintPad,
+	PadLayer,
+	PinMap,
+} from "./footprints/index.ts";
+export { defineFootprint } from "./footprints/index.ts";
+export type {
+	FootprintDeclarations,
+	FootprintGroupProps,
+	FootprintProps,
+	FootprintSource,
+	FootprintStyle,
+	FootprintTransform,
+	GraphicProps,
+	HoleProps,
+	PadProps,
+} from "./footprints/jsx.tsx";
+export {
+	Footprint,
+	FootprintGroup,
+	Graphic,
+	Hole,
+	Pad,
+	renderFootprintDeclarations,
+} from "./footprints/jsx.tsx";
+export type {
+	BoardManufacturingReport,
+	ManufacturingCheck,
+	ManufacturingProfile,
+	ManufacturingProfileInput,
+	ManufacturingReport,
+} from "./footprints/manufacturing.ts";
+export {
+	validateBoardManufacturing,
+	validateFootprintManufacturing,
+} from "./footprints/manufacturing.ts";
+export type {
+	FeatureInput,
+	FeaturePurpose,
+	FootprintRole,
+	PhysicalFeature,
+	PhysicalFootprint,
+	PhysicalFootprintInput,
+	PhysicalLength,
+	PhysicalShape,
+	PlacedPhysicalFeature,
+} from "./footprints/physical.ts";
+export {
+	compileFootprint,
+	definePhysicalFootprint,
+	FOOTPRINT_SCHEMA_VERSION,
+	footprintLayer,
+	footprintSvg,
+	migrateFootprint,
+} from "./footprints/physical.ts";
 export type {
 	BoardIr,
 	IrComponentDefinition,
@@ -51,29 +109,7 @@ export type {
 	IrTechnicalLayer,
 	IrZone,
 } from "./ir/index.ts";
-export { net, pad, part, point, rect } from "./model/index.ts";
-export type { Children, Net, Pin, Point, Rect, Region } from "./model/index.ts";
-export { definePart } from "./parts/index.tsx";
-export type {
-	DatasheetSource,
-	DefinedPartProps,
-	ElectricalType,
-	PartConnections,
-	PartDefinition,
-	PinDefinition,
-} from "./parts/index.tsx";
-export { globalNet, Module, useNet, usePart } from "./scope/index.tsx";
-export type { ModuleProps } from "./scope/index.tsx";
-export {
-	copperLayer,
-	defineLayerSet,
-	defineStackup,
-	dielectricLayer,
-	mechanicalLayer,
-	pasteLayer,
-	silkscreenLayer,
-	solderMaskLayer,
-} from "./layers/index.ts";
+export { PCB_IR_SCHEMA_VERSION } from "./ir/index.ts";
 export type {
 	BoardSide,
 	CopperLayer,
@@ -89,66 +125,26 @@ export type {
 	StackupLayer,
 	TechnicalLayer,
 } from "./layers/index.ts";
-
-export { defineFootprint } from "./footprints/index.ts";
 export {
-	definePhysicalFootprint,
-	compileFootprint,
-	footprintSvg,
-	migrateFootprint,
-	footprintLayer,
-	FOOTPRINT_SCHEMA_VERSION,
-} from "./footprints/physical.ts";
+	copperLayer,
+	defineLayerSet,
+	defineStackup,
+	dielectricLayer,
+	mechanicalLayer,
+	pasteLayer,
+	silkscreenLayer,
+	solderMaskLayer,
+} from "./layers/index.ts";
+export type { Children, Net, Pin, Point, Rect, Region } from "./model/index.ts";
+export { net, pad, part, point, rect } from "./model/index.ts";
 export type {
-	PhysicalLength,
-	PhysicalShape,
-	PhysicalFeature,
-	PhysicalFootprint,
-	PhysicalFootprintInput,
-	FootprintRole,
-	FeatureInput,
-	FeaturePurpose,
-	PlacedPhysicalFeature,
-} from "./footprints/physical.ts";
-export type {
-	FootprintDefinition,
-	FootprintPad,
-	FootprintBinding,
-	PadLayer,
-	PinMap,
-} from "./footprints/index.ts";
-
-export {
-	Footprint,
-	FootprintGroup,
-	Pad,
-	Hole,
-	Graphic,
-	renderFootprintDeclarations,
-} from "./footprints/jsx.tsx";
-export type {
-	FootprintProps,
-	FootprintGroupProps,
-	PadProps,
-	HoleProps,
-	GraphicProps,
-	FootprintStyle,
-	FootprintTransform,
-	FootprintSource,
-	FootprintDeclarations,
-} from "./footprints/jsx.tsx";
-
-export {
-	validateFootprintManufacturing,
-	validateBoardManufacturing,
-} from "./footprints/manufacturing.ts";
-export type {
-	ManufacturingProfileInput,
-	ManufacturingProfile,
-	ManufacturingCheck,
-	ManufacturingReport,
-	BoardManufacturingReport,
-} from "./footprints/manufacturing.ts";
-
-export { boardSvg } from "./compiler/board-svg.ts";
-export type { BoardProjection } from "./compiler/board-svg.ts";
+	DatasheetSource,
+	DefinedPartProps,
+	ElectricalType,
+	PartConnections,
+	PartDefinition,
+	PinDefinition,
+} from "./parts/index.tsx";
+export { definePart } from "./parts/index.tsx";
+export type { ModuleProps } from "./scope/index.tsx";
+export { globalNet, Module, useNet, usePart } from "./scope/index.tsx";

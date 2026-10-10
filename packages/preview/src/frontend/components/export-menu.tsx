@@ -54,7 +54,7 @@ export function ExportMenu({
 						snapshot.result &&
 						download(
 							"board.json",
-							JSON.stringify(snapshot.result, null, 2) + "\n",
+							`${JSON.stringify(snapshot.result, null, 2)}\n`,
 							"application/json",
 						)
 					}

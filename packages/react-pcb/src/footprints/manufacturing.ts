@@ -1,7 +1,7 @@
-import { compilerError } from "../compiler/diagnostics.ts";
 import type { CompilerDiagnostic } from "../compiler/diagnostics.ts";
-import type { PhysicalFootprint, PhysicalLength } from "./physical.ts";
+import { compilerError } from "../compiler/diagnostics.ts";
 import type { BoardIr } from "../ir/index.ts";
+import type { PhysicalFootprint, PhysicalLength } from "./physical.ts";
 
 /** Explicit user-selected process limits; no fabricator defaults are inferred. */
 export type ManufacturingProfileInput = Readonly<{

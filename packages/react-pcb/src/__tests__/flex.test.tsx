@@ -1,30 +1,29 @@
 import { expect, test } from "bun:test";
-import React from "react";
-import {
-	Board,
-	Footprint,
-	FootprintGroup,
-	Graphic,
-	Pad,
-	Part,
-	PcbCompileError,
-	compile,
-	compileFootprint,
-	definePhysicalFootprint,
-	footprintSvg,
-	net,
-	part,
-	rect,
-	renderFootprintDeclarations,
-	type FootprintStyle,
-} from "../index.ts";
 import {
 	Flex0402,
 	FlexSoicRow,
 } from "../../../../examples/basic/footprints/flex.tsx";
-import { testLayers } from "./fixtures.ts";
+import {
+	Board,
+	compile,
+	compileFootprint,
+	definePhysicalFootprint,
+	Footprint,
+	FootprintGroup,
+	type FootprintStyle,
+	footprintSvg,
+	Graphic,
+	net,
+	Pad,
+	Part,
+	PcbCompileError,
+	part,
+	rect,
+	renderFootprintDeclarations,
+} from "../index.ts";
+import { assertDefined, testLayers } from "./fixtures.ts";
 
-const options = { cwd: import.meta.dir + "/../../../..", hideWarnings: true };
+const options = { cwd: `${import.meta.dir}/../../../..`, hideWarnings: true };
 
 test("flex passive equals explicit geometry, round trips and resolves board instances", async () => {
 	const explicit = definePhysicalFootprint({
@@ -143,8 +142,8 @@ test("row and column alignment use fixed untransformed boxes with mixed units", 
 			expect(ir.features.map((f) => f.at)).toEqual(
 				main.map((m, i) =>
 					row
-						? ([m * 1000000, cross[i]! * 1000000] as const)
-						: ([cross[i]! * 1000000, m * 1000000] as const),
+						? ([m * 1000000, assertDefined(cross[i]) * 1000000] as const)
+						: ([assertDefined(cross[i]) * 1000000, m * 1000000] as const),
 				),
 			);
 		}
@@ -324,7 +323,9 @@ test("invalid flex input fails with scoped diagnostics and never silently shrink
 	];
 	for (const [child, patch, message] of cases) {
 		const declaration = structuredClone(base);
-		const node = child ? declaration.root.children[0]! : declaration.root;
+		const node = child
+			? assertDefined(declaration.root.children[0])
+			: declaration.root;
 		node.props.style = { ...(node.props.style as object), ...patch };
 		try {
 			await compileFootprint(declaration, options);
@@ -341,7 +342,7 @@ test("invalid flex input fails with scoped diagnostics and never silently shrink
 	}
 	const gaps = structuredClone(base);
 	gaps.root.props.style = { ...(gaps.root.props.style as object), gap: "3mm" };
-	const second = structuredClone(gaps.root.children[0]!);
+	const second = structuredClone(assertDefined(gaps.root.children[0]));
 	second.props.name = "Q";
 	gaps.root.children.push(second);
 	await expect(compileFootprint(gaps, options)).rejects.toThrow(

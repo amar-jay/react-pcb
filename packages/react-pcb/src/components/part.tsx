@@ -1,7 +1,6 @@
-import type { FootprintDeclarations } from "../footprints/jsx.tsx";
 import React from "react";
-
 import type { FootprintDefinition, PinMap } from "../footprints/index.ts";
+import type { FootprintDeclarations } from "../footprints/jsx.tsx";
 import type {
 	PhysicalFootprint,
 	PhysicalFootprintInput,

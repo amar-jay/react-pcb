@@ -164,7 +164,9 @@ export function exportBoardSvg(
 	// Some server DOM implementations retain empty declarations that browsers remove.
 	if (parsed) {
 		for (const element of svg.querySelectorAll("[style]")) {
-			const declarations = element.getAttribute("style")!.split(";");
+			const style = element.getAttribute("style");
+			if (style === null) continue;
+			const declarations = style.split(";");
 			element.setAttribute(
 				"style",
 				declarations

@@ -1,5 +1,5 @@
-import { mkdir, rename, rm } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
+import { mkdir, rename, rm } from "node:fs/promises";
 import { dirname, extname, resolve } from "node:path";
 import type {
 	BoardIr,
@@ -10,15 +10,15 @@ import { Resvg } from "@resvg/resvg-js";
 import { DOMParser } from "linkedom";
 import { buildBoardPreview, type PreviewBuildOptions } from "./build.ts";
 import {
+	type LayerPresetId,
 	layerPresets,
 	presetVisibility,
-	type LayerPresetId,
 } from "./frontend/lib/layer-presets.ts";
-import {
-	exportBoardSvg,
-	type BoardView,
-} from "./frontend/lib/scene-presentation.ts";
 import { sceneLayers } from "./frontend/lib/scene.ts";
+import {
+	type BoardView,
+	exportBoardSvg,
+} from "./frontend/lib/scene-presentation.ts";
 
 export type PngRenderOptions = {
 	view?: BoardView;
@@ -56,12 +56,13 @@ function systemMonospaceFamily() {
 	} catch {
 		/* Fontconfig is optional on macOS and Windows. */
 	}
-	return (monospaceFamily ||=
+	monospaceFamily ||=
 		process.platform === "darwin"
 			? "Menlo"
 			: process.platform === "win32"
 				? "Consolas"
-				: "DejaVu Sans Mono");
+				: "DejaVu Sans Mono";
+	return monospaceFamily;
 }
 
 function validateOptions(options: PngRenderOptions | PngExportOptions) {
@@ -114,8 +115,18 @@ export function renderBoardPng(
 	)) {
 		references.style.fontFamily = fontFamily;
 	}
-	const viewBox = svg.getAttribute("viewBox")!.trim().split(/\s+/).map(Number);
-	const unitsPerPixel = viewBox[2]! / width;
+	const rawViewBox = svg.getAttribute("viewBox");
+	if (!rawViewBox) throw new Error("Board SVG is missing its viewBox");
+	const viewBox = rawViewBox.trim().split(/\s+/).map(Number);
+	const svgWidth = viewBox[2];
+	if (
+		viewBox.length !== 4 ||
+		!viewBox.every(Number.isFinite) ||
+		svgWidth === undefined ||
+		svgWidth <= 0
+	)
+		throw new Error("Invalid board SVG viewBox");
+	const unitsPerPixel = svgWidth / width;
 	// resvg does not support non-scaling-stroke. Resolve display stroke widths at output scale.
 	for (const element of svg.querySelectorAll<SVGElement>("[style]")) {
 		if (element.style.vectorEffect !== "non-scaling-stroke") continue;
@@ -162,12 +173,13 @@ export async function exportBoardPng(
 	const destination = resolve(output);
 	const views: BoardView[] =
 		options.view === "both" ? ["board", "analysis"] : [options.view ?? "board"];
+	const { projection, result } = build;
 	const images = views.map((view) => ({
 		file:
 			options.view === "both"
 				? `${destination.slice(0, -4)}.${view}.png`
 				: destination,
-		bytes: renderBoardPng(build.projection!, build.result!.ir, {
+		bytes: renderBoardPng(projection, result.ir, {
 			...options,
 			view,
 		}),

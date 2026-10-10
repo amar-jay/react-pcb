@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
-import type { PreviewSnapshot } from "../index.ts";
 import { previewFindings } from "../frontend/lib/findings.ts";
+import type { PreviewSnapshot } from "../index.ts";
 
 const snapshot: PreviewSnapshot = {
 	entry: "board.tsx",

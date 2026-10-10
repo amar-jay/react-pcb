@@ -1,8 +1,8 @@
 import {
-	measureDistance,
-	projectPoint,
 	type CanvasPoint,
 	type CanvasTransform,
+	measureDistance,
+	projectPoint,
 } from "../lib/ruler.ts";
 
 export type CanvasViewport = {
@@ -37,7 +37,10 @@ export function CanvasMeasurement({
 			data-measurement
 			data-complete={complete}
 		>
-			<svg className="absolute inset-0 size-full overflow-visible text-primary">
+			<svg
+				aria-hidden="true"
+				className="absolute inset-0 size-full overflow-visible text-primary"
+			>
 				<line
 					x1={from.x}
 					y1={from.y}

@@ -1,5 +1,5 @@
-import React from "react";
 import { definePart, renderFootprintDeclarations } from "@react-pcb/core";
+import React from "react";
 import { SOIC8Footprint } from "../footprints/SOIC8.tsx";
 
 const footprint = await renderFootprintDeclarations(

@@ -1,20 +1,20 @@
+import type { ReactNode } from "react";
 import type {
 	BoardManufacturingReport,
 	ManufacturingReport,
 } from "../footprints/manufacturing.ts";
-import type { ReactNode } from "react";
+import { type BoardIr, PCB_IR_SCHEMA_VERSION } from "../ir/index.ts";
 import { createDeclarationTransaction } from "../protocol/index.ts";
 import { renderDeclarations } from "../renderer/index.ts";
+import type { CompilerDiagnostic } from "./diagnostics.ts";
 import {
 	compilerError,
 	formatDiagnostic,
 	PcbCompileError,
 } from "./diagnostics.ts";
-import type { CompilerDiagnostic } from "./diagnostics.ts";
-import { PCB_IR_SCHEMA_VERSION, type BoardIr } from "../ir/index.ts";
 
-export { formatDiagnostic, PcbCompileError };
 export type { CompilerDiagnostic, DiagnosticSeverity } from "./diagnostics.ts";
+export { formatDiagnostic, PcbCompileError };
 
 export type CompileOptions = {
 	command?: readonly string[];

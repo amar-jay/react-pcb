@@ -1,22 +1,22 @@
+import type { ManufacturingProfileInput } from "@react-pcb/core";
 import { LQFP48Footprint } from "../../basic/footprints/LQFP48.tsx";
+import { LFPAK56Footprint } from "./LFPAK56.tsx";
 import {
 	Capacitor0402Footprint,
 	Capacitor1210Footprint,
 	Shunt2512Footprint,
 } from "./passives.tsx";
 import { SOIC8Footprint } from "./SOIC8.tsx";
-import { LFPAK56Footprint } from "./LFPAK56.tsx";
 import { PhaseTerminalFootprint, XT30UPBFootprint } from "./terminals.tsx";
-import type { ManufacturingProfileInput } from "@react-pcb/core";
 
 export {
-	LQFP48Footprint,
 	Capacitor0402Footprint,
 	Capacitor1210Footprint,
+	LFPAK56Footprint,
+	LQFP48Footprint,
+	PhaseTerminalFootprint,
 	Shunt2512Footprint,
 	SOIC8Footprint,
-	LFPAK56Footprint,
-	PhaseTerminalFootprint,
 	XT30UPBFootprint,
 };
 

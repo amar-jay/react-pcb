@@ -1,7 +1,7 @@
 # LQFP-48, 7 × 7 mm, 0.5 mm pitch
 
-`examples/footprints/LQFP48.tsx` supplies the physical definition used by
-`examples/parts/STM32G0B1CBT6.ts` and therefore `examples/basic.tsx`.
+`examples/basic/footprints/LQFP48.tsx` supplies the physical definition used by
+`examples/basic/parts/STM32G0B1CBT6.ts` and therefore `examples/basic/board.tsx`.
 
 Sources checked on 2026-10-08:
 
@@ -54,7 +54,7 @@ The logical example remains explicitly partial: VDD/VDDA → 6, VSS/VSSA → 7,
 PA11/USB_DM → 33, and PA12/USB_DP → 34, verified against the GP pinout.
 The physical definition includes all 48 lands regardless of logical coverage.
 
-Run `bun run board:inspect examples/basic.tsx --out /tmp/react-pcb-footprints`
+Run `bun run board:inspect examples/basic/board.tsx --out /tmp/react-pcb-footprints`
 for the static inspection page. `manifest.json` maps the LQFP48 definition
 key to its canonical JSON and styled SVG filenames. Tests independently
 check all land positions and dimensions, numbering, identity, deterministic SVG,

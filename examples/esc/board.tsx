@@ -1,14 +1,13 @@
-import React from "react";
 import {
 	Board,
 	DifferentialPair,
 	Keepout,
+	pad,
 	Route,
 	RouteThrough,
-	Zone,
-	pad,
 	rect,
 	useNet,
+	Zone,
 } from "@react-pcb/core";
 import { batteryPlane, boardLayers, groundPlane } from "./layers.ts";
 import { Control, controller } from "./modules/control.tsx";

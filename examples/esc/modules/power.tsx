@@ -1,5 +1,5 @@
 import { Module, part, usePart } from "@react-pcb/core";
-import { Battery, BulkCapacitor, Shunt, type Net } from "../parts/index.ts";
+import { Battery, BulkCapacitor, type Net, Shunt } from "../parts/index.ts";
 
 const scope = "power";
 

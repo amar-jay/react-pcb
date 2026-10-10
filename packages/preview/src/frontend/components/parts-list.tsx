@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { ChevronRight, Search, X } from "lucide-react";
 import type { BoardIr } from "@react-pcb/core";
+import { ChevronRight, Search, X } from "lucide-react";
+import { useState } from "react";
 import { Input } from "./ui/input";
 
 export function PartsList({
@@ -54,7 +54,7 @@ export function PartsList({
 			</div>
 			<div id="parts" className="flex flex-col gap-2">
 				{parts.map((item) => {
-					const component = ir!.componentDefinitions[item.component];
+					const component = ir?.componentDefinitions[item.component];
 					return (
 						<button
 							type="button"

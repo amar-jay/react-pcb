@@ -10,7 +10,7 @@ const escapeHtml = (value: string) =>
 				">": "&gt;",
 				'"': "&quot;",
 				"'": "&#39;",
-			})[character]!,
+			})[character] ?? character,
 	);
 const link = (file: string, label: string) =>
 	`<a href="${escapeHtml(file)}">${escapeHtml(label)}</a>`;
@@ -30,13 +30,9 @@ export function inspectionHtml(inspection: BoardInspection): string {
 			: ir.board.id;
 	const footprints = inspection.footprints
 		.map((item) => {
-			const dimensions = item.physical
-				? item.physical.bounds.max2
-						.map(
-							(max, axis) =>
-								(max - item.physical!.bounds.min2[axis]!) / 2_000_000,
-						)
-						.join(" × ") + " mm"
+			const bounds = item.physical?.bounds;
+			const dimensions = bounds
+				? `${(bounds.max2[0] - bounds.min2[0]) / 2_000_000} × ${(bounds.max2[1] - bounds.min2[1]) / 2_000_000} mm`
 				: "";
 			const parts = item.parts
 				.map(

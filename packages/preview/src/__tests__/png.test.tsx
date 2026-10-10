@@ -1,14 +1,13 @@
 import { expect, test } from "bun:test";
-import React from "react";
 import { mkdtemp, rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { inflateSync } from "node:zlib";
 import {
 	Board,
-	Part,
 	compile,
 	definePhysicalFootprint,
 	net,
+	Part,
 	part,
 	rect,
 } from "@react-pcb/core";
@@ -18,7 +17,7 @@ import {
 	exportBoardPng,
 	renderBoardPng,
 } from "../index.ts";
-import { testLayers } from "./fixtures.ts";
+import { assertDefined, testLayers } from "./fixtures.ts";
 
 const cwd = resolve(import.meta.dir, "../../../..");
 const footprint = definePhysicalFootprint({
@@ -68,12 +67,13 @@ function pixels(bytes: Uint8Array) {
 	const decoded = Buffer.alloc(stride * height);
 	const colors = new Map<string, number>();
 	for (let y = 0; y < height; y++) {
-		const filter = data[y * (stride + 1)]!;
+		const filter = assertDefined(data[y * (stride + 1)]);
 		for (let x = 0; x < stride; x++) {
 			const offset = y * stride + x;
-			const left = x < 4 ? 0 : decoded[offset - 4]!;
-			const above = y === 0 ? 0 : decoded[offset - stride]!;
-			const corner = y === 0 || x < 4 ? 0 : decoded[offset - stride - 4]!;
+			const left = x < 4 ? 0 : assertDefined(decoded[offset - 4]);
+			const above = y === 0 ? 0 : assertDefined(decoded[offset - stride]);
+			const corner =
+				y === 0 || x < 4 ? 0 : assertDefined(decoded[offset - stride - 4]);
 			const prediction = left + above - corner;
 			const distances = [
 				Math.abs(prediction - left),
@@ -81,14 +81,17 @@ function pixels(bytes: Uint8Array) {
 				Math.abs(prediction - corner),
 			];
 			const paeth =
-				distances[0]! <= distances[1]! && distances[0]! <= distances[2]!
+				assertDefined(distances[0]) <= assertDefined(distances[1]) &&
+				assertDefined(distances[0]) <= assertDefined(distances[2])
 					? left
-					: distances[1]! <= distances[2]!
+					: assertDefined(distances[1]) <= assertDefined(distances[2])
 						? above
 						: corner;
 			decoded[offset] =
-				(data[y * (stride + 1) + x + 1]! +
-					[0, left, above, Math.floor((left + above) / 2), paeth][filter]!) &
+				(assertDefined(data[y * (stride + 1) + x + 1]) +
+					assertDefined(
+						[0, left, above, Math.floor((left + above) / 2), paeth][filter],
+					)) &
 				255;
 		}
 	}
@@ -230,19 +233,31 @@ test("ESC PNG defaults retain courtyard, fabrication, mask, paste and constraint
 	const build = await buildBoardPreview(join(cwd, "examples/esc/index.tsx"));
 	expect(build.error).toBeNull();
 	const board = pixels(
-		renderBoardPng(build.projection!, build.result!.ir, { width: 1024 }),
+		renderBoardPng(
+			assertDefined(build.projection),
+			assertDefined(build.result).ir,
+			{ width: 1024 },
+		),
 	);
 	const front = pixels(
-		renderBoardPng(build.projection!, build.result!.ir, {
-			width: 1024,
-			layers: "front",
-		}),
+		renderBoardPng(
+			assertDefined(build.projection),
+			assertDefined(build.result).ir,
+			{
+				width: 1024,
+				layers: "front",
+			},
+		),
 	);
 	const analysis = pixels(
-		renderBoardPng(build.projection!, build.result!.ir, {
-			width: 1024,
-			view: "analysis",
-		}),
+		renderBoardPng(
+			assertDefined(build.projection),
+			assertDefined(build.result).ir,
+			{
+				width: 1024,
+				view: "analysis",
+			},
+		),
 	);
 	expect(board.width).toBe(1024);
 	expect(board.height).toBe(1024);
@@ -344,7 +359,9 @@ test("CLI exports both PNG views and inferred PNG builds, rejects invalid flags 
 			(await cli(entry, "png", "--out", output, "--view", "both")).code,
 		).toBe(1);
 		for (let i = 0; i < paths.length; i++)
-			expect(await Bun.file(paths[i]!).arrayBuffer()).toEqual(valid[i]!);
+			expect(await Bun.file(assertDefined(paths[i])).arrayBuffer()).toEqual(
+				assertDefined(valid[i]),
+			);
 	} finally {
 		await rm(directory, { recursive: true, force: true });
 	}

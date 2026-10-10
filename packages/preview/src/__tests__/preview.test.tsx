@@ -1,14 +1,13 @@
 import { expect, test } from "bun:test";
-import React from "react";
-import { mkdtemp, rm, mkdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
+import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import {
 	Board,
-	Part,
 	compile,
 	definePhysicalFootprint,
 	net,
+	Part,
 	part,
 	rect,
 } from "@react-pcb/core";
@@ -19,7 +18,7 @@ import {
 	exportBoardPreview,
 	startBoardPreview,
 } from "@react-pcb/preview";
-import { testLayers } from "./fixtures.ts";
+import { assertDefined, testLayers } from "./fixtures.ts";
 
 const cwd = resolve(import.meta.dir, "../../../..");
 const options = { cwd, hideWarnings: true };
@@ -104,8 +103,10 @@ test("board projection uses exact placed geometry, concrete layers, stable IDs a
 	expect((await boardSvg(reordered, options)).svg).toBe(output.svg);
 	expect(JSON.stringify(result.ir)).toBe(original);
 	const forged = structuredClone(result.ir);
-	(forged.parts[0]!.physicalFeatures.P!.geometry.at as [number, number])[0] +=
-		1;
+	(
+		assertDefined(assertDefined(forged.parts[0]).physicalFeatures.P).geometry
+			.at as [number, number]
+	)[0] += 1;
 	await expect(boardSvg(forged, options)).rejects.toThrow("does not match");
 });
 
@@ -126,9 +127,13 @@ test("offline HTML embeds the actual board and safely handles markup in metadata
 		</Board>,
 		options,
 	);
-	const payload = html.match(
-		/<script type="application\/json" id="preview-data">(.*?)<\/script>/s,
-	)![1]!;
+	const payload = assertDefined(
+		assertDefined(
+			html.match(
+				/<script type="application\/json" id="preview-data">(.*?)<\/script>/s,
+			),
+		)[1],
+	);
 	expect(payload).not.toContain("</script>");
 	const parsed = JSON.parse(payload);
 	expect(parsed.result.ir.board.metadata.title).toBe(title);
@@ -284,7 +289,7 @@ test("workspace CLI exports HTML and serves the board through the installed prev
 					if (done) throw new Error("Preview CLI exited before serving a URL");
 					text += decoder.decode(value, { stream: true });
 					const match = text.match(/Board preview: (http:\/\/\S+)/);
-					if (match) return match[1]!;
+					if (match) return assertDefined(match[1]);
 				}
 			})(),
 			new Promise<never>((_, reject) => {
@@ -320,10 +325,12 @@ test("live preview reloads imported geometry and recovers from compiler, syntax,
 		const response = await fetch(server.url);
 		const shell = await response.text();
 		expect(shell).toContain("preview-data");
-		const stylesheet = shell.match(
-			/<link rel="stylesheet" href="([^"]+)"/,
-		)![1]!;
-		const script = shell.match(/src="([^"]+)" data-bun-dev-server-script/)![1]!;
+		const stylesheet = assertDefined(
+			assertDefined(shell.match(/<link rel="stylesheet" href="([^"]+)"/))[1],
+		);
+		const script = assertDefined(
+			assertDefined(shell.match(/src="([^"]+)" data-bun-dev-server-script/))[1],
+		);
 		const css = await fetch(new URL(stylesheet, server.url));
 		expect(css.status).toBe(200);
 		expect(await css.text()).toContain(".bg-card");
@@ -340,7 +347,7 @@ test("live preview reloads imported geometry and recovers from compiler, syntax,
 			() => !!server.snapshot.projection?.svg.includes('width="3" height="1"'),
 			"dependency did not reload",
 		);
-		const good = server.snapshot.projection!.svg;
+		const good = assertDefined(server.snapshot.projection).svg;
 		let version = server.snapshot.version;
 		await Bun.write(join(directory, "footprint.ts"), pad(-1));
 		await until(
@@ -348,14 +355,14 @@ test("live preview reloads imported geometry and recovers from compiler, syntax,
 			"invalid geometry did not report an error",
 		);
 		expect(server.snapshot.error).toContain("invalid dimensions");
-		expect(server.snapshot.projection!.svg).toBe(good);
+		expect(assertDefined(server.snapshot.projection).svg).toBe(good);
 		version = server.snapshot.version;
 		await Bun.write(entry, "export default function Board( {");
 		await until(
 			() => server.snapshot.version > version && !!server.snapshot.error,
 			"syntax error did not reload",
 		);
-		expect(server.snapshot.projection!.svg).toBe(good);
+		expect(assertDefined(server.snapshot.projection).svg).toBe(good);
 		await Bun.write(join(directory, "footprint.ts"), pad(4));
 		await Bun.write(entry, source("Recovered"));
 		await until(
@@ -364,7 +371,9 @@ test("live preview reloads imported geometry and recovers from compiler, syntax,
 				server.snapshot.result?.ir.board.metadata.title === "Recovered",
 			"syntax error did not recover",
 		);
-		expect(server.snapshot.projection!.svg).toContain('width="4" height="1"');
+		expect(assertDefined(server.snapshot.projection).svg).toContain(
+			'width="4" height="1"',
+		);
 		version = server.snapshot.version;
 		await Bun.write(
 			entry,
@@ -494,16 +503,17 @@ export default function BoardView(){return <Board outline={rect(0,0,10,10)} laye
 			() => !running.snapshot.error && !!running.snapshot.result,
 			"collision did not recover",
 		);
-		const good = running.snapshot.projection!.svg;
+		const good = assertDefined(running.snapshot.projection).svg;
 		expect(
-			running.snapshot.result!.boardManufacturingReport?.conformsToCheckedRules,
+			assertDefined(running.snapshot.result).boardManufacturingReport
+				?.conformsToCheckedRules,
 		).toBe(true);
 		await Bun.write(entry, board(2.5));
 		await until(
 			() => !!running.snapshot.error,
 			"collision rebuild did not fail",
 		);
-		expect(running.snapshot.projection!.svg).toBe(good);
+		expect(assertDefined(running.snapshot.projection).svg).toBe(good);
 		const state = await (
 			await fetch(new URL("/__preview/data", running.url))
 		).json();

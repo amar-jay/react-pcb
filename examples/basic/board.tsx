@@ -1,33 +1,32 @@
-import React from "react";
 import {
 	Board,
-	DifferentialPair,
-	Keepout,
-	Module,
-	Part,
-	PcbCompileError,
-	Route,
-	RouteThrough,
-	Zone,
 	compile,
 	copperLayer,
+	DifferentialPair,
 	defineLayerSet,
 	defineStackup,
 	dielectricLayer,
+	Keepout,
+	Module,
 	mechanicalLayer,
+	Part,
+	type PartProps,
+	PcbCompileError,
 	pad,
 	pasteLayer,
+	Route,
+	RouteThrough,
 	rect,
 	renderFootprintDeclarations,
 	silkscreenLayer,
 	solderMaskLayer,
 	useNet,
 	usePart,
-	type PartProps,
+	Zone,
 } from "@react-pcb/core";
 import {
-	ManufacturingPassive,
 	inspectionProfile,
+	ManufacturingPassive,
 } from "./footprints/manufacturing.tsx";
 import { STM32G0B1CBT6 } from "./parts/STM32G0B1CBT6.ts";
 import { USB4105GFA } from "./parts/USB4105GFA.ts";
@@ -201,7 +200,9 @@ export default function MyBoard() {
 
 if (import.meta.main)
 	try {
-		const result = await compile(<MyBoard />, { cwd: import.meta.dir + "/.." });
+		const result = await compile(<MyBoard />, {
+			cwd: `${import.meta.dir}/../..`,
+		});
 		console.log(JSON.stringify(result, null, 2));
 	} catch (error) {
 		if (error instanceof PcbCompileError) {

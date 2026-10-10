@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { PreviewSnapshot } from "../../index.ts";
 
 export type PreviewConnection = "connecting" | "connected" | "disconnected";
@@ -23,6 +23,7 @@ function initialSnapshot(): PreviewSnapshot {
 /** One request at a time, canceled when the viewer unmounts or hot reloads. */
 export function usePreview() {
 	const [snapshot, setSnapshot] = useState(initialSnapshot);
+	const version = useRef(snapshot.version);
 	const [connection, setConnection] = useState<PreviewConnection>(
 		snapshot.live ? "connecting" : "connected",
 	);
@@ -30,7 +31,6 @@ export function usePreview() {
 		if (!snapshot.live) return;
 		const controller = new AbortController();
 		let timer: ReturnType<typeof setTimeout>;
-		let version = snapshot.version;
 		const get = async (path: string) => {
 			const response = await fetch(path, {
 				cache: "no-store",
@@ -46,10 +46,10 @@ export function usePreview() {
 					version: number;
 					building: boolean;
 				};
-				if (status.version !== version) {
+				if (status.version !== version.current) {
 					const next = (await get("/__preview/data")) as PreviewSnapshot;
 					if (controller.signal.aborted) return;
-					version = next.version;
+					version.current = next.version;
 					setSnapshot(next);
 				} else
 					setSnapshot((previous) =>

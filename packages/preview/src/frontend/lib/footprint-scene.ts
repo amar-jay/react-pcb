@@ -1,6 +1,6 @@
 import type { FootprintRole } from "@react-pcb/core";
-import { boardLayerColor } from "./scene-presentation.ts";
 import type { SceneLayer } from "./scene.ts";
+import { boardLayerColor } from "./scene-presentation.ts";
 
 const roles: Record<
 	FootprintRole,

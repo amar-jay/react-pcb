@@ -60,7 +60,7 @@ These checks establish deterministic geometry and reference semantics. Phase six
 ```sh
 cargo run --quiet -p pcbir -- footprint < declaration.json > footprint.json
 cargo run --quiet -p pcbir -- footprint-svg < footprint.json > footprint.svg
-bun run board:inspect examples/basic.tsx --out /tmp/react-pcb-footprints
+bun run board:inspect examples/basic/board.tsx --out /tmp/react-pcb-footprints
 ```
 
 Open the generated static `index.html` to view the board’s used footprints,
@@ -107,7 +107,7 @@ const footprint = await compileFootprint(declarations); // compileFootprint(elem
 const svg = await footprintSvg(footprint);
 ```
 
-The two pad centers are exactly `[-500000, 0]` and `[500000, 0]` nm. See `examples/footprints/0402.tsx` for a fixture using a layout group. This standalone fixture is covered by layout tests; a board using it includes its resolved SVG when exported with `board:inspect`. `examples/basic.tsx` uses the Grid-authored `ManufacturingPassive` fixture for its decoupling capacitor: `renderFootprintDeclarations` snapshots the JSX, and board compilation resolves its layout, pin bindings, placement, and semantic layers.
+The two pad centers are exactly `[-500000, 0]` and `[500000, 0]` nm. See `examples/basic/footprints/0402.tsx` for a fixture using a layout group. This standalone fixture is covered by layout tests; a board using it includes its resolved SVG when exported with `board:inspect`. `examples/basic/board.tsx` uses the Grid-authored `ManufacturingPassive` fixture for its decoupling capacitor: `renderFootprintDeclarations` snapshots the JSX, and board compilation resolves its layout, pin bindings, placement, and semantic layers.
 
 ### Layout contract
 
@@ -162,9 +162,9 @@ Physical schema version two adds optional `slot: [width, height]` to a drill. Le
 
 New explicit declarations, JSX compilations and migration of numeric legacy geometry emit physical schema version two. Existing compiled physical version-one definitions without slots remain accepted and can pass through migration unchanged. Version-one authoring declarations still accept circular drills and normalize to version two; a version-one declaration or canonical definition containing a slot is rejected. The board schema remains version two because the independently versioned `physical` definition is authoritative; consumers must validate that nested version. Compatibility pad drills also retain optional millimetre slot dimensions. SVG renders slots as independent capsule drill elements rather than approximating them with circles.
 
-[USB4105 source and coordinate notes](footprints/USB4105.md) document the GCT B4 land pattern, official KiCad cross-check, merged contact lands, mounting slots, and locating holes. Its authored footprint is integrated into the USB4105-GF-A component and `examples/basic.tsx`; the inspection page includes its layer-separated SVG.
+[USB4105 source and coordinate notes](footprints/USB4105.md) document the GCT B4 land pattern, official KiCad cross-check, merged contact lands, mounting slots, and locating holes. Its authored footprint is integrated into the USB4105-GF-A component and `examples/basic/board.tsx`; the inspection page includes its layer-separated SVG.
 
-The MCU now uses the authored [LQFP48 land pattern](footprints/LQFP48.md), with all 48 physical pads following ST DS13560 Rev 6 Figure 44. Its logical pin definition remains explicitly partial. All footprints in `examples/basic.tsx` resolve to physical geometry; `bun run board:inspect examples/basic.tsx` includes the LQFP48 SVG.
+The MCU now uses the authored [LQFP48 land pattern](footprints/LQFP48.md), with all 48 physical pads following ST DS13560 Rev 6 Figure 44. Its logical pin definition remains explicitly partial. All footprints in `examples/basic/board.tsx` resolve to physical geometry; `bun run board:inspect examples/basic/board.tsx` includes the LQFP48 SVG.
 
 
 ## Restricted Flexbox (Phase four)
@@ -186,7 +186,7 @@ rejects container properties on pads, holes, and graphics.
 ```
 
 This produces centers at `[-500000, 0]` and `[500000, 0]` nm, identical to
-explicit-coordinate authoring. `examples/footprints/flex.tsx` also includes a
+explicit-coordinate authoring. `examples/basic/footprints/flex.tsx` also includes a
 four-pad SOIC-style column with independently tested 1.27 mm pitch. Both fixtures
 are covered by layout tests; their land dimensions are illustrative. Inspection
 includes them when the supplied board uses them.
@@ -315,7 +315,7 @@ intrinsic/automatic sizing, track distribution, stretch, per-item alignment,
 shared TypeScript style type exposes the supported vocabulary; Rust validates
 which properties apply to each declaration and layout context.
 
-`examples/footprints/grid.tsx` includes two four-pad rows and a 2×3 through-hole
+`examples/basic/footprints/grid.tsx` includes two four-pad rows and a 2×3 through-hole
 header. Tests independently transcribe every pad's explicit coordinates, shapes,
 layers and drills, compare canonical geometry and SVG, and check pitch, bounds,
 spans, nested transforms, JSON round trips, stable identities, diagnostics, and
@@ -337,7 +337,7 @@ thresholds, feature IDs, evaluated counts, failures and skipped checks. Use
 Profiles and reports do not alter reusable definitions or resolve manufacturing
 geometry from metadata.
 
-`examples/basic.tsx` now uses `ManufacturingPassive`, a Grid-authored two-pad
+`examples/basic/board.tsx` now uses `ManufacturingPassive`, a Grid-authored two-pad
 fixture with explicit expanded mask apertures, reduced paste apertures, and a
 courtyard. The board selects documented illustrative limits and emits separate
 manufacturing reports for its three physical footprint definitions. Its USB/MCU

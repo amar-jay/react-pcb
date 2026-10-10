@@ -1,9 +1,8 @@
-import React from "react";
 import {
 	Footprint,
 	Graphic,
-	Pad,
 	type ManufacturingProfileInput,
+	Pad,
 } from "@react-pcb/core";
 
 // Illustrative process limits, not the capabilities of a particular fabricator.

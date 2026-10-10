@@ -1,5 +1,5 @@
-import React from "react";
 import { Footprint, Graphic, Pad } from "@react-pcb/core";
+import React from "react";
 import { box, Documentation, SmdOpenings } from "./shared.tsx";
 
 function TwoTerminal({
@@ -20,7 +20,7 @@ function TwoTerminal({
 	return (
 		<Footprint name={name} style={{ width: "10mm", height: "10mm" }}>
 			{([-1, 1] as const).map((sign, index) => (
-				<React.Fragment key={index + 1}>
+				<React.Fragment key={sign}>
 					<Pad
 						name={String(index + 1)}
 						layers={["front-copper"]}
