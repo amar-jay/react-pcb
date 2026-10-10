@@ -100,9 +100,9 @@ in the source tree. Programmatic callers can set `cwd` for another Rust workspac
   same-side inter-part courtyard overlaps. The overview distinguishes board
   checks from the selected part's footprint checks. A failed build's findings
   replace the diagnostic list while its last successful scene stays visible.
-  Compilation failure opens an alert dialog with blocking errors and optional
-  full compiler output. Dismiss it to inspect the retained scene, or reopen it
-  from **View compilation failure**. A successful rebuild closes the dialog.
+  Click the red X in the bottom bar (**View compilation failure**) to open an
+  alert dialog with blocking errors and optional full compiler output. Failures
+  leave the dialog closed until requested. A successful rebuild closes it.
   **Diagnostics** opens a bottom sheet with All, Errors, and Warnings tabs;
   errors appear first. Dialogs support keyboard navigation and return focus
   to their opening control when dismissed.

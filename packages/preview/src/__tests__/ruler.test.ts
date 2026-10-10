@@ -1,5 +1,9 @@
 import { expect, test } from 'bun:test';
-import { rulerTicks } from '../frontend/lib/ruler.ts';
+import {
+  rulerTicks,
+  measureDistance,
+  projectPoint,
+} from '../frontend/lib/ruler.ts';
 
 test('rulers retain world-coordinate alignment when the board is panned and zoomed', () => {
   for (const [scale, offset] of [
@@ -36,4 +40,27 @@ test('rulers handle a canvas without measurable SVG geometry', () => {
   expect(rulerTicks(Number.NaN, 10, 500)).toEqual([]);
   expect(rulerTicks(10, Number.POSITIVE_INFINITY, 500)).toEqual([]);
   expect(rulerTicks(10, 10, 20)).toEqual([]);
+});
+
+test('distance measurements use board coordinates in millimetres', () => {
+  expect(measureDistance({ x: -2, y: -1 }, { x: 1, y: 3 })).toEqual({
+    dx: 3,
+    dy: 4,
+    length: 5,
+  });
+  expect(measureDistance({ x: 1, y: 3 }, { x: -2, y: -1 })).toEqual({
+    dx: -3,
+    dy: -4,
+    length: 5,
+  });
+  expect(measureDistance({ x: 1, y: 3 }, { x: 1, y: 3 }).length).toBe(0);
+});
+
+test('measurement endpoints project through pan, zoom and rotation', () => {
+  expect(
+    projectPoint({ x: 3, y: 4 }, { a: 10, b: 0, c: 0, d: 10, e: 80, f: 40 }),
+  ).toEqual({ x: 110, y: 80 });
+  expect(
+    projectPoint({ x: 3, y: 4 }, { a: 0, b: 2, c: -2, d: 0, e: 80, f: 40 }),
+  ).toEqual({ x: 72, y: 46 });
 });

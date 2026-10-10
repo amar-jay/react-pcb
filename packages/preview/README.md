@@ -14,7 +14,7 @@ Canvas rulers follow actual millimetre coordinates through pan and zoom; the
 inspector displays board dimensions and stackup or the selected part's details.
 The design sidebar collapses with its toggle or `Ctrl/Cmd+B`. Board/part details
 dock beside the canvas on large screens and open as a sheet on smaller screens.
-Compilation failures open a dismissible alert dialog; diagnostics have separate
+Click the red X in the bottom bar to open compilation failure details; diagnostics have separate
 All, Errors, and Warnings tabs in a bottom sheet.
 
 From the repository root:
@@ -98,3 +98,5 @@ is currently private and consumes TypeScript source directly through Bun.
 
 See the [board preview guide](../../docs/board-preview.md) for all options, geometry
 contracts, rebuild behavior, and verification coverage.
+
+The canvas uses a dotted background. Use the ruler button (or press `R` while the canvas is focused), then click two points to measure their distance in millimetres. The measurement stays aligned when you pan or zoom. Alt-drag pans while measuring; `Escape` clears the measurement and exits the tool.

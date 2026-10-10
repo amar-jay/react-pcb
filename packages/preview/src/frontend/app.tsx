@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AlertCircle } from 'lucide-react';
 import { usePreview } from './hooks/use-preview.ts';
 import { useIsMobile } from './hooks/use-mobile';
 import { sceneLayers } from './lib/scene.ts';
@@ -15,7 +14,6 @@ import {
   DiagnosticsTrigger,
 } from './components/diagnostics-panel.tsx';
 import { SidebarProvider } from './components/ui/sidebar';
-import { Button } from './components/ui/button';
 import { TooltipProvider } from './components/ui/tooltip';
 
 export function App() {
@@ -52,7 +50,6 @@ export function App() {
       ? ir.board.metadata.title
       : 'Board preview';
   const findings = previewFindings(snapshot);
-  const errors = findings.filter((item) => item.severity === 'error').length;
 
   useEffect(() => {
     document.title = `${title} · react-pcb`;
@@ -72,7 +69,7 @@ export function App() {
   }, [ir, selected, net]);
 
   useEffect(() => {
-    setFailureOpen(Boolean(snapshot.error));
+    setFailureOpen(false);
     if (snapshot.error) {
       setInspectorOpen(false);
       setDiagnosticsOpen(false);
@@ -120,27 +117,6 @@ export function App() {
                 onBack={() => setSelected(null)}
               />
             </CanvasToolbar>
-            {snapshot.error && (
-              <div className="flex items-center justify-between gap-3 border-b bg-[color-mix(in_srgb,var(--destructive)_5%,var(--card))] px-3 py-[5px] max-md:flex-col max-md:items-start max-md:gap-0 max-md:pb-2 [&_button]:gap-2 [&_button]:text-left [&_button]:whitespace-normal [&_button]:text-destructive">
-                <Button
-                  id="build-error"
-                  variant="ghost"
-                  onClick={() => setFailureOpen(true)}
-                >
-                  <AlertCircle size={15} />
-                  {errors} {errors === 1 ? 'error' : 'errors'} · View
-                  compilation failure
-                </Button>
-                {ir && (
-                  <span
-                    id="stale-label"
-                    className="shrink-0 text-[11px] text-muted-foreground max-md:pl-2"
-                  >
-                    Last successful build
-                  </span>
-                )}
-              </div>
-            )}
             {connection === 'disconnected' && (
               <div
                 className="bg-secondary px-5 py-3 text-[13px] text-secondary-foreground"
@@ -159,7 +135,11 @@ export function App() {
               onSelect={selectPart}
               statusControls={
                 <>
-                  <PreviewStatus snapshot={snapshot} connection={connection} />
+                  <PreviewStatus
+                    snapshot={snapshot}
+                    connection={connection}
+                    onViewFailure={() => setFailureOpen(true)}
+                  />
                   <DiagnosticsTrigger
                     findings={findings}
                     onClick={() => setDiagnosticsOpen(true)}

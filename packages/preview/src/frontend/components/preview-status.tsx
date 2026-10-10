@@ -1,14 +1,17 @@
-import { SquareCheck } from 'lucide-react';
+import { SquareCheck, SquareX } from 'lucide-react';
 import type { PreviewSnapshot } from '../../index.ts';
 import type { PreviewConnection } from '../hooks/use-preview.ts';
+import { IconButton } from './icon-button.tsx';
 import { Badge } from './ui/badge';
 
 export function PreviewStatus({
   snapshot,
   connection,
+  onViewFailure,
 }: {
   snapshot: PreviewSnapshot;
   connection: PreviewConnection;
+  onViewFailure: () => void;
 }) {
   const ir = snapshot.result?.ir;
   const status =
@@ -31,6 +34,20 @@ export function PreviewStatus({
         : snapshot.error
           ? 'error'
           : 'ready';
+
+  if (snapshot.error && !snapshot.building) {
+    return (
+      <IconButton
+        id="build-error"
+        label="View compilation failure"
+        aria-haspopup="dialog"
+        className="size-7 shrink-0 text-destructive hover:text-destructive"
+        onClick={onViewFailure}
+      >
+        <SquareX className="size-5" aria-hidden="true" />
+      </IconButton>
+    );
+  }
 
   if (
     connection === 'connected' &&

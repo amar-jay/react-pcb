@@ -34,3 +34,30 @@ export function rulerTicks(
   }
   return ticks;
 }
+
+export type CanvasPoint = { x: number; y: number };
+export type CanvasTransform = {
+  a: number;
+  b: number;
+  c: number;
+  d: number;
+  e: number;
+  f: number;
+};
+
+/** SVG world coordinates are millimetres, independently of the board's source units. */
+export function measureDistance(start: CanvasPoint, end: CanvasPoint) {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  return { dx, dy, length: Math.hypot(dx, dy) };
+}
+
+export function projectPoint(
+  point: CanvasPoint,
+  transform: CanvasTransform,
+): CanvasPoint {
+  return {
+    x: transform.a * point.x + transform.c * point.y + transform.e,
+    y: transform.b * point.x + transform.d * point.y + transform.f,
+  };
+}

@@ -7,11 +7,20 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { Crosshair, Maximize, Minus, Plus } from 'lucide-react';
+import { Crosshair, Maximize, Minus, Plus, Ruler, X } from 'lucide-react';
 import type { BoardIr } from '@react-pcb/core';
 import type { SceneLayer } from '../lib/scene.ts';
 import { boardSize } from '../lib/scene.ts';
-import { rulerTicks, type RulerTick } from '../lib/ruler.ts';
+import {
+  rulerTicks,
+  measureDistance,
+  type RulerTick,
+  type CanvasPoint,
+} from '../lib/ruler.ts';
+import {
+  CanvasMeasurement,
+  type CanvasViewport,
+} from './canvas-measurement.tsx';
 import { IconButton } from './icon-button.tsx';
 import { Button } from './ui/button';
 
@@ -47,7 +56,27 @@ export function BoardCanvas({
     view: View;
     inverse: DOMMatrix;
     moved: boolean;
+    measuring: boolean;
+    selecting: boolean;
   } | null>(null);
+  const [measuring, setMeasuring] = useState(false);
+  const [measurementStart, setMeasurementStart] = useState<CanvasPoint | null>(
+    null,
+  );
+  const [measurementEnd, setMeasurementEnd] = useState<CanvasPoint | null>(
+    null,
+  );
+  const [canvasViewport, setCanvasViewport] = useState<CanvasViewport | null>(
+    null,
+  );
+  const clearMeasurement = () => {
+    setMeasurementStart(null);
+    setMeasurementEnd(null);
+  };
+  const toggleMeasurement = () => {
+    if (measuring && !measurementEnd) clearMeasurement();
+    setMeasuring(!measuring);
+  };
   const [zoomLevel, setZoomLevel] = useState(100);
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
   const [rulers, setRulers] = useState<{ x: RulerTick[]; y: RulerTick[] }>({
@@ -58,6 +87,18 @@ export function BoardCanvas({
     const matrix = scene.current?.querySelector('svg')?.getScreenCTM();
     const bounds = shell.current?.getBoundingClientRect();
     if (!matrix || !bounds) return;
+    setCanvasViewport({
+      transform: {
+        a: matrix.a,
+        b: matrix.b,
+        c: matrix.c,
+        d: matrix.d,
+        e: matrix.e - bounds.left,
+        f: matrix.f - bounds.top,
+      },
+      width: bounds.width,
+      height: bounds.height,
+    });
     setRulers({
       x: rulerTicks(matrix.a, matrix.e - bounds.left, bounds.width),
       y: rulerTicks(matrix.d, matrix.f - bounds.top, bounds.height),
@@ -72,6 +113,19 @@ export function BoardCanvas({
       .split(/\s+/)
       .map(Number) as View;
   }, [markup]);
+  const measurementTarget =
+    measurementEnd ?? (measurementStart && measuring ? cursor : null);
+  const measurement =
+    measurementStart && measurementTarget
+      ? measureDistance(measurementStart, measurementTarget)
+      : null;
+
+  useEffect(() => {
+    setMeasurementStart(null);
+    setMeasurementEnd(null);
+    if (!markup) setMeasuring(false);
+  }, [markup]);
+
   const getSvg = () => scene.current?.querySelector('svg');
   const view = useCallback(
     (values: View) => {
@@ -182,7 +236,8 @@ export function BoardCanvas({
   return (
     <>
       <div
-        className="relative min-h-[340px] flex-1 overflow-hidden bg-canvas bg-[radial-gradient(var(--canvas-dot)_0.7px,transparent_0.7px)] bg-size-[24px_24px] max-[701px]:min-h-[400px]"
+        id="canvas-surface"
+        className="relative min-h-[340px] flex-1 overflow-hidden bg-canvas bg-[radial-gradient(var(--canvas-dot)_1.1px,transparent_1.1px)] bg-size-[20px_20px] max-[701px]:min-h-[400px]"
         ref={shell}
       >
         <div
@@ -211,6 +266,14 @@ export function BoardCanvas({
             </span>
           ))}
         </div>
+        {measurementStart && measurementTarget && canvasViewport && (
+          <CanvasMeasurement
+            start={measurementStart}
+            end={measurementTarget}
+            viewport={canvasViewport}
+            complete={Boolean(measurementEnd)}
+          />
+        )}
         {ir && (
           <div className="absolute top-[45px] right-[38px] font-mono text-[11px] leading-normal text-canvas-text max-[1401px]:hidden">
             {boardSize(ir)}
@@ -219,11 +282,23 @@ export function BoardCanvas({
         <div
           id="scene"
           ref={scene}
-          className="absolute top-[66px] right-[42px] bottom-[54px] left-[54px] touch-none cursor-grab data-[dragging=true]:cursor-grabbing focus-visible:rounded-[2px] focus-visible:outline-offset-[5px] max-[701px]:top-[72px] max-[701px]:right-3 max-[701px]:bottom-[62px] max-[701px]:left-10 [&_svg]:block [&_svg]:size-full [&_svg]:overflow-visible [&_svg]:drop-shadow-[0_9px_12px_#233d3426] [&_svg>rect]:fill-[#234e41] [&_svg>rect]:stroke-[#527560] dark:[&_svg>rect]:fill-[#2a5848] dark:[&_svg>rect]:stroke-[#49816b] [&_g[data-overlay=references]]:stroke-none! [&_g[data-overlay=references]_text]:font-mono [&_g[data-overlay=references]_text]:text-[1px] [&_g[data-overlay=drills]]:stroke-none! [&_[data-part-id]]:cursor-pointer [&_.selected]:[filter:drop-shadow(0_0_0.18px_#c6e6ff)_drop-shadow(0_0_0.28px_#8fc3ef)] [&_.net-match]:drop-shadow-[0_0_0.4px_#fff0af] [&_.dimmed]:opacity-[0.19]"
+          className="absolute top-[66px] right-[42px] bottom-[54px] left-[54px] touch-none cursor-grab data-[measuring=true]:cursor-crosshair data-[measuring=true]:[&_[data-part-id]]:cursor-crosshair data-[dragging=true]:cursor-grabbing focus-visible:rounded-[2px] focus-visible:outline-offset-[5px] max-[701px]:top-[72px] max-[701px]:right-3 max-[701px]:bottom-[62px] max-[701px]:left-10 [&_svg]:block [&_svg]:size-full [&_svg]:overflow-visible [&_svg]:drop-shadow-[0_9px_12px_#233d3426] [&_svg>rect]:fill-[#234e41] [&_svg>rect]:stroke-[#527560] dark:[&_svg>rect]:fill-[#2a5848] dark:[&_svg>rect]:stroke-[#49816b] [&_g[data-overlay=references]]:stroke-none! [&_g[data-overlay=references]_text]:font-mono [&_g[data-overlay=references]_text]:text-[1px] [&_g[data-overlay=drills]]:stroke-none! [&_[data-part-id]]:cursor-pointer [&_.selected]:[filter:drop-shadow(0_0_0.18px_#c6e6ff)_drop-shadow(0_0_0.28px_#8fc3ef)] [&_.net-match]:drop-shadow-[0_0_0.4px_#fff0af] [&_.dimmed]:opacity-[0.19]"
+          data-measuring={measuring}
           tabIndex={0}
           role="region"
-          aria-label="Board canvas. Drag to pan, scroll to zoom. Arrow keys pan; plus and minus zoom; F fits the board."
+          aria-label="Board canvas. Drag to pan, scroll to zoom. Arrow keys pan; plus and minus zoom; F fits the board. R toggles distance measurement; Escape clears it. Alt-drag pans while measuring."
           onKeyDown={(event) => {
+            if (event.key.toLowerCase() === 'r' && markup) {
+              event.preventDefault();
+              toggleMeasurement();
+              return;
+            }
+            if (event.key === 'Escape' && (measuring || measurementStart)) {
+              event.preventDefault();
+              clearMeasurement();
+              setMeasuring(false);
+              return;
+            }
             if (!viewport.current) return;
             const [x, y, w, h] = viewport.current;
             const moves: Record<string, View> = {
@@ -244,7 +319,8 @@ export function BoardCanvas({
             }
           }}
           onPointerDown={(event) => {
-            if (event.button !== 0 || !viewport.current) return;
+            if (![0, 1].includes(event.button) || !viewport.current) return;
+            event.preventDefault();
             const matrix = getSvg()?.getScreenCTM();
             if (!matrix) return;
             scene.current?.focus({ preventScroll: true });
@@ -254,9 +330,12 @@ export function BoardCanvas({
               view: [...viewport.current],
               inverse: matrix.inverse(),
               moved: false,
+              measuring: measuring && event.button === 0 && !event.altKey,
+              selecting: !measuring && event.button === 0 && !event.altKey,
             };
             event.currentTarget.setPointerCapture(event.pointerId);
-            event.currentTarget.dataset.dragging = 'true';
+            if (!drag.current.measuring)
+              event.currentTarget.dataset.dragging = 'true';
           }}
           onPointerMove={(event) => {
             const matrix = getSvg()?.getScreenCTM();
@@ -282,6 +361,7 @@ export function BoardCanvas({
               4
             )
               active.moved = true;
+            if (active.measuring) return;
             view([
               active.view[0] + start.x - end.x,
               active.view[1] + start.y - end.y,
@@ -296,6 +376,21 @@ export function BoardCanvas({
             if (event.currentTarget.hasPointerCapture(event.pointerId))
               event.currentTarget.releasePointerCapture(event.pointerId);
             if (!active || active.moved) return;
+            if (active.measuring) {
+              const point = new DOMPoint(
+                event.clientX,
+                event.clientY,
+              ).matrixTransform(active.inverse);
+              const next = { x: point.x, y: point.y };
+              if (!measurementStart || measurementEnd) {
+                setMeasurementStart(next);
+                setMeasurementEnd(null);
+              } else {
+                setMeasurementEnd(next);
+              }
+              return;
+            }
+            if (!active.selecting) return;
             const item = document
               .elementFromPoint(event.clientX, event.clientY)
               ?.closest<SVGElement>('[data-part-id]');
@@ -344,14 +439,35 @@ export function BoardCanvas({
           <span className="mx-2.5 h-5 w-px bg-border max-[701px]:mx-[5px]" />
           <Button
             id="fit"
+            aria-label="Fit board"
             variant="ghost"
             size="lg"
             onClick={fit}
             disabled={!markup}
           >
             <Maximize />
-            Fit board
+            <span className="max-sm:hidden">Fit board</span>
           </Button>
+          <span className="mx-2 h-5 w-px bg-border max-[701px]:mx-1" />
+          <IconButton
+            id="measure-toggle"
+            label="Measure distance (R)"
+            aria-pressed={measuring}
+            className="aria-pressed:bg-secondary aria-pressed:text-primary"
+            onClick={toggleMeasurement}
+            disabled={!markup}
+          >
+            <Ruler />
+          </IconButton>
+          {measurementStart && (
+            <IconButton
+              id="clear-measurement"
+              label="Clear measurement"
+              onClick={clearMeasurement}
+            >
+              <X />
+            </IconButton>
+          )}
         </div>
       </div>
       <div
@@ -359,26 +475,44 @@ export function BoardCanvas({
         className="flex min-h-11 shrink-0 items-center gap-2 border-t px-3"
       >
         {statusControls}
-        <output
-          aria-label="Cursor coordinates"
-          className="flex shrink-0 items-center gap-1.5 font-mono text-[10px] text-muted-foreground max-sm:gap-1"
-        >
-          X{' '}
-          <span
-            className="min-w-[29px] max-w-[64px] truncate text-foreground max-sm:min-w-5 max-sm:max-w-10"
-            title={cursor?.x.toFixed(2)}
+        {measuring || measurementStart ? (
+          <output
+            aria-label="Measured distance"
+            className="min-w-0 truncate font-mono text-[10px] text-muted-foreground"
+            title={
+              measurement
+                ? `ΔX ${measurement.dx.toFixed(3)} mm · ΔY ${measurement.dy.toFixed(3)} mm`
+                : undefined
+            }
           >
-            {cursor ? cursor.x.toFixed(2) : '—'}
-          </span>
-          <span className="mx-0.5 h-[11px] w-px bg-border" />Y{' '}
-          <span
-            className="min-w-[29px] max-w-[64px] truncate text-foreground max-sm:min-w-5 max-sm:max-w-10"
-            title={cursor?.y.toFixed(2)}
+            {measurement
+              ? `${measurement.length.toFixed(3)} mm`
+              : measurementStart
+                ? 'Pick end point'
+                : 'Pick start point'}
+          </output>
+        ) : (
+          <output
+            aria-label="Cursor coordinates"
+            className="flex shrink-0 items-center gap-1.5 font-mono text-[10px] text-muted-foreground max-sm:gap-1"
           >
-            {cursor ? cursor.y.toFixed(2) : '—'}
-          </span>
-          <span className="max-sm:hidden">mm</span>
-        </output>
+            X{' '}
+            <span
+              className="min-w-[29px] max-w-[64px] truncate text-foreground max-sm:min-w-5 max-sm:max-w-10"
+              title={cursor?.x.toFixed(2)}
+            >
+              {cursor ? cursor.x.toFixed(2) : '—'}
+            </span>
+            <span className="mx-0.5 h-[11px] w-px bg-border" />Y{' '}
+            <span
+              className="min-w-[29px] max-w-[64px] truncate text-foreground max-sm:min-w-5 max-sm:max-w-10"
+              title={cursor?.y.toFixed(2)}
+            >
+              {cursor ? cursor.y.toFixed(2) : '—'}
+            </span>
+            <span className="max-sm:hidden">mm</span>
+          </output>
+        )}
       </div>
     </>
   );

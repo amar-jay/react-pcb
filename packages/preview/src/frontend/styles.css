@@ -59,7 +59,7 @@
   --success: #428078;
   --panel: #fff;
   --canvas: #eef0f4;
-  --canvas-dot: #c9cdd8;
+  --canvas-dot: #b8bfce;
   --canvas-text: #727684;
   --sidebar: var(--card);
   --sidebar-foreground: var(--foreground);
@@ -87,7 +87,7 @@
   --success: #75bcb0;
   --panel: #21242c;
   --canvas: #1b1e26;
-  --canvas-dot: #363b48;
+  --canvas-dot: #465064;
   --canvas-text: #929aaa;
   --sidebar: var(--card);
   --sidebar-foreground: var(--foreground);
