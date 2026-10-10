@@ -95,7 +95,9 @@ test("independent physical compilation and per-part placement retain exact geome
 		"solder-mask/back",
 	]);
 	expect(result.ir.parts[1]?.physicalFeatures.mount?.layers).toEqual([]);
-	expect(result.diagnostics).toEqual([]);
+	expect(result.diagnostics).toMatchObject([
+		{ code: "PCBIR034", severity: "warning", entity: "GND" },
+	]);
 });
 
 test("sub-nanometre inputs and duplicate identities reject through the Rust bridge", async () => {

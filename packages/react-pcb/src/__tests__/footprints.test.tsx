@@ -92,7 +92,9 @@ test("compiles reusable footprints and many-pad pin bindings end to end", async 
 			{ component: componentKey, footprint: "TEST-SMD" },
 		],
 	});
-	expect(result.diagnostics).toEqual([]);
+	expect(result.diagnostics).toMatchObject([
+		{ code: "PCBIR034", severity: "warning", entity: "GND" },
+	]);
 });
 
 test("rejects a binding to a nonexistent physical pad through the compiler bridge", async () => {

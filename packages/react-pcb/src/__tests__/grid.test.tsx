@@ -126,7 +126,9 @@ test("2x3 header preserves pitch, drills, explicit geometry, serialization and b
 	expect(board.ir.parts[1]?.physicalFeatures["4"]?.geometry.at).toEqual([
 		7460000, 7460000,
 	]);
-	expect(board.diagnostics).toEqual([]);
+	expect(board.diagnostics).toMatchObject([
+		{ code: "PCBIR034", severity: "warning", entity: "GND" },
+	]);
 	expect(JSON.stringify(ir)).not.toContain("gridTemplate");
 });
 

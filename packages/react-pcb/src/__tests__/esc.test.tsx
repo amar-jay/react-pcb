@@ -172,7 +172,33 @@ test("every ESC footprint round-trips, renders deterministically and passes its 
 
 test("ESC uses real part bindings, all 48 MCU lands and collision-free placed geometry", async () => {
 	const result = await compile(<Esc />, options);
-	expect(result.diagnostics).toEqual([]);
+	expect(result.diagnostics).toMatchObject([
+		{
+			code: "PCBIR032",
+			severity: "warning",
+			entity: "control/U2",
+			message: "unconnected pins: PA2",
+		},
+		...[
+			"12V_GATE",
+			"3V3",
+			"BOOT_A",
+			"GND",
+			"PHASE_A",
+			"PHASE_B",
+			"PHASE_C",
+			"PWM_AH",
+			"PWM_AL",
+			"SHUNT_N",
+			"VBAT",
+		].map((entity) => ({ code: "PCBIR034", severity: "warning", entity })),
+		...[
+			"inverter/GATE_BH",
+			"inverter/GATE_BL",
+			"inverter/GATE_CH",
+			"inverter/GATE_CL",
+		].map((entity) => ({ code: "PCBIR033", severity: "warning", entity })),
+	]);
 	expect(result.ir.parts).toHaveLength(17);
 	expect(Object.values(result.ir.footprintDefinitions)).toHaveLength(8);
 	expect(

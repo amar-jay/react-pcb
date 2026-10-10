@@ -104,7 +104,13 @@ test("STM32 pin bindings and footprint realization work on both board sides", as
 		</Board>,
 		options,
 	);
-	expect(result.diagnostics).toEqual([]);
+	expect(result.diagnostics).toMatchObject(
+		["D+", "D-", "GND", "VDD"].map((entity) => ({
+			code: "PCBIR034",
+			severity: "warning",
+			entity,
+		})),
+	);
 	expect(Object.keys(result.ir.footprintDefinitions)).toEqual([
 		LQFP48_FOOTPRINT_KEY,
 	]);

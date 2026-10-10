@@ -143,7 +143,13 @@ test("all contacts bind to unique physical lands and shell pads on both board si
 		</Board>,
 		options,
 	);
-	expect(result.diagnostics).toEqual([]);
+	expect(result.diagnostics).toMatchObject(
+		["CC1", "CC2", "D+", "D-", "GND", "SBU1", "SBU2", "VBUS"].map((entity) => ({
+			code: "PCBIR034",
+			severity: "warning",
+			entity,
+		})),
+	);
 	expect(Object.keys(result.ir.footprintDefinitions)).toEqual([
 		USB4105_FOOTPRINT_KEY,
 	]);

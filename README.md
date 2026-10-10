@@ -51,6 +51,18 @@ and shows compile errors while keeping the last valid board. See the
 [board preview guide](docs/board-preview.md) for entry exports, watch options and
 the programmatic API.
 
+Compilation also warns about unconnected declared or mapped pins (`PCBIR032`),
+nets with zero or one logical endpoint (`PCBIR033`), and net endpoints that form
+disconnected groups in routing intent (`PCBIR034`). `Route` declarations and both
+legs of a `DifferentialPair` connect these groups; a copper zone does not imply
+resolved connectivity. These warnings appear in `compile()` diagnostics, CLI output,
+and the preview. `hideWarnings: true` silences console output while retaining the
+diagnostics. Required pins and invalid route references remain errors. The checks
+use stable part and net IDs, count a pin mapped to multiple pads once, and cover
+only declared or mapped logical pins; they do not invent missing pinouts or check
+physical copper continuity. A net handle never used in a declaration is absent
+from the IR and cannot be checked.
+
 `bun run --cwd packages/preview build` builds the React site shell into `dist/`.
 
 **Illustrative JSX API**

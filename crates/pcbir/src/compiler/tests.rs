@@ -39,6 +39,152 @@ fn defined_part(id: &str, connect: Value, pins: Value, coverage: &str) -> Value 
     }, "children": []})
 }
 
+fn connectivity_route(net: &str, from: (&str, &str), to: (&str, &str)) -> Value {
+    json!({"type": "pcb-route", "props": {
+        "net": {"id": net},
+        "from": {"part": {"id": from.0}, "name": from.1},
+        "to": {"part": {"id": to.0}, "name": to.1}
+    }})
+}
+
+fn connectivity_warnings(output: &super::CompileOutput) -> Vec<serde_json::Value> {
+    output
+        .compiler_diagnostics
+        .iter()
+        .filter(|d| matches!(d.code, "PCBIR032" | "PCBIR033" | "PCBIR034"))
+        .map(|d| serde_json::to_value(d).unwrap())
+        .collect()
+}
+
+#[test]
+fn warns_about_unconnected_declared_and_mapped_pins() {
+    let device = defined_part(
+        "U1",
+        json!({}),
+        json!({
+            "A": {"pad": ["1", "2"], "electricalType": "passive"},
+            "B": {"pad": "3", "electricalType": "passive"}
+        }),
+        "complete",
+    );
+    let mut mapped_only = part("J1", "TEST", json!({}));
+    mapped_only["props"]["pinMap"] = json!({"signal": ["1", "2"]});
+    let output = compile(transaction(vec![device, mapped_only])).unwrap();
+    let warnings = connectivity_warnings(&output);
+    assert_eq!(warnings.len(), 2);
+    assert_eq!(warnings[0]["entity"], "J1");
+    assert_eq!(warnings[0]["message"], "unconnected pins: signal");
+    assert_eq!(warnings[1]["entity"], "U1");
+    assert_eq!(warnings[1]["message"], "unconnected pins: A, B");
+    assert!(warnings.iter().all(|d| d["severity"] == "warning"));
+}
+
+#[test]
+fn warns_about_empty_nets_and_single_logical_endpoints_even_with_many_pads() {
+    let output = compile(transaction(vec![
+        physical_part("J1"),
+        json!({"type": "pcb-zone", "props": {
+            "net": {"id": "EMPTY"}, "layers": [{"id": "copper/1"}], "boundary": "board"
+        }}),
+    ]))
+    .unwrap();
+    let warnings = connectivity_warnings(&output);
+    assert_eq!(warnings.len(), 2);
+    assert_eq!(warnings[0]["code"], "PCBIR033");
+    assert_eq!(warnings[0]["entity"], "EMPTY");
+    assert_eq!(
+        warnings[0]["message"],
+        "net EMPTY has no connected endpoints"
+    );
+    assert_eq!(warnings[1]["code"], "PCBIR033");
+    assert_eq!(warnings[1]["entity"], "GND");
+    assert_eq!(
+        warnings[1]["message"],
+        "net GND has only one connected endpoint: J1.GND"
+    );
+}
+
+#[test]
+fn warns_about_missing_routes_and_isolated_endpoints_without_assuming_zone_connections() {
+    let mut declarations = vec![
+        part("U1", "TEST", json!({"1": {"id": "SIG"}})),
+        part("U2", "TEST", json!({"1": {"id": "SIG"}})),
+        part("U3", "TEST", json!({"1": {"id": "SIG"}})),
+        json!({"type": "pcb-zone", "props": {
+            "net": {"id": "SIG"}, "layers": [{"id": "copper/1"}], "boundary": "board"
+        }}),
+    ];
+    let warnings = connectivity_warnings(&compile(transaction(declarations.clone())).unwrap());
+    assert_eq!(warnings.len(), 1);
+    assert_eq!(warnings[0]["code"], "PCBIR034");
+    assert_eq!(
+        warnings[0]["message"],
+        "net SIG has 3 disconnected endpoint groups in routing intent: [U1.1] | [U2.1] | [U3.1]"
+    );
+    declarations.push(connectivity_route("SIG", ("U1", "1"), ("U2", "1")));
+    let warnings = connectivity_warnings(&compile(transaction(declarations.clone())).unwrap());
+    assert_eq!(warnings.len(), 1);
+    assert_eq!(
+        warnings[0]["message"],
+        "net SIG has 2 disconnected endpoint groups in routing intent: [U1.1, U2.1] | [U3.1]"
+    );
+    declarations.push(connectivity_route("SIG", ("U3", "1"), ("U2", "1")));
+    assert!(connectivity_warnings(&compile(transaction(declarations)).unwrap()).is_empty());
+}
+
+#[test]
+fn diagnoses_disjoint_route_groups_and_accepts_chains_branches_and_cycles() {
+    let mut declarations: Vec<_> = ["U1", "U2", "U3", "U4"]
+        .into_iter()
+        .map(|id| part(id, "TEST", json!({"1": {"id": "SIG"}})))
+        .collect();
+    declarations.extend([
+        connectivity_route("SIG", ("U1", "1"), ("U2", "1")),
+        connectivity_route("SIG", ("U3", "1"), ("U4", "1")),
+    ]);
+    let original = connectivity_warnings(&compile(transaction(declarations.clone())).unwrap());
+    assert_eq!(original.len(), 1);
+    assert_eq!(
+        original[0]["message"],
+        "net SIG has 2 disconnected endpoint groups in routing intent: [U1.1, U2.1] | [U3.1, U4.1]"
+    );
+    declarations.reverse();
+    assert_eq!(
+        connectivity_warnings(&compile(transaction(declarations.clone())).unwrap()),
+        original
+    );
+    declarations.extend([
+        connectivity_route("SIG", ("U2", "1"), ("U3", "1")),
+        connectivity_route("SIG", ("U1", "1"), ("U3", "1")),
+    ]);
+    assert!(connectivity_warnings(&compile(transaction(declarations)).unwrap()).is_empty());
+}
+
+#[test]
+fn connectivity_uses_stable_net_and_part_ids_instead_of_display_names() {
+    let endpoint = |id: &str, net_id: &str| {
+        let mut declaration = part(id, "TEST", json!({"1": {"id": net_id, "name": "SIG"}}));
+        declaration["props"]["id"]["reference"] = json!("U1");
+        declaration
+    };
+    let output = compile(transaction(vec![
+        endpoint("left/U1", "left/SIG"),
+        endpoint("right/U1", "right/SIG"),
+    ]))
+    .unwrap();
+    let warnings = connectivity_warnings(&output);
+    assert_eq!(warnings.len(), 2);
+    assert_eq!(warnings[0]["entity"], "left/SIG");
+    assert_eq!(warnings[1]["entity"], "right/SIG");
+    assert!(warnings.iter().all(|d| d["code"] == "PCBIR033"));
+}
+
+#[test]
+fn differential_pair_legs_connect_endpoints_without_duplicate_route_declarations() {
+    let output = compile(transaction(intent_design())).unwrap();
+    assert!(connectivity_warnings(&output).is_empty());
+}
+
 #[test]
 fn compiles_declarations_into_canonical_ir() {
     let mut input = transaction(vec![
@@ -502,7 +648,12 @@ fn separates_electrical_definitions_footprints_and_parts() {
         output.ir.footprint_definitions["DUAL-PADS"].pads[0].at,
         [-1.0, 0.0]
     );
-    assert!(output.compiler_diagnostics.is_empty());
+    assert_eq!(output.compiler_diagnostics.len(), 1);
+    assert_eq!(output.compiler_diagnostics[0].code, "PCBIR034");
+    assert_eq!(
+        output.compiler_diagnostics[0].entity.as_deref(),
+        Some("GND")
+    );
     let json = serde_json::to_value(output.ir).unwrap();
     assert!(json.get("componentInstances").is_none());
     assert_eq!(json["parts"][0]["component"], "DUAL");

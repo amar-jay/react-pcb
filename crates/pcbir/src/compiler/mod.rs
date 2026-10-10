@@ -10,6 +10,7 @@ use crate::protocol::{DeclarationNode, DeclarationTransaction, PROTOCOL_VERSION}
 use serde::Serialize;
 use serde_json::Value;
 
+mod connectivity;
 mod constraints;
 mod layers;
 mod parse;
@@ -182,7 +183,8 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
         .iter()
         .map(|instance| (instance.id.as_str(), instance))
         .collect();
-    for route in &context.physical.endpoint_routes() {
+    let endpoint_routes = context.physical.endpoint_routes();
+    for route in &endpoint_routes {
         for endpoint in [&route.from, &route.to] {
             let Some(instance) = known_instances.get(endpoint.part.as_str()) else {
                 diagnostics.push(
@@ -211,6 +213,15 @@ pub fn compile(transaction: DeclarationTransaction) -> Result<CompileOutput, Com
         previous.extend(diagnostics);
         return Err(CompileError::diagnostic(fatal).with_diagnostics(previous));
     }
+
+    context
+        .compiler_diagnostics
+        .extend(connectivity::validate_connectivity(
+            &context.component_instances,
+            &context.component_definitions,
+            &context.nets,
+            &endpoint_routes,
+        ));
 
     let mut manufacturing_reports = BTreeMap::new();
     if let Some(profile) = &board.manufacturing_profile {
