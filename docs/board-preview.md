@@ -269,6 +269,14 @@ a server restart if it changes runtime/package resolution in a way the tracked
 configuration does not reflect. A failed static export exits unsuccessfully and
 leaves any existing destination unchanged; successful exports replace it atomically.
 
+Constraint rebuilds follow the same recovery path. Current `PCBIR039`, `PCBIR040`
+and `PCBIR042` geometry travels through the worker and live JSON response while
+the accepted board and its region IDs remain unchanged. **Show on board** uses
+that current geometry; it can also display an initial failure with no accepted
+scene. A successful rebuild clears the failed-build findings and their highlight.
+Ambiguous declaration keys and sub-nanometre rectangles fail before projection.
+Fixing them restores the original identities when the original keys/owners remain.
+
 ## Programmatic API
 
 ```tsx
@@ -331,3 +339,11 @@ no network requests and checks that React HMR preserves viewer controls. Ruler
 tests cover coordinate alignment, negative coordinates, fractional labels and
 unmeasurable canvases. Responsive browser checks include narrow mobile, tablet,
 and desktop widths.
+
+Constraint regressions also cover all three intent overlays, explicit/shared
+ownership, repeated visit numbers, side/layer scope, exceptions, both pair legs,
+initial and retained-scene failures, live recovery, stable identities after edits,
+atomic offline exports, SVG/PNG visibility and saved-toggle migration. The
+[coverage matrix](constraint-regions-regressions.md) maps the original
+investigations to direct-protocol, serialized-IR, JSX and preview tests and records
+the completion audit.

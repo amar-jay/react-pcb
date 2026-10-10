@@ -1,11 +1,11 @@
 # Constraint region implementation plan
 
-Status: phases 1–6 complete and verified. Phase 7 is pending.
+Status: phases 1–7 complete and verified.
 
 ## Progress and resume checkpoint
 
-Work is being completed one phase at a time. This checkpoint records the
-implemented boundary so subsequent work can resume at phase 7.
+Work was completed one phase at a time. This checkpoint records the completed
+constraint-region boundary and the remaining work reserved for physical backends.
 
 | Phase | Status |
 | --- | --- |
@@ -15,7 +15,7 @@ implemented boundary so subsequent work can resume at phase 7.
 | 4. Enforce keepouts against available geometry | Complete and verified. |
 | 5. Check route-region feasibility and report coverage | Complete and verified. |
 | 6. Make all constraint types inspectable | Complete and verified. |
-| 7. Regression fixtures, documentation and completion | Pending; tests are added alongside each completed phase. |
+| 7. Regression fixtures, documentation and completion | Complete and verified; regression matrix, recovery fixtures, example review and final audits recorded below. |
 
 Phase 1 delivers board IR schema 3, declaration protocol 2, typed keepout
 restrictions, explicit `componentSides`/`copperLayers`, scope validation at compiler
@@ -124,15 +124,29 @@ choices. Default overlays are visible; Front/Back, Copper only and Fabrication
 presets hide constraint intent while All layers enables it. Exports retain the
 original full-scene physical coordinates, independent of canvas zoom/highlights.
 
-Resume with phase 7 below: consolidate investigation fixtures and coverage,
-review the examples/documentation and complete the final checks and visual audit.
+Phase 7 consolidates investigation coverage in the
+[regression matrix](constraint-regions-regressions.md). A shared preview source
+fixture exercises all six reproductions through fresh workers and live rebuilds.
+Two new regressions verify initial off-board/sub-nm failures, current findings
+over retained IR/SVG, both blocked pair legs, stable IDs after recovery and keyed
+insertion/geometry edits, and atomic offline exports whose embedded IR/projection
+match the accepted live scene. Existing direct-protocol, serialized-IR and JSX
+tests retain the exact geometry, scope, exception, identity and export cases.
+
+The basic/ESC examples pass with the phase-4 basic keepout correction retained.
+Their documentation now distinguishes enforced physical reservations and waypoint
+feasibility from unrealized routing/fills; HOWTO and preview recovery documentation
+describe the same boundary. CI now builds both examples. No phase-7 change rewrites
+their geometry or identities.
+
 Do not infer ownership from ID spelling, regenerate IDs or rewrite authored
 geometry. Region sharing and repeated ordered visits remain valid in serialized IR.
 
-Known remaining gaps: final phase-7 regression/coverage review and completion
-audits remain pending. Realized routing/fills are unavailable and have explicit coverage
-warnings. Anonymous repeated declarations require stable keys, with actionable
-diagnostics. The schema records semantics and scope, not full physical approval.
+Remaining physical coverage: realized routing/fills are unavailable and have
+explicit coverage warnings. Anonymous repeated declarations require stable keys,
+with actionable diagnostics. The schema records semantics and scope, not full
+physical approval. All six reproduced issues have regression tests and defined
+outcomes; no constraint-region implementation phase remains pending.
 
 Evidence: phase 2 adds eight Rust regression tests and four Bun JSX/CLI tests
 covering unit equivalence, exact nm edges, sub-nm and overflow rejection,
@@ -174,7 +188,7 @@ The final `bun run check` passed **108 Rust tests** and **153 Bun tests**, inclu
 live preview, TypeScript, Rust formatting/checking and Clippy with warnings denied.
 Both basic and ESC example builds passed with their new coverage warnings.
 
-Phase 5 changes are local; no commit was created by this phase.
+Phase 5 was subsequently committed as `20b1614`.
 
 Phase 6 adds five Rust regressions and nine Bun regressions covering zone
 projection/full-scene bounds, explicit custom/shared owners, repeated ordered
@@ -188,7 +202,23 @@ net/owner highlights, saved visibility and SVG export, both fit actions, current
 039/040/042 geometry over retained scenes and initial mobile failure, live recovery,
 and the overlay presentation in both views and themes. Visual artifacts are in
 `/tmp/react-pcb-ui-browser/phase6-*`; check output is in
-`/tmp/react-pcb-phase6-check.log`. Phase 6 changes are local; no commit was created.
+`/tmp/react-pcb-phase6-check.log`. Phase 6 was subsequently committed as `1548a62`.
+
+Phase 7 completion verification on 2026-10-11: `bun run check` passed **113 Rust
+tests** and **164 Bun tests**, TypeScript, Rust formatting/checking and Clippy with
+warnings denied. Both basic and ESC offline HTML builds and the preview frontend
+build passed. Final check output is in `/tmp/react-pcb-phase7-check.log`; example
+outputs are `/tmp/react-pcb-phase7-basic/index.html` and
+`/tmp/react-pcb-phase7-esc/index.html`.
+
+A fresh live browser audit using the shared phase-7 fixture passed pointer/keyboard
+selection, all three rule inspectors, owner/net highlighting, saved visibility,
+SVG export and both fit actions. Board/Analysis overlay presentation was inspected
+in both themes. Current `PCBIR039`/`PCBIR040`/`PCBIR042` geometry was inspected in
+light/dark themes over retained scenes; initial mobile failure and live recovery
+also passed, with no browser errors. Screenshots, the exported SVG and the audit
+script are in `/tmp/react-pcb-ui-browser/phase7-*`; the result is in
+`/tmp/react-pcb-phase7-browser.log`. Phase 7 changes are local; no commit was created.
 
 ## Objective
 

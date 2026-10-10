@@ -3,7 +3,8 @@
 Board IR schema **3** and board declaration protocol **2** define explicit
 constraint scope. Physical footprint schema 2 and footprint layout protocol 1
 are unchanged. The [implementation plan](constraint-regions-plan.md) records
-the remaining phases.
+the completed phases; the [regression matrix](constraint-regions-regressions.md)
+records their verification and remaining physical coverage limits.
 
 ## Current implementation and coverage
 

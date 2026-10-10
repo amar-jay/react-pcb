@@ -385,6 +385,19 @@ net props. Add `RouteThrough`, `DifferentialPair`, `Zone`, and `Keepout` when th
 electrical/mechanical intent is known. Their constraints remain independent of
 resolved copper; a zone declaration does not establish a realized ground plane.
 
+Compilation checks every region's exact nanometre precision, references and board
+intersection. Keepouts reject interior overlap with available placed copper and
+explicit courtyard reservations; exact boundary contact passes. Select
+`componentSides` for component reservations and `copperLayers` for electrical
+restrictions. Net exceptions exempt only authoritatively bound electrical objects.
+A waypoint with no on-board area rejects, as does one whose entire visit area is
+blocked on every copper layer for its net. Separated waypoints remain valid.
+`PCBIR041` and `PCBIR043` identify incomplete keepout and routing coverage; a
+successful build still needs realized tracks, vias and fills before physical
+routing or plane connectivity can be established. See the
+[constraint contract](docs/constraint-regions.md) and
+[regression coverage](docs/constraint-regions-regressions.md).
+
 Use distinct stable keys for multiple `RouteThrough` declarations in one route
 or pair, multiple `Keepout` declarations in one board/module scope, and multiple
 `Zone` declarations sharing a net/layer selection. For example, use

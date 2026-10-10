@@ -22,3 +22,4 @@ jobs:
         run: bun run build
         working-directory: packages/preview
       - run: bun run board:build examples/basic/board.tsx --out /tmp/react-pcb-board/index.html
+      - run: bun run board:build examples/esc/board.tsx --out /tmp/react-pcb-esc/index.html

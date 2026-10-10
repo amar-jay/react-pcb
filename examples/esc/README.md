@@ -34,7 +34,7 @@ links did not identify actual packages, so these are explicit example selections
 
 | Board role | Selected part | Physical definition and evidence |
 | --- | --- | --- |
-| Controller | ST STM32G0B1CBT6 | Existing [LQFP48 definition](../footprints/LQFP48.tsx), [geometry notes](../../docs/footprints/LQFP48.md). [DS13560 Rev 6](https://www.st.com/resource/en/datasheet/stm32g0b1cb.pdf), Fig. 5 p. 38, Fig. 44 p. 136, AF tables pp. 56–59. |
+| Controller | ST STM32G0B1CBT6 | Existing [LQFP48 definition](../basic/footprints/LQFP48.tsx), [geometry notes](../../docs/footprints/LQFP48.md). [DS13560 Rev 6](https://www.st.com/resource/en/datasheet/stm32g0b1cb.pdf), Fig. 5 p. 38, Fig. 44 p. 136, AF tables pp. 56–59. |
 | Gate driver | Infineon IR2101STRPBF | [SOIC8.tsx](footprints/SOIC8.tsx). [PD60043 Rev O](https://www.infineon.com/assets/row/public/documents/24/49/infineon-ir2101-ds-en.pdf), lead assignment p. 5, land pattern p. 13. |
 | MOSFETs | Nexperia PSMN2R8-40YSB | [LFPAK56.tsx](footprints/LFPAK56.tsx). [Device datasheet](https://assets.nexperia.com/documents/data-sheet/PSMN2R8-40YSB.pdf), pinning p. 2; [SOT669 package information, 20 March 2025](https://www.nexperia.com/documents/package-information/SOT669.pdf), Figs. 1–2 pp. 2–3. |
 | Decoupling | Murata GRM155R71H104KE14D | [passives.tsx](footprints/passives.tsx). [Manufacturer reference sheet GRM155R71H104KE14-01A](https://search.murata.co.jp/Ceramy/image/img/A01X/G101/ENG/GRM155R71H104KE14-01A.pdf), dimensions p. 2, general GRM reflow Table 2 p. 27. |
@@ -141,8 +141,13 @@ drain without sharing the driver's sense pickup. The shunt corridors approach
 the MCU along the left edge; they are placeholders for Kelvin routing and future
 conditioning. The buffer at x = 11.5–12.7, y = 14–27 excludes components,
 tracks and vias while permitting reference-plane copper. It does not create a
-split ground plane. These constraints remain intent and are not enforced as
-realized routing by the current compiler.
+split ground plane. The component prohibition is enforced against explicit
+placed courtyard reservations; the current placement passes. The compiler also
+rejects empty or provably blocked ordinary/pair waypoints. `PCBIR041` reports
+unavailable tracks/vias for the sensing buffer, and one `PCBIR043` per route or
+pair reports unverified traversal, ordering, width/gap clearance, transitions and
+remaining path feasibility. The GND zone is an unfilled intent outline and does
+not establish a connected reference plane.
 
 ## Inspection policy and coverage
 
@@ -165,6 +170,11 @@ inter-part courtyard reservations.
 Tests also check pad/drill dimensions, native pin mappings, deterministic SVG,
 JSON round trips, many-pad source/drain binding, side-specific technical layers,
 back-side reflection/rotation, and import-safe preview behavior.
+
+The [constraint regression matrix](../../docs/constraint-regions-regressions.md)
+records the shared checks and preview/export coverage. Preview layers expose
+separate keepout, waypoint and zone-intent outlines; selecting them shows the
+rules and stable owners instead of inferred routing geometry.
 
 ## Remaining electrical design
 
