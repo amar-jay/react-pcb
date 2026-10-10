@@ -22,6 +22,7 @@
     "@react-pcb/core": "workspace:*",
     "bun-plugin-tailwind": "^0.1.2",
     "class-variance-authority": "^0.7.1",
+    "cmdk": "^1.1.1",
     "cn": "^0.4.0",
     "lucide-react": "^1.53.0",
     "radix-ui": "^1.7.0",

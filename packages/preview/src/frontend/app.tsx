@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { usePreview } from './hooks/use-preview.ts';
 import { useIsMobile } from './hooks/use-mobile';
 import { sceneLayers } from './lib/scene.ts';
 import { previewFindings } from './lib/findings.ts';
 import { NavigationPanel } from './components/navigation-panel.tsx';
-import { BoardCanvas } from './components/board-canvas.tsx';
+import { WorkbenchCommand } from './components/workbench-command.tsx';
+import { BoardCanvas, type CanvasActions } from './components/board-canvas.tsx';
 import { PreviewStatus } from './components/preview-status.tsx';
 import { CanvasToolbar } from './components/canvas-toolbar.tsx';
 import { InspectorSheet } from './components/inspector-sheet.tsx';
@@ -18,6 +19,7 @@ import { TooltipProvider } from './components/ui/tooltip';
 
 export function App() {
   const { snapshot, connection } = usePreview();
+  const canvas = useRef<CanvasActions>(null);
   const ir = snapshot.result?.ir;
   const [selected, setSelected] = useState<string | null>(null);
   const [net, setNet] = useState('');
@@ -106,6 +108,27 @@ export function App() {
               net={activeNet}
               onNet={setNet}
             >
+              <WorkbenchCommand
+                snapshot={snapshot}
+                canvas={canvas}
+                layers={layers}
+                visibility={visibility}
+                theme={theme}
+                onToggleTheme={() =>
+                  setTheme(theme === 'light' ? 'dark' : 'light')
+                }
+                onSelect={selectPart}
+                onNet={setNet}
+                onToggleLayer={(key, visible) =>
+                  setVisibility((previous) => ({ ...previous, [key]: visible }))
+                }
+                onOverview={() => {
+                  setSelected(null);
+                  setInspectorOpen(true);
+                }}
+                onDiagnostics={() => setDiagnosticsOpen(true)}
+                onFailure={() => setFailureOpen(true)}
+              />
               <InspectorSheet
                 snapshot={snapshot}
                 part={part}
@@ -126,6 +149,7 @@ export function App() {
               </div>
             )}
             <BoardCanvas
+              ref={canvas}
               svg={snapshot.projection?.svg ?? null}
               ir={ir}
               layers={layers}

@@ -100,3 +100,5 @@ See the [board preview guide](../../docs/board-preview.md) for all options, geom
 contracts, rebuild behavior, and verification coverage.
 
 The canvas uses a dotted background. Use the ruler button (or press `R` while the canvas is focused), then click two points to measure their distance in millimetres. The measurement stays aligned when you pan or zoom. Alt-drag pans while measuring; `Escape` clears the measurement and exits the tool.
+
+Open the shadcn command palette with the toolbar search button or `Ctrl/Cmd+K`. Search canvas actions, parts, nets, layers, diagnostics, theme settings and exports; use arrow keys and Enter to run a command, or Escape to close it.

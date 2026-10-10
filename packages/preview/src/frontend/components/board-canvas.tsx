@@ -1,5 +1,7 @@
 import {
   useCallback,
+  useImperativeHandle,
+  type Ref,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -25,7 +27,16 @@ import { IconButton } from './icon-button.tsx';
 import { Button } from './ui/button';
 
 type View = [number, number, number, number];
+export type CanvasActions = {
+  fit: () => void;
+  zoomIn: () => void;
+  zoomOut: () => void;
+  toggleMeasurement: () => void;
+  clearMeasurement: () => void;
+};
+
 type Props = {
+  ref?: Ref<CanvasActions>;
   svg: string | null;
   ir: BoardIr | undefined;
   layers: SceneLayer[];
@@ -37,6 +48,7 @@ type Props = {
 };
 
 export function BoardCanvas({
+  ref,
   svg: markup,
   ir,
   layers,
@@ -165,6 +177,20 @@ export function BoardCanvas({
   const fit = () => {
     if (fitted.current) view([...fitted.current]);
   };
+
+  useImperativeHandle(ref, () => {
+    const run = (action: () => void) => () => {
+      action();
+      scene.current?.focus({ preventScroll: true });
+    };
+    return {
+      fit: run(fit),
+      zoomIn: run(() => zoom(1 / 1.25)),
+      zoomOut: run(() => zoom(1.25)),
+      toggleMeasurement: run(toggleMeasurement),
+      clearMeasurement: run(clearMeasurement),
+    };
+  });
 
   useLayoutEffect(() => {
     const svg = getSvg();
