@@ -1,8 +1,9 @@
 import type { BoardIr } from "@react-pcb/core";
-import { FileCode2, Network } from "lucide-react";
+import { FileCode2 } from "lucide-react";
 import type { ReactNode } from "react";
 import type { BoardView } from "../lib/scene-presentation.ts";
 import { BoardViewSelect } from "./board-view-select.tsx";
+import { NetIcon } from "./pcb-icons.tsx";
 import {
 	Select,
 	SelectContent,
@@ -68,7 +69,7 @@ export function CanvasToolbar({
 						aria-label="Highlight net"
 						className="data-[size=default]:h-8.5 min-w-30 max-w-47.5 text-[12px] max-md:min-w-0 max-md:max-w-30.5 max-md:px-2"
 					>
-						<Network size={14} />
+						<NetIcon />
 						<SelectValue />
 					</SelectTrigger>
 					<SelectContent position="popper" align="end">

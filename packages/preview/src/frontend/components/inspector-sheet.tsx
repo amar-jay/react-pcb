@@ -1,7 +1,7 @@
 import type { IrPart } from "@react-pcb/core";
-import { CircuitBoard, PanelRight } from "lucide-react";
 import type { PreviewSnapshot } from "../../index.ts";
 import { Inspector } from "./inspector.tsx";
+import { BoardIcon, ComponentIcon } from "./pcb-icons.tsx";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
 import {
@@ -40,7 +40,7 @@ export function InspectorSheet({
 					variant="outline"
 					className="gap-2 px-3 max-md:px-2 max-md:text-[12px]"
 				>
-					<PanelRight size={15} />
+					{part ? <ComponentIcon /> : <BoardIcon />}
 					<span>{part ? part.reference : "Board overview"}</span>
 				</Button>
 			</SheetTrigger>
@@ -71,7 +71,7 @@ export function InspectorSheet({
 								className="-ml-1 shrink-0 text-muted-foreground"
 								onClick={onBack}
 							>
-								<CircuitBoard size={15} />
+								<BoardIcon />
 							</Button>
 						)}
 						<SheetTitle className="text-[18px]">

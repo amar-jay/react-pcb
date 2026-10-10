@@ -1,5 +1,5 @@
 import type { BoardIr } from "@react-pcb/core";
-import { Box, Layers3, Moon, Sun } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { PreviewSnapshot } from "../../index.ts";
 import type { LayerPresetId } from "../lib/layer-presets.ts";
@@ -10,6 +10,7 @@ import { LayerList, TechnicalLayers } from "./layer-controls.tsx";
 import { LayerGroup } from "./layer-group.tsx";
 import { LayerPresetSelect } from "./layer-preset-select.tsx";
 import { PartsList } from "./parts-list.tsx";
+import { ComponentIcon, LayerStackIcon } from "./pcb-icons.tsx";
 import {
 	Sidebar,
 	SidebarContent,
@@ -75,14 +76,14 @@ export function NavigationPanel({
 						value="layers"
 						className="min-w-0 flex-1 gap-1.75 rounded-[5px] text-muted-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-[0_1px_4px_#242b4010] data-[state=active]:[&>svg]:text-primary dark:data-[state=active]:bg-card"
 					>
-						<Layers3 />
+						<LayerStackIcon />
 						Layers
 					</TabsTrigger>
 					<TabsTrigger
 						value="parts"
 						className="min-w-0 flex-1 gap-1.75 rounded-[5px] text-muted-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-[0_1px_4px_#242b4010] data-[state=active]:[&>svg]:text-primary dark:data-[state=active]:bg-card"
 					>
-						<Box />
+						<ComponentIcon />
 						Parts
 						<small className="pl-0.5 font-mono text-[11px] leading-[normal] text-muted-foreground">
 							{ir?.parts.length ?? 0}

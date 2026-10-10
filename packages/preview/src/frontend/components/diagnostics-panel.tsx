@@ -1,26 +1,7 @@
 import type { CompilerDiagnostic } from "@react-pcb/core";
-import {
-	AlertCircle,
-	AlertTriangle,
-	CheckCircle2,
-	ChevronDown,
-} from "lucide-react";
-import {
-	AlertDialog,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "./ui/alert-dialog";
+import { AlertCircle, AlertTriangle, CheckCircle2, ChevronDown } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import {
-	Collapsible,
-	CollapsibleContent,
-	CollapsibleTrigger,
-} from "./ui/collapsible";
 import {
 	Sheet,
 	SheetContent,
@@ -89,83 +70,7 @@ export function DiagnosticList({
 	);
 }
 
-export function BuildFailureDialog({
-	open,
-	onOpenChange,
-	findings,
-	log,
-	retained,
-	onDiagnostics,
-}: {
-	open: boolean;
-	onOpenChange: (open: boolean) => void;
-	findings: readonly CompilerDiagnostic[];
-	log: string | null;
-	retained: boolean;
-	onDiagnostics: () => void;
-}) {
-	const errors = findings.filter((finding) => finding.severity === "error");
-	const warnings = findings.filter(
-		(finding) => finding.severity === "warning",
-	).length;
-	return (
-		<AlertDialog open={open} onOpenChange={onOpenChange}>
-			<AlertDialogContent
-				className="flex max-h-[calc(100dvh-48px)] w-[calc(100vw-32px)] max-w-152.5 flex-col gap-4.5 p-6.5 animate-panel-fade data-[size=default]:sm:max-w-152.5 max-md:max-h-[calc(100dvh-24px)] max-md:gap-3.5 max-md:p-5"
-				onCloseAutoFocus={(event) => {
-					event.preventDefault();
-					(
-						document.getElementById("build-error") ??
-						document.getElementById("scene")
-					)?.focus();
-				}}
-			>
-				<AlertDialogHeader className="flex flex-col items-start gap-2.5 text-left">
-					<span className="mb-0.5 grid size-11.5 place-items-center rounded-xl bg-[color-mix(in_srgb,var(--destructive)_9%,var(--card))] text-destructive">
-						<AlertCircle size={24} />
-					</span>
-					<AlertDialogTitle className="text-[21px] tracking-[-0.4px]">
-						Board compilation failed
-					</AlertDialogTitle>
-					<AlertDialogDescription className="text-[13px] leading-[1.7]">
-						{retained
-							? "Your last successful board is still available. Fix these errors in the source to update the preview."
-							: "Fix these errors in the source to display your board."}
-					</AlertDialogDescription>
-				</AlertDialogHeader>
-				<div className="min-h-0 overflow-y-auto rounded-lg border px-4 scrollbar-thin">
-					<DiagnosticList findings={errors} />
-				</div>
-				{log && (
-					<Collapsible className="shrink-0">
-						<CollapsibleTrigger asChild>
-							<Button
-								variant="ghost"
-								className="gap-2 p-0 text-[12px] text-muted-foreground [&[data-state=open]>svg]:rotate-180"
-							>
-								Full compiler output
-								<ChevronDown size={14} />
-							</Button>
-						</CollapsibleTrigger>
-						<CollapsibleContent>
-							<pre className="mt-2 max-h-32.5 overflow-y-auto rounded-md bg-muted p-3 font-mono text-[11px] leading-[1.7] whitespace-pre-wrap wrap-anywhere">
-								{log}
-							</pre>
-						</CollapsibleContent>
-					</Collapsible>
-				)}
-				<AlertDialogFooter className="shrink-0 gap-2.5 pt-2 max-md:flex-col-reverse [&_button]:min-h-9.5 [&_button]:px-3.5 [&_button]:text-[13px]">
-					<Button variant="outline" onClick={onDiagnostics}>
-						View diagnostics{warnings ? ` (${warnings} warnings)` : ""}
-					</Button>
-					<AlertDialogCancel variant="default">
-						{retained ? "Inspect last build" : "Dismiss"}
-					</AlertDialogCancel>
-				</AlertDialogFooter>
-			</AlertDialogContent>
-		</AlertDialog>
-	);
-}
+export { BuildFailureDialog } from "./build-failure-dialog.tsx";
 
 export function DiagnosticsPanel({
 	open,

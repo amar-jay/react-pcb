@@ -32,7 +32,7 @@ export default function Esc() {
 
 	return (
 		<Board
-			outline={rect(0, 0, 10, 36)}
+			outline={rect(0, 0, 16, 36)}
 			layers={boardLayers}
 			metadata={{
 				title: "ESC footprint study",

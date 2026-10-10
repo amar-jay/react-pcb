@@ -1,15 +1,11 @@
 import {
 	AlertCircle,
 	ArrowDownToLine,
-	Box,
 	Check,
-	CircuitBoard,
 	Code2,
-	Layers,
 	Maximize,
 	Minus,
 	Moon,
-	Network,
 	PanelLeft,
 	Plus,
 	Ruler,
@@ -24,6 +20,13 @@ import { download, type SceneLayer } from "../lib/scene.ts";
 import type { BoardView } from "../lib/scene-presentation.ts";
 import type { CanvasActions } from "./board-canvas.tsx";
 import { IconButton } from "./icon-button.tsx";
+import {
+	AnalysisIcon,
+	BoardIcon,
+	ComponentIcon,
+	LayerStackIcon,
+	NetIcon,
+} from "./pcb-icons.tsx";
 import {
 	CommandDialog,
 	CommandEmpty,
@@ -181,14 +184,14 @@ export function WorkbenchCommand({
 							keywords={["view"]}
 							onSelect={() => run(() => onView("board"))}
 						>
-							<CircuitBoard />
+							<BoardIcon />
 							Board view
 						</CommandItem>
 						<CommandItem
 							keywords={["view", "SVG"]}
 							onSelect={() => run(() => onView("analysis"))}
 						>
-							<Code2 />
+							<AnalysisIcon />
 							Analysis view
 						</CommandItem>
 					</CommandGroup>
@@ -202,7 +205,7 @@ export function WorkbenchCommand({
 								disabled={!layers.length}
 								onSelect={() => run(() => onPreset(preset.id))}
 							>
-								<Layers />
+								<LayerStackIcon />
 								{preset.label}
 							</CommandItem>
 						))}
@@ -214,7 +217,7 @@ export function WorkbenchCommand({
 							Toggle design sidebar
 						</CommandItem>
 						<CommandItem onSelect={() => run(onOverview)}>
-							<CircuitBoard />
+							<BoardIcon />
 							Board overview
 						</CommandItem>
 						<CommandItem onSelect={() => run(onDiagnostics)}>
@@ -274,7 +277,7 @@ export function WorkbenchCommand({
 									]}
 									onSelect={() => run(() => onSelect(part.id))}
 								>
-									<Box />
+									<ComponentIcon />
 									Inspect {part.reference}
 									<span className="ml-auto truncate text-xs text-muted-foreground">
 										{ir.componentDefinitions[part.component]?.mpn}
@@ -290,7 +293,7 @@ export function WorkbenchCommand({
 								keywords={["all nets", "clear highlight"]}
 								onSelect={() => run(() => onNet(""))}
 							>
-								<Network />
+								<NetIcon />
 								Clear net highlight
 							</CommandItem>
 							{ir.nets.map((net) => (
@@ -300,7 +303,7 @@ export function WorkbenchCommand({
 									keywords={[`Highlight ${net.name}`]}
 									onSelect={() => run(() => onNet(net.id))}
 								>
-									<Network />
+									<NetIcon />
 									Highlight {net.name}
 								</CommandItem>
 							))}
@@ -319,7 +322,7 @@ export function WorkbenchCommand({
 											run(() => onToggleLayer(layer.key, !visible))
 										}
 									>
-										<Layers />
+										<LayerStackIcon />
 										{visible ? "Hide" : "Show"} {layer.name}
 										{visible && <Check className="ml-auto" />}
 									</CommandItem>
