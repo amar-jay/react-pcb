@@ -15,8 +15,7 @@ import {
   compilerRoot,
   type PreviewBuildOptions,
 } from './build.ts';
-import { bundleFrontend } from './frontend/build.ts';
-import { embedPreviewData } from './html.ts';
+import { inspectionHtml } from './inspection-html.ts';
 import { inspectionFootprintSvg } from './inspection-svg.ts';
 import { exportBoardSvg } from './frontend/lib/scene-presentation.ts';
 import { sceneLayers, type SceneLayer } from './frontend/lib/scene.ts';
@@ -49,7 +48,6 @@ export type BoardInspection = {
     manifest: string;
   };
 };
-let frontend: Promise<string> | undefined;
 
 /** Discover reusable footprints by canonical definition key, never by instance order or display name. */
 export async function buildBoardInspection(
@@ -129,14 +127,7 @@ export async function exportBoardInspection(
   options: PreviewBuildOptions = {},
 ): Promise<string> {
   const inspection = await buildBoardInspection(entry, options);
-  frontend ??= bundleFrontend(
-    undefined,
-    join(import.meta.dir, 'frontend/inspect/index.html'),
-  ).catch((error) => {
-    frontend = undefined;
-    throw error;
-  });
-  const html = embedPreviewData(await frontend, inspection);
+  const html = inspectionHtml(inspection);
   const json = (value: unknown) => `${JSON.stringify(value, null, 2)}\n`;
   const files = new Map<string, string>([
     ['board.json', json(inspection.result.ir)],

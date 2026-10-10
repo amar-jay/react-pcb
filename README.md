@@ -20,7 +20,8 @@ footprint and board manufacturing reports. Board checks enforce placed copper
 spacing and same-side inter-part courtyard reservations using the selected profile.
 The inspection command derives unique footprints directly from the compiled board,
 writes their canonical JSON and SVG alongside the board-selected manufacturing
-reports, and generates an offline `index.html` with search and semantic layer toggles.
+reports, and generates a small static `index.html` with SVG images and artifact links.
+The HTML has no JavaScript or embedded IR; agents can use `manifest.json` directly.
 Examples need no separate inspection script or footprint list.
 Illustrative dimensions and limits do not establish fabrication approval.
 

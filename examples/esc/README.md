@@ -15,7 +15,7 @@ bun test packages/react-pcb/src/__tests__/esc.test.tsx
 
 The inspection command discovers the eight used definitions directly from the
 compiled board and writes canonical JSON, SVG, a manifest, and an offline
-layer-toggle `index.html`. The board selects no manufacturing profile, so its
+static `index.html` with SVG images and artifact links, without JavaScript or embedded IR. The board selects no manufacturing profile, so its
 gallery records absent reports as `null`; it does not apply the separate
 regression-test profiles described below. Importing the
 board entry is safe for preview/watch use; compilation and console output happen

@@ -71,12 +71,14 @@ bun run react-pcb-preview inspect examples/basic.tsx --out dist/basic-inspect
 bun run board:inspect examples/esc/index.tsx --out dist/esc-inspect
 ```
 
-Open the printed `index.html` directly in a browser. The offline gallery discovers
+Open the printed `index.html` directly in a browser. The small static page lists
 one entry per canonical footprint key used by the compiled board, including
-unplaced parts. It shows local component-side geometry, part references, Board
-and Analysis views, themes, search, layer presets, and independent layer toggles.
-Save SVG uses the current view and visible layers. No example-specific script or
-manually maintained footprint list is needed.
+unplaced parts. Each entry shows component-side geometry, dimensions, part
+references, selected check status, and links to its JSON/SVG files. Images use
+Analysis view, light theme, and all layers. There is no JavaScript, bundled font,
+embedded IR, or UI framework in the HTML; geometry and data stay in linked files.
+Agents can read `manifest.json` to locate canonical artifacts directly. No
+example-specific script or manually maintained footprint list is needed.
 
 The default output directory is `dist/inspect`. The directory contains `board.json`
 (canonical IR), `board.svg` (Analysis, light, all layers), `result.json` (full compile

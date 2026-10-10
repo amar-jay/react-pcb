@@ -55,7 +55,7 @@ PA11/USB_DM → 33, and PA12/USB_DP → 34, verified against the GP pinout.
 The physical definition includes all 48 lands regardless of logical coverage.
 
 Run `bun run board:inspect examples/basic.tsx --out /tmp/react-pcb-footprints`
-for the layer-toggle inspection page. `manifest.json` maps the LQFP48 definition
+for the static inspection page. `manifest.json` maps the LQFP48 definition
 key to its canonical JSON and styled SVG filenames. Tests independently
 check all land positions and dimensions, numbering, identity, deterministic SVG,
 and front/back board placement and bindings.

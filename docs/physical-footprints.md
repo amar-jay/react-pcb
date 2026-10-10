@@ -63,8 +63,8 @@ cargo run --quiet -p pcbir -- footprint-svg < footprint.json > footprint.svg
 bun run board:inspect examples/basic.tsx --out /tmp/react-pcb-footprints
 ```
 
-Open the generated `index.html` to search the board’s used footprints and toggle
-semantic layers independently, or locate individual JSON/SVG files through
+Open the generated static `index.html` to view the board’s used footprints,
+or locate individual JSON/SVG files through
 `manifest.json`. The gallery is derived from the compiled board entry; no separate
 inspection script or footprint registry is required. The basic board includes
 the USB4105, LQFP48 and manufacturing passive. Unplaced parts are included;

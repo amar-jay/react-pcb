@@ -139,7 +139,7 @@ test('all-side footprint copper retains its meaning in both side presets and sha
   expect(copper.side).toBeNull();
 });
 
-test('inspection export is offline, safely embeds labels and writes canonical artifacts from its manifest; failed rebuilds preserve output', async () => {
+test('inspection export is small static HTML with escaped labels and linked canonical artifacts; failed rebuilds preserve output', async () => {
   const directory = await mkdtemp(join(cwd, '.inspection-test-'));
   const entry = join(directory, 'board.tsx');
   const output = join(directory, 'out');
@@ -161,17 +161,24 @@ test('inspection export is offline, safely embeds labels and writes canonical ar
     const index = join(output, 'index.html');
     expect(stdout).toContain(index);
     const html = await Bun.file(index).text();
-    const payload = html.match(
-      /<script type="application\/json" id="preview-data">(.*?)<\/script>/s,
-    )![1]!;
-    expect(payload).not.toContain('</script>');
-    const snapshot = JSON.parse(payload);
-    expect(snapshot.result.ir.board.metadata.title).toBe(title);
-    expect(html).not.toContain('<script src=');
-    expect(html).toContain('data:font/woff2;base64,');
+    const document = new DOMParser().parseFromString(html, 'text/html');
+    expect(document.querySelector('h1')!.textContent).toBe(
+      `${title} / Footprints`,
+    );
+    expect(
+      document
+        .querySelector('[data-footprint-key]')!
+        .getAttribute('data-footprint-key'),
+    ).toBe(unsafeKey);
+    expect(
+      document.querySelectorAll('script, svg, link[rel="stylesheet"]').length,
+    ).toBe(0);
+    expect(html).not.toContain('data:font');
+    expect(html).not.toContain('preview-data');
+    expect(Buffer.byteLength(html)).toBeLessThan(12000);
     const manifest = await Bun.file(join(output, 'manifest.json')).json();
     const board = await Bun.file(join(output, manifest.files.board)).json();
-    expect(board).toEqual(snapshot.result.ir);
+    expect(board.board.metadata.title).toBe(title);
     expect(
       await Bun.file(join(output, manifest.files.manufacturing)).json(),
     ).toBeNull();
@@ -179,6 +186,17 @@ test('inspection export is offline, safely embeds labels and writes canonical ar
       (item: { key: string }) => item.key === unsafeKey,
     );
     expect(physical.parts).toEqual(['B', 'F', 'U']);
+    expect(document.querySelector('img')!.getAttribute('src')).toBe(
+      physical.files.svg,
+    );
+    expect(document.querySelectorAll('article').length).toBe(
+      manifest.footprints.length,
+    );
+    for (const anchor of document.querySelectorAll('a')) {
+      expect(
+        await Bun.file(join(output, anchor.getAttribute('href')!)).exists(),
+      ).toBe(true);
+    }
     for (const item of manifest.footprints) {
       for (const file of Object.values(item.files)) {
         if (file)
