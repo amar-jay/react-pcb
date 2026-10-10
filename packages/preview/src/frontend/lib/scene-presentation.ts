@@ -70,7 +70,8 @@ export function applyScenePresentation(
         : layer.color
       : '';
     const overlay = group.getAttribute('data-overlay');
-    group.style.fill = overlay === 'constraints' ? 'none' : color;
+    const opening = layer?.kind === 'solder-mask' || layer?.kind === 'paste';
+    group.style.fill = overlay === 'constraints' || opening ? 'none' : color;
     group.style.stroke =
       overlay === 'references'
         ? analysis
@@ -83,12 +84,7 @@ export function applyScenePresentation(
               : '#475569'
             : 'none'
           : color;
-    group.style.opacity =
-      analysis && layer?.kind === 'solder-mask'
-        ? '0.18'
-        : analysis && layer?.kind === 'paste'
-          ? '0.5'
-          : '';
+    group.style.opacity = '';
     if (overlay === 'references') {
       group.style.fontFamily = 'monospace';
       group.style.fontSize = '1px';
@@ -106,6 +102,19 @@ export function applyScenePresentation(
       feature.style.vectorEffect = analysis ? 'non-scaling-stroke' : '';
       feature.style.strokeWidth = analysis ? '1.25px' : '';
     }
+    // Openings describe process boundaries, not material covering the copper.
+    // Override the projection's filled-shape/stroke="none" presentation only.
+    if (opening) {
+      for (const feature of group.querySelectorAll<SVGElement>(
+        '[data-feature-id]',
+      )) {
+        feature.style.fill = 'none';
+        feature.style.stroke = color;
+        feature.style.vectorEffect = 'non-scaling-stroke';
+        feature.style.strokeWidth = analysis ? '1.25px' : '1px';
+        feature.style.strokeDasharray = layer.kind === 'paste' ? '3px 2px' : '';
+      }
+    }
   }
 }
 
@@ -117,7 +126,8 @@ export function exportBoardSvg(
   presentation: ScenePresentation,
   parsed?: Document,
 ) {
-  const document = parsed ?? new DOMParser().parseFromString(markup, 'image/svg+xml');
+  const document =
+    parsed ?? new DOMParser().parseFromString(markup, 'image/svg+xml');
   if (
     document.querySelector('parsererror') ||
     document.documentElement.localName !== 'svg'
@@ -134,9 +144,14 @@ export function exportBoardSvg(
   if (parsed) {
     for (const element of svg.querySelectorAll('[style]')) {
       const declarations = element.getAttribute('style')!.split(';');
-      element.setAttribute('style', declarations.filter(declaration =>
-        declaration.slice(declaration.indexOf(':') + 1).trim(),
-      ).join(';'));
+      element.setAttribute(
+        'style',
+        declarations
+          .filter((declaration) =>
+            declaration.slice(declaration.indexOf(':') + 1).trim(),
+          )
+          .join(';'),
+      );
     }
   }
   return parsed ? svg.outerHTML : new XMLSerializer().serializeToString(svg);

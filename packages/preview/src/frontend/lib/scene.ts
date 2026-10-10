@@ -28,7 +28,8 @@ export function sceneLayers(
   parsed?: Document,
 ): SceneLayer[] {
   if (!svg || !ir) return [];
-  const document = parsed ?? new DOMParser().parseFromString(svg, 'image/svg+xml');
+  const document =
+    parsed ?? new DOMParser().parseFromString(svg, 'image/svg+xml');
   const copper = ir.board.layers.stackup.entries.filter(
     (layer) => layer.kind === 'copper',
   );
@@ -73,7 +74,7 @@ export function sceneLayers(
       ? technicalName.charAt(0).toUpperCase() + technicalName.slice(1)
       : id;
     const color = overlay
-      ? ({ references: '#e8eddb', drills: '#263e34', constraints: '#e879c9' }[
+      ? ({ references: '#e8eddb', drills: '#263e34', constraints: '#c4b5fd' }[
           id
         ] ?? '#a6adbd')
       : depth >= 0
@@ -91,7 +92,7 @@ export function sceneLayers(
               ? '#67e8f9'
               : technical?.kind === 'mechanical' &&
                   technical.purpose === 'courtyard'
-                ? '#fb7185'
+                ? '#fbbf24'
                 : '#a4abc5';
     return {
       key: `${overlay ? 'overlay' : 'layer'}:${id}`,

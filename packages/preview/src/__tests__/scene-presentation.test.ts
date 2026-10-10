@@ -1,5 +1,10 @@
 import { expect, test } from 'bun:test';
-import { analysisLayerColor } from '../frontend/lib/scene-presentation.ts';
+import { DOMParser } from 'linkedom';
+import {
+  analysisLayerColor,
+  applyScenePresentation,
+  exportBoardSvg,
+} from '../frontend/lib/scene-presentation.ts';
 import type { SceneLayer } from '../frontend/lib/scene.ts';
 const layer = (
   kind: string,
@@ -88,5 +93,57 @@ test('fabrication, courtyard and constraint colors are distinct in both analysis
       (Math.max(color, background) + 0.05) /
         (Math.min(color, background) + 0.05),
     ).toBeGreaterThanOrEqual(4.5);
+  }
+});
+
+test('canvas and SVG export draw mask/paste boundaries without filling over copper in every view and theme', () => {
+  const layers = ['copper', 'solder-mask', 'paste'].map((kind) => ({
+    ...layer(kind, 'front'),
+    id: kind,
+    key: `layer:${kind}`,
+    color: '#68aa98',
+  }));
+  const markup = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10"/>
+    ${layers.map((layer) => `<g data-layer-id="${layer.id}"><rect data-feature-id="shape" x="3" y="3" width="4" height="4" stroke="none"/></g>`).join('')}</svg>`;
+  const document = new DOMParser().parseFromString(
+    markup,
+    'image/svg+xml',
+  ) as unknown as Document;
+  const svg = document.documentElement as unknown as SVGSVGElement;
+  for (const view of ['analysis', 'board'] as const) {
+    for (const theme of ['dark', 'light'] as const) {
+      applyScenePresentation(svg, layers, {}, { view, theme });
+      for (const kind of ['solder-mask', 'paste']) {
+        const group = svg.querySelector<SVGGElement>(
+          `g[data-layer-id="${kind}"]`,
+        )!;
+        const feature = group.querySelector<SVGElement>('[data-feature-id]')!;
+        expect(group.style.fill).toBe('none');
+        expect(group.style.opacity).toBe('');
+        expect(feature.style.fill).toBe('none');
+        expect(feature.style.stroke).not.toBe('none');
+        expect(feature.style.vectorEffect).toBe('non-scaling-stroke');
+        expect(feature.style.strokeDasharray).toBe(
+          kind === 'paste' ? '3px 2px' : '',
+        );
+        expect(feature.getAttribute('stroke')).toBe('none');
+        expect(feature.getAttribute('width')).toBe('4');
+        expect(feature.getAttribute('height')).toBe('4');
+      }
+      const parsed = new DOMParser().parseFromString(
+        markup,
+        'image/svg+xml',
+      ) as unknown as Document;
+      const exported = exportBoardSvg(
+        markup,
+        layers,
+        {},
+        { view, theme },
+        parsed,
+      );
+      expect(exported).toContain('fill:none');
+      expect(exported).toContain('stroke-dasharray:3px 2px');
+      expect(exported).toContain('data-layer-id="copper"');
+    }
   }
 });

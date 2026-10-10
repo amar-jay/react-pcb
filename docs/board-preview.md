@@ -21,6 +21,11 @@ bun run board:dev examples/basic.tsx --port 3100
 # One self-contained file; open it directly in a browser.
 bun run board:build examples/basic.tsx
 bun run board:build examples/basic.tsx --out dist/board/index.html
+
+# PNG images for AI visual inspection; no browser or preview server required.
+bun run react-pcb-preview png examples/basic.tsx --view both --out dist/basic.png
+# Writes dist/basic.board.png and dist/basic.analysis.png.
+bun run board:build examples/basic.tsx --out dist/analysis.png --view analysis --layers all --width 4096
 ```
 
 The default export destination is `dist/index.html`. `--port 0` lets the OS choose
@@ -32,6 +37,18 @@ compiler, network dependency, or asset directory required.
 data when hosted alongside the preview API. Use `board:build` to embed a particular
 board in a file that opens directly in a browser. Both use Bun's standalone HTML
 bundler, including local fonts.
+
+PNG output supports `--view board|analysis|both` (default Board), `--layers
+front|back|copper|fabrication|all` (default All), `--theme light|dark` (default
+light), and `--width 1..8192` (default 2048 pixels). Height follows the full-board
+aspect ratio; images over 32 million pixels are rejected. The `png` command
+defaults to `dist/board.png`; `build` also recognizes a `.png` output. Both-view
+output adds `.board` and `.analysis` before the PNG extension and compiles once.
+Rendering shares the canvas presentation and layer presets, uses an opaque
+background and the local monospace font, and ignores browser preferences and temporary
+canvas state. Output paths go to stdout; compiler and projection findings go to
+stderr for automated inspection. Compilation/rendering failures preserve existing
+files. Run `bun run react-pcb-preview --help` for usage.
 
 ## Board entry contract
 
@@ -93,6 +110,11 @@ in the source tree. Programmatic callers can set `cwd` for another Rust workspac
 - Show constraint regions as dashed outlines. They describe keepouts and routing
   corridors, not realized copper. Traces, vias, generated zones, placement synthesis
   and autorouting remain outside the current compiler's realization scope.
+- Mask openings use solid boundaries and paste openings use dashed boundaries
+  in both Board and Analysis views, including both themes. Their interiors stay
+  unfilled so enabling All layers preserves the copper layer colors. Outlines
+  remain readable when zooming; SVG and PNG exports share this presentation.
+  Board view uses amber courtyard and violet constraint outlines.
 - Read compiler, manufacturing and preview diagnostics. Unplaced parts and
   footprints without canonical physical geometry stay listed with explicit
   warnings; the preview does not invent pad geometry for them.
@@ -106,9 +128,10 @@ in the source tree. Programmatic callers can set `cwd` for another Rust workspac
   **Diagnostics** opens a bottom sheet with All, Errors, and Warnings tabs;
   errors appear first. Dialogs support keyboard navigation and return focus
   to their opening control when dismissed.
-- Save the compiled result as JSON or the full projection as SVG. The saved SVG
-  contains every declared layer/overlay; viewer colors, visibility, highlighting and zoom
-  are viewer state rather than changes to canonical geometry or the saved SVG.
+- Save the compiled result as JSON or the active Board/Analysis view as SVG.
+  The saved SVG includes visible layers and their view colors, with original
+  physical dimensions and full-board bounds. Temporary highlighting and zoom
+  stay in the viewer; canonical geometry remains unchanged.
   Both downloads are in the **Export** menu.
 
 ## Geometry and serialization
@@ -178,14 +201,17 @@ leaves any existing destination unchanged; successful exports replace it atomica
 
 ```tsx
 import {compile} from '@react-pcb/core';
-import {boardHtml, boardSvg, exportBoardPreview, startBoardPreview} from '@react-pcb/preview';
+import {boardHtml, boardSvg, exportBoardPreview, exportBoardPng, renderBoardPng, startBoardPreview} from '@react-pcb/preview';
 import MyBoard from './board.tsx';
 
 await Bun.write('dist/index.html', await boardHtml(<MyBoard />, {cwd: process.cwd()}));
 await exportBoardPreview('./board.tsx', 'dist/index.html');
+const pngExport = await exportBoardPng('./board.tsx', 'dist/board.png', {view: 'both'});
 
 const result = await compile(<MyBoard />);
 const {svg, diagnostics} = await boardSvg(result.ir);
+const projection = await boardSvg(result.ir);
+await Bun.write('dist/analysis.png', renderBoardPng(projection, result.ir, {view: 'analysis', layers: 'all'}));
 
 const preview = await startBoardPreview('./board.tsx', {port: 0, watch: ['./board-data']});
 console.log(preview.url);
