@@ -4,9 +4,12 @@ import { Capacitor, GateDriver, type Net } from "../parts/index.ts";
 const scope = "drive";
 
 export const gateDriver = part("U1", `${scope}/U1`);
+export const driverCap = part("C3", `${scope}/C3`);
+export const bootCap = part("C4", `${scope}/C4`);
 
 type DriveProps = {
 	ground: Net;
+	returnNet: Net;
 	gateSupply: Net;
 	phaseA: Net;
 	pwmHigh: Net;
@@ -36,7 +39,10 @@ function DriveParts(props: DriveProps) {
 					VB: props.bootstrap,
 					VS: props.phaseA,
 					VCC: props.gateSupply,
-					COM: props.ground,
+					// Return reference is the low-side source bus (SHUNT_N), across
+					// the shunt from battery-side GND. Level shifting for HIN/LIN
+					// across that offset is unresolved electrical work.
+					COM: props.returnNet,
 				}}
 			/>
 			<Capacitor
@@ -45,7 +51,7 @@ function DriveParts(props: DriveProps) {
 				at={[23.4, 21.3]}
 				side="back"
 				rotation={270}
-				connect={{ 1: props.gateSupply, 2: props.ground }}
+				connect={{ 1: props.gateSupply, 2: props.returnNet }}
 			/>
 			<Capacitor
 				id={bootCap}

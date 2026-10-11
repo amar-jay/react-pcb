@@ -25,8 +25,7 @@ const Toaster = ({ theme = "system", ...props }: ToasterProps) => {
 					"--normal-bg": "var(--card)",
 					"--normal-text": "var(--foreground)",
 					"--normal-border": "var(--border)",
-					"--success-bg":
-						"color-mix(in srgb, var(--success) 9%, var(--card))",
+					"--success-bg": "color-mix(in srgb, var(--success) 9%, var(--card))",
 					"--success-border":
 						"color-mix(in srgb, var(--success) 22%, var(--border))",
 					"--success-text": "var(--foreground)",
@@ -36,8 +35,7 @@ const Toaster = ({ theme = "system", ...props }: ToasterProps) => {
 						"color-mix(in srgb, var(--destructive) 22%, var(--border))",
 					"--error-text": "var(--foreground)",
 					"--warning-bg": "color-mix(in srgb, #9a7835 9%, var(--card))",
-					"--warning-border":
-						"color-mix(in srgb, #9a7835 22%, var(--border))",
+					"--warning-border": "color-mix(in srgb, #9a7835 22%, var(--border))",
 					"--warning-text": "var(--foreground)",
 					"--info-bg": "var(--card)",
 					"--info-border": "var(--border)",

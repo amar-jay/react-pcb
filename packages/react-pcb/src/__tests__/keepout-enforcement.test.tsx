@@ -2,20 +2,20 @@ import { expect, test } from "bun:test";
 import Basic from "../../../../examples/basic/board.tsx";
 import {
 	Board,
+	type BoardIr,
 	boardSvg,
 	compile,
 	defineLayerSet,
 	definePhysicalFootprint,
+	type FeatureInput,
 	Keepout,
+	type ManufacturingProfileInput,
 	mechanicalLayer,
 	net,
 	Part,
 	part,
 	rect,
 	validateBoardManufacturing,
-	type BoardIr,
-	type FeatureInput,
-	type ManufacturingProfileInput,
 } from "../index.ts";
 import { testLayers } from "./fixtures.ts";
 

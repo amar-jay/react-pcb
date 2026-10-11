@@ -39,7 +39,6 @@ export const Controller = definePart(
 			},
 			PA0: { electricalType: "input", functions: ["ADC_IN0"] },
 			PA1: { electricalType: "input", functions: ["ADC_IN1"] },
-			PA2: { electricalType: "input", functions: ["ADC_IN2"] },
 		},
 	},
 	{
@@ -55,7 +54,6 @@ export const Controller = definePart(
 			PB13: "25",
 			PA0: "11",
 			PA1: "12",
-			PA2: "13",
 		},
 	},
 );

@@ -36,7 +36,7 @@ export function sceneLayers(
 	const copper = ir.board.layers.stackup.entries.filter(
 		(layer) => layer.kind === "copper",
 	);
-	return [
+	const layers = [
 		...document.querySelectorAll<SVGGElement>(
 			"g[data-layer-id],g[data-overlay]",
 		),
@@ -65,6 +65,7 @@ export function sceneLayers(
 					keepouts: "Keepouts",
 					waypoints: "Route waypoints",
 					zones: "Zone intent boundaries",
+					ratsnest: "Ratsnest",
 				}[id] ?? id)
 			: depth >= 0
 				? depth === 0
@@ -116,7 +117,9 @@ export function sceneLayers(
 				? `${copperLayer.usage} · ${copperLayer.thickness} ${ir.units}`
 				: id,
 			visible: overlay
-				? ["drills", "keepouts", "waypoints", "zones"].includes(id) ||
+				? ["drills", "keepouts", "waypoints", "zones", "ratsnest"].includes(
+						id,
+					) ||
 					(id === "references" && side !== "back")
 				: depth === 0 ||
 					(technical?.kind === "silkscreen" && technical.side === "front"),
@@ -124,6 +127,27 @@ export function sceneLayers(
 		layer.color = boardLayerColor(layer);
 		return [layer];
 	});
+	if (!layers.some((layer) => layer.id === "ratsnest"))
+		layers.push(ratsnestLayer());
+	return layers;
+}
+
+function ratsnestLayer(): SceneLayer {
+	const layer: SceneLayer = {
+		key: "overlay:ratsnest",
+		id: "ratsnest",
+		name: "Ratsnest",
+		kind: "ratsnest",
+		overlay: true,
+		color: "",
+		category: "overlay",
+		group: "Overlays",
+		side: null,
+		detail: "Unrouted net airwires",
+		visible: true,
+	};
+	layer.color = boardLayerColor(layer);
+	return layer;
 }
 
 export function download(name: string, content: string, type: string) {

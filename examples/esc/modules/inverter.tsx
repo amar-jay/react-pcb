@@ -4,7 +4,6 @@ import {
 	pad,
 	part,
 	Route,
-	useNet,
 	usePart,
 } from "@react-pcb/core";
 import { Mosfet, type Net, PhasePad } from "../parts/index.ts";
@@ -15,6 +14,11 @@ export const phasePadA = part("J2", `${scope}/J2`);
 export const phasePadB = part("J3", `${scope}/J3`);
 export const phasePadC = part("J4", `${scope}/J4`);
 export const phaseHighA = part("QAH", `${scope}/QAH`);
+export const phaseLowA = part("QAL", `${scope}/QAL`);
+export const phaseHighB = part("QBH", `${scope}/QBH`);
+export const phaseLowB = part("QBL", `${scope}/QBL`);
+export const phaseHighC = part("QCH", `${scope}/QCH`);
+export const phaseLowC = part("QCL", `${scope}/QCL`);
 
 type PhaseName = "A" | "B" | "C";
 
@@ -41,10 +45,12 @@ function InverterPhase({
 	gateLow,
 	driver,
 }: PhaseProps) {
-	const ownHigh = useNet(`GATE_${name}H`);
-	const ownLow = useNet(`GATE_${name}L`);
-	const highNet = gateHigh ?? ownHigh;
-	const lowNet = gateLow ?? ownLow;
+	// Phases B/C have no driver yet. Hold their gates at their own source
+	// potential (Vgs = 0): high-side gates join the phase output, low-side
+	// gates join the return bus. This documents a held-off state on existing
+	// nets instead of leaving orphan single-endpoint GATE nets.
+	const highNet = gateHigh ?? phase;
+	const lowNet = gateLow ?? ground;
 	const high = usePart(`Q${name}H`);
 	const low = usePart(`Q${name}L`);
 	const output = usePart(name === "A" ? "J2" : name === "B" ? "J3" : "J4");
@@ -64,6 +70,15 @@ function InverterPhase({
 				connect={{ G: lowNet, D: phase, S: ground }}
 			/>
 			<PhasePad id={output} at={padAt} connect={{ P: phase }} />
+			{/* Switch-node intent: high-side source, low-side drain and the
+			    motor terminal are one copper node once routed. */}
+			<Route net={phase} from={pad(high, "S")} to={pad(low, "D")} width={0.5} />
+			<Route
+				net={phase}
+				from={pad(low, "D")}
+				to={pad(output, "P")}
+				width={0.5}
+			/>
 			{driver ? (
 				<>
 					<Route
@@ -96,8 +111,35 @@ type InverterProps = {
 };
 
 function InverterParts(props: InverterProps) {
+	// Cross-phase bus intent: the three drains share one VBAT bus and the
+	// three sources share one return bus once routed.
+	const width = 1.0;
 	return (
 		<>
+			<Route
+				net={props.vbat}
+				from={pad(phaseHighA, "D")}
+				to={pad(phaseHighB, "D")}
+				width={width}
+			/>
+			<Route
+				net={props.vbat}
+				from={pad(phaseHighB, "D")}
+				to={pad(phaseHighC, "D")}
+				width={width}
+			/>
+			<Route
+				net={props.ground}
+				from={pad(phaseLowA, "S")}
+				to={pad(phaseLowB, "S")}
+				width={width}
+			/>
+			<Route
+				net={props.ground}
+				from={pad(phaseLowB, "S")}
+				to={pad(phaseLowC, "S")}
+				width={width}
+			/>
 			<InverterPhase
 				name="A"
 				vbat={props.vbat}

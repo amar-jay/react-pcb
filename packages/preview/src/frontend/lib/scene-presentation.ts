@@ -22,6 +22,7 @@ export function boardLayerColor(layer: SceneLayer) {
 				keepouts: "#fb7185",
 				waypoints: "#c4b5fd",
 				zones: "#5eead4",
+				ratsnest: "#9aa3b2",
 			}[layer.id] ?? "#a6adbd"
 		);
 	if (layer.category === "copper")
@@ -46,6 +47,7 @@ export function analysisLayerColor(layer: SceneLayer, dark: boolean) {
 		if (layer.id === "zones") return dark ? "#5eead4" : "#0f766e";
 		if (layer.id === "waypoints") return dark ? "#d8b4fe" : "#7e22ce";
 		if (layer.id === "constraints") return dark ? "#d8b4fe" : "#7e22ce";
+		if (layer.id === "ratsnest") return dark ? "#d4d4d4" : "#737373";
 		return dark ? "#f472b6" : "#be185d";
 	}
 	if (layer.category === "copper") {

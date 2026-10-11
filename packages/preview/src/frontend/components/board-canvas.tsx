@@ -27,6 +27,7 @@ import {
 	outlineFocusView,
 	outlineGeometry,
 } from "../lib/outline-diagnostic.ts";
+import { renderRatsnest } from "../lib/ratsnest.ts";
 import {
 	type CanvasPoint,
 	measureDistance,
@@ -36,6 +37,7 @@ import {
 import type { SceneLayer } from "../lib/scene.ts";
 import { boardSize } from "../lib/scene.ts";
 import {
+	analysisLayerColor,
 	applyScenePresentation,
 	type ScenePresentation,
 } from "../lib/scene-presentation.ts";
@@ -314,6 +316,16 @@ export function BoardCanvas({
 		const svg = getSvg();
 		if (!markup || !svg || !ir) return;
 		applyScenePresentation(svg, layers, visibility, { view: boardView, theme });
+		const ratsnestLayer = layers.find((layer) => layer.id === "ratsnest");
+		renderRatsnest(svg, ir, {
+			visible: visibility[ratsnestLayer?.key ?? "overlay:ratsnest"] ?? true,
+			color: ratsnestLayer
+				? boardView === "analysis"
+					? analysisLayerColor(ratsnestLayer, theme === "dark")
+					: ratsnestLayer.color
+				: "#9aa3b2",
+			net,
+		});
 		highlightConstraintRegions(svg, constraint, net);
 		const parts = new Map(ir.parts.map((part) => [part.id, part]));
 		for (const feature of svg.querySelectorAll<SVGElement>("[data-part-id]")) {
@@ -456,7 +468,7 @@ export function BoardCanvas({
 					id="scene"
 					data-view={presentation.view}
 					ref={scene}
-					className="absolute top-16.5 right-10.5 bottom-13.5 left-13.5 touch-none cursor-grab data-[measuring=true]:cursor-crosshair data-[measuring=true]:**:data-part-id:cursor-crosshair data-[dragging=true]:cursor-grabbing focus-visible:rounded-xs focus-visible:outline-offset-[5px] max-[701px]:top-18 max-[701px]:right-3 max-[701px]:bottom-15.5 max-[701px]:left-10 [&_svg]:block [&_svg]:size-full [&_svg]:overflow-visible data-[view=board]:[&_svg]:drop-shadow-[0_9px_12px_#233d3426] **:data-part-id:cursor-pointer **:data-region-id:cursor-pointer [&_.selected:not(text)]:stroke-[color-mix(in_srgb,var(--primary)_55%,var(--muted-foreground))]! [&_.selected:not(text)]:[stroke-width:1px]! [&_.selected:not(text)]:[vector-effect:non-scaling-stroke]! [&_.net-match:not(text)]:stroke-[#b6ab84]! [&_.net-match:not(text)]:[stroke-width:1px]! [&_.net-match:not(text)]:[vector-effect:non-scaling-stroke]! [&_.dimmed]:opacity-[0.19] data-[view=analysis]:[&_.dimmed]:opacity-50"
+					className="absolute top-16.5 right-10.5 bottom-13.5 left-13.5 touch-none cursor-grab data-[measuring=true]:cursor-crosshair data-[measuring=true]:**:data-part-id:cursor-crosshair data-[dragging=true]:cursor-grabbing focus-visible:rounded-xs focus-visible:outline-offset-[5px] max-[701px]:top-18 max-[701px]:right-3 max-[701px]:bottom-15.5 max-[701px]:left-10 [&_svg]:block [&_svg]:size-full [&_svg]:overflow-visible data-[view=board]:[&_svg]:drop-shadow-[0_9px_12px_#233d3426] **:data-part-id:cursor-pointer **:data-region-id:cursor-pointer [&_.selected:not(text)]:stroke-[color-mix(in_srgb,var(--primary)_55%,var(--muted-foreground))]! [&_.selected:not(text)]:[stroke-width:1px]! [&_.selected:not(text)]:[vector-effect:non-scaling-stroke]! [&_.net-match:not(text):not([data-net-id])]:stroke-[#b6ab84]! [&_.net-match:not(text):not([data-net-id])]:[stroke-width:1px]! [&_.net-match:not(text):not([data-net-id])]:[vector-effect:non-scaling-stroke]! [&_.dimmed]:opacity-[0.19] data-[view=analysis]:[&_.dimmed]:opacity-50"
 					data-measuring={measuring}
 					// biome-ignore lint/a11y/noNoninteractiveTabindex: Canvas keyboard controls need focus for panning, zooming and measurement.
 					tabIndex={0}

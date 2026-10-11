@@ -6,14 +6,7 @@ export function LayerStackup({ ir }: { ir: BoardIr }) {
 	const stackup = ir.board.layers.stackup.entries;
 	const copper = stackup.filter((layer) => layer.kind === "copper");
 	return (
-		<InspectorSection
-			title={
-				<>
-					Layer stackup
-				</>
-			}
-			className="mt-5 pt-4.5"
-		>
+		<InspectorSection title={<>Layer stackup</>} className="mt-5 pt-4.5">
 			<div
 				className="mb-3 flex flex-col gap-px rounded-md bg-muted px-3.5 py-1.5"
 				aria-hidden="true"

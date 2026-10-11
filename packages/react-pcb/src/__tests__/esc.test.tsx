@@ -172,32 +172,14 @@ test("every ESC footprint round-trips, renders deterministically and passes its 
 
 test("ESC uses real part bindings, all 48 MCU lands and collision-free placed geometry", async () => {
 	const result = await compile(<Esc />, options);
+	// Connectivity intent is fully joined: no PCBIR032/033/034. Remaining
+	// warnings cover unrealized routing/keepout geometry (PCBIR041/043).
+	expect(
+		result.diagnostics.some((d) =>
+			["PCBIR032", "PCBIR033", "PCBIR034"].includes(d.code),
+		),
+	).toBe(false);
 	expect(result.diagnostics).toMatchObject([
-		{
-			code: "PCBIR032",
-			severity: "warning",
-			entity: "control/U2",
-			message: "unconnected pins: PA2",
-		},
-		...[
-			"12V_GATE",
-			"3V3",
-			"BOOT_A",
-			"GND",
-			"PHASE_A",
-			"PHASE_B",
-			"PHASE_C",
-			"PWM_AH",
-			"PWM_AL",
-			"SHUNT_N",
-			"VBAT",
-		].map((entity) => ({ code: "PCBIR034", severity: "warning", entity })),
-		...[
-			"inverter/GATE_BH",
-			"inverter/GATE_BL",
-			"inverter/GATE_CH",
-			"inverter/GATE_CL",
-		].map((entity) => ({ code: "PCBIR033", severity: "warning", entity })),
 		...["tracks", "vias"].map((kind) => ({
 			code: "PCBIR041",
 			severity: "warning",
@@ -228,6 +210,7 @@ test("ESC uses real part bindings, all 48 MCU lands and collision-free placed ge
 	const driver = assertDefined(
 		result.ir.parts.find((p) => p.id === "drive/U1"),
 	);
+	expect(driver.connections.COM).toBe("SHUNT_N"); // Low-side source return, not GND.
 	expect(driver.pinMap).toEqual({
 		VCC: ["1"],
 		HIN: ["2"],
@@ -244,7 +227,6 @@ test("ESC uses real part bindings, all 48 MCU lands and collision-free placed ge
 		PB13: ["25"],
 		PA0: ["11"],
 		PA1: ["12"],
-		PA2: ["13"],
 		VBAT: ["4"],
 		"VREF+": ["5"],
 		"VDD/VDDA": ["6"],
@@ -252,7 +234,9 @@ test("ESC uses real part bindings, all 48 MCU lands and collision-free placed ge
 		VSS: ["30"],
 		VDDIO2: ["31"],
 	});
-	expect(mcu.connections.PA2).toBeUndefined(); // No unconditioned phase voltage on an ADC.
+	const mcuConnections = assertDefined(mcu.connections);
+	expect(mcuConnections.VBAT).toBe("VBAT"); // Backup-domain supply, not 3V3.
+	expect(mcuConnections.PA2).toBeUndefined(); // Unmodeled pin, not an unconnected one.
 	const battery = assertDefined(
 		result.ir.parts.find((p) => p.id === "power/J1"),
 	);

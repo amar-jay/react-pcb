@@ -117,8 +117,8 @@ to a later electrical and thermal design.
 | U1 | (18.8, 21.3), back, 0° | Mirrored output pins face the phase-A gates; its body lies between the front-side MOSFET body rows. |
 | C3 | (23.4, 21.3), back, 270° | At U1's VCC/COM edge; supply land above return land. |
 | C4 | (14.2, 20.665), back, 270° | At U1's VB/VS edge; bootstrap land above phase land. |
-| U2 | (7.2, 7.2), front, 0° | Separate from the power stage, with ADC inputs facing the left sensing corridor. |
-| C2 | (1.2, 7.2), front, 90° | Beside U2 pins 6/7, on the same side for a short supply loop. |
+| U2 | (8.4, 7.2), front, 0° | Separate from the power stage, with ADC inputs facing the left sensing corridor. |
+| C2 | (2.4, 7.2), front, 90° | Beside U2 pins 6/7, on the same side for a short supply loop. |
 | R1 | (6.5, 29), front, 0° | SHUNT_N land faces the low-side return bus; GND land faces the sensing corridor. |
 
 This placement follows the short gate-loop, local bypassing and separate sense
@@ -137,7 +137,10 @@ capacitor does not establish adequate local bypassing for all three phases.
 
 The VS route intent now starts at QAH's source rather than the motor terminal.
 Motor copper must reach the junction between each high-side source and low-side
-drain without sharing the driver's sense pickup. The shunt corridors approach
+drain without sharing the driver's sense pickup. Every net's routing intent is
+joined by explicit `Route` edges (switch nodes, VBAT/return buses, supply
+stars, gate hold-offs, PWM, Kelvin sense), so no `PCBIR032`/`PCBIR033`/`PCBIR034`
+warnings remain. The shunt corridors approach
 the MCU along the left edge; they are placeholders for Kelvin routing and future
 conditioning. The buffer at x = 11.5–12.7, y = 14–27 excludes components,
 tracks and vias while permitting reference-plane copper. It does not create a
@@ -180,19 +183,20 @@ rules and stable owners instead of inferred routing geometry.
 
 This work completes physical footprints and their integration; it does not
 supply a complete motor controller. Phases B/C still need drivers and PWM
-connections. Both supply nets currently describe external supply intent without
+connections; their gates are held at source potential (Vgs = 0) on existing
+nets, which documents the idle state but is not drive circuitry. Both supply nets currently describe external supply intent without
 connectors/regulators. Bootstrap charging diodes, gate resistors/pulldowns,
 reset/debug connections, full decoupling, current-sense conditioning/protection,
 and phase-voltage sensing are not designed. The MCU logical definition remains
 explicitly partial even though its physical footprint contains every land.
-Driver COM remains connected to battery-side GND while low-side sources use
-SHUNT_N; the driver return reference across the shunt needs electrical review.
+Unused PA2 is unmodeled rather than left unconnected.
+Driver COM and its bypass reference the low-side source bus (SHUNT_N); MCU
+VBAT joins the battery net as its backup-domain supply. The HIN/LIN level
+shifting across the shunt offset, and backup power source selection, still need
+electrical review.
 
 The IR's route and zone declarations express intent; no actual traces, power
 planes, thermal vias or fabrication outputs have been synthesized. The 10 μF bus
 capacitor is an example selection, not a verified motor-bus capacitance budget.
 IR2101 VCC now uses a separate gate-supply net rather than 3V3; the datasheet
 requires 10–20 V. The original direct phase-to-MCU ADC connection is removed.
-These gaps require electrical, thermal, routing and EMC work before a working
-ESC can be claimed. No KiCad schematic/PCB or simulation model exists here,
-so schematic/PCB analyzers and SPICE were not run for this footprint task.

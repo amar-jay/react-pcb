@@ -1,2396 +1,1370 @@
 {
-  "esc-real/brake/C_BR_DRV": {
-    "at": [
-      140.5,
-      60
-    ],
-    "rotation": 0
-  },
-  "esc-real/brake/C_BR_DRV_HF": {
-    "at": [
-      136.5,
-      60
-    ],
-    "rotation": 0
-  },
-  "esc-real/brake/C_BRAKE_BUS": {
-    "at": [
-      145,
-      78
-    ],
-    "rotation": 0
-  },
-  "esc-real/brake/C_BRAKE_REF": {
-    "at": [
-      137,
-      86
-    ],
-    "rotation": 0
-  },
-  "esc-real/brake/C_BUS_CMP": {
-    "at": [
-      145,
-      86
-    ],
-    "rotation": 0
-  },
-  "esc-real/brake/C_OV_BUS": {
-    "at": [
-      141,
-      75
-    ],
-    "rotation": 0
-  },
-  "esc-real/brake/C_OV_REF": {
-    "at": [
-      145,
-      76
-    ],
-    "rotation": 0
-  },
-  "esc-real/brake/J_BRAKE": {
-    "at": [
-      153,
-      72
-    ],
-    "rotation": 0
-  },
-  "esc-real/brake/Q_BR": {
-    "at": [
-      139.92,
-      48
-    ],
-    "rotation": 0
-  },
-  "esc-real/brake/R_BR_GS": {
-    "at": [
-      144.5,
-      57
-    ],
-    "rotation": 0
-  },
-  "esc-real/brake/R_BR_IN": {
-    "at": [
-      144.5,
-      63
-    ],
-    "rotation": 0
-  },
-  "esc-real/brake/R_BR_OFF": {
-    "at": [
-      140.5,
-      57.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/brake/R_BR_ON": {
-    "at": [
-      140.5,
-      62.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/brake/R_BRAKE_BUS_BOT": {
-    "at": [
-      137,
-      88
-    ],
-    "rotation": 0
-  },
-  "esc-real/brake/R_BRAKE_BUS_T1": {
-    "at": [
-      141,
-      77.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/brake/R_BRAKE_BUS_T2": {
-    "at": [
-      141,
-      86.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/brake/R_BRAKE_HYST": {
-    "at": [
-      135,
-      82
-    ],
-    "rotation": 0
-  },
-  "esc-real/brake/R_BRAKE_REF_BOT": {
-    "at": [
-      145,
-      88
-    ],
-    "rotation": 0
-  },
-  "esc-real/brake/R_BRAKE_REF_TOP": {
-    "at": [
-      137.5,
-      75
-    ],
-    "rotation": 0
-  },
-  "esc-real/brake/R_OV_BUS_BOT": {
-    "at": [
-      133.5,
-      84.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/brake/R_OV_BUS_T1": {
-    "at": [
-      147,
-      82
-    ],
-    "rotation": 0
-  },
-  "esc-real/brake/R_OV_BUS_T2": {
-    "at": [
-      137,
-      77.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/brake/R_OV_HYST": {
-    "at": [
-      148.5,
-      84.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/brake/R_OV_REF_BOT": {
-    "at": [
-      133,
-      79.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/brake/R_OV_REF_TOP": {
-    "at": [
-      144.5,
-      74
-    ],
-    "rotation": 0
-  },
-  "esc-real/brake/U_BR_DRV": {
-    "at": [
-      145,
-      60
-    ],
-    "rotation": 0
-  },
-  "esc-real/brake/U_BUS_CMP": {
-    "at": [
-      141,
-      82
-    ],
-    "rotation": 0
-  },
-  "esc-real/control/C_MCU_24": {
-    "at": [
-      65,
-      132.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/control/C_MCU_36": {
-    "at": [
-      61.5,
-      132.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/control/C_MCU_48": {
-    "at": [
-      68.5,
-      132.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/control/C_MCU_BULK": {
-    "at": [
-      65,
-      119
-    ],
-    "rotation": 0
-  },
-  "esc-real/control/C_MCU_VBAT": {
-    "at": [
-      57.5,
-      126
-    ],
-    "rotation": 0
-  },
-  "esc-real/control/C_MCU_VDDA": {
-    "at": [
-      72.5,
-      126
-    ],
-    "rotation": 0
-  },
-  "esc-real/control/C_MCU_VREF": {
-    "at": [
-      61,
-      119.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/control/C_NRST": {
-    "at": [
-      69,
-      119.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/control/C_RESET": {
-    "at": [
-      57.5,
-      124
-    ],
-    "rotation": 0
-  },
-  "esc-real/control/C_RESET_CT": {
-    "at": [
-      72.5,
-      124
-    ],
-    "rotation": 0
-  },
-  "esc-real/control/D_LED_PWR": {
-    "at": [
-      28,
-      132
-    ],
-    "rotation": 0
-  },
-  "esc-real/control/D_LED_STATUS": {
-    "at": [
-      28,
-      125
-    ],
-    "rotation": 0
-  },
-  "esc-real/control/R_BOOT": {
-    "at": [
-      57.5,
-      128
-    ],
-    "rotation": 0
-  },
-  "esc-real/control/R_EN_REQ_U": {
-    "at": [
-      72.5,
-      128
-    ],
-    "rotation": 0
-  },
-  "esc-real/control/R_EN_REQ_V": {
-    "at": [
-      57.5,
-      122
-    ],
-    "rotation": 0
-  },
-  "esc-real/control/R_EN_REQ_W": {
-    "at": [
-      72.5,
-      122
-    ],
-    "rotation": 0
-  },
-  "esc-real/control/R_LED_PWR": {
-    "at": [
-      57.5,
-      130
-    ],
-    "rotation": 0
-  },
-  "esc-real/control/R_LED_STATUS": {
-    "at": [
-      72.5,
-      130
-    ],
-    "rotation": 0
-  },
-  "esc-real/control/R_RESET": {
-    "at": [
-      65,
-      134.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/control/R_RESET_BTN": {
-    "at": [
-      61.5,
-      134.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/control/SW_RESET": {
-    "at": [
-      17,
-      125
-    ],
-    "rotation": 0
-  },
-  "esc-real/control/U_MCU": {
-    "at": [
-      65,
-      126
-    ],
-    "rotation": 0
-  },
-  "esc-real/control/U_RESET": {
-    "at": [
-      79,
-      126
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/C_BOOT_U": {
-    "at": [
-      30.5,
-      41.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/C_BOOT_V": {
-    "at": [
-      65.5,
-      41.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/C_BOOT_W": {
-    "at": [
-      100.5,
-      41.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/C_CP": {
-    "at": [
-      69.5,
-      61.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/C_REG": {
-    "at": [
-      60,
-      65
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/C_REG_HF": {
-    "at": [
-      71.5,
-      59.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/C_SCREF": {
-    "at": [
-      58.5,
-      59
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/C_VS": {
-    "at": [
-      59.5,
-      62
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/C_VS_HF": {
-    "at": [
-      65,
-      54.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/D_OFF_UH": {
-    "at": [
-      34.5,
-      38.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/D_OFF_UL": {
-    "at": [
-      41.5,
-      50
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/D_OFF_VH": {
-    "at": [
-      69.5,
-      38.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/D_OFF_VL": {
-    "at": [
-      76.5,
-      50
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/D_OFF_WH": {
-    "at": [
-      104.5,
-      38.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/D_OFF_WL": {
-    "at": [
-      111.5,
-      50
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_CP": {
-    "at": [
-      71.5,
-      57.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_DT": {
-    "at": [
-      61,
-      54.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_EN_SER_U": {
-    "at": [
-      44.5,
-      40
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_EN_SER_V": {
-    "at": [
-      79.5,
-      40
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_EN_SER_W": {
-    "at": [
-      114.5,
-      40
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_EN_U": {
-    "at": [
-      44.5,
-      42
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_EN_V": {
-    "at": [
-      79.5,
-      42
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_EN_W": {
-    "at": [
-      114.5,
-      42
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_GATE_UH": {
-    "at": [
-      41.5,
-      33
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_GATE_UL": {
-    "at": [
-      41.5,
-      47
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_GATE_VH": {
-    "at": [
-      76.5,
-      33
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_GATE_VL": {
-    "at": [
-      76.5,
-      47
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_GATE_WH": {
-    "at": [
-      111.5,
-      33
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_GATE_WL": {
-    "at": [
-      111.5,
-      47
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_GS_UH": {
-    "at": [
-      41.5,
-      30
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_GS_UL": {
-    "at": [
-      41.5,
-      44
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_GS_VH": {
-    "at": [
-      76.5,
-      30
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_GS_VL": {
-    "at": [
-      76.5,
-      44
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_GS_WH": {
-    "at": [
-      111.5,
-      30
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_GS_WL": {
-    "at": [
-      111.5,
-      44
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_OFF_UH": {
-    "at": [
-      41.5,
-      27.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_OFF_UL": {
-    "at": [
-      40,
-      52.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_OFF_VH": {
-    "at": [
-      76.5,
-      27.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_OFF_VL": {
-    "at": [
-      75,
-      52.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_OFF_WH": {
-    "at": [
-      111.5,
-      27.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_OFF_WL": {
-    "at": [
-      110,
-      52.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_PWM_SER_U": {
-    "at": [
-      36,
-      52
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_PWM_SER_V": {
-    "at": [
-      71,
-      52
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_PWM_SER_W": {
-    "at": [
-      106,
-      52
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_PWM_U": {
-    "at": [
-      33.5,
-      29
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_PWM_V": {
-    "at": [
-      68.5,
-      29
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_PWM_W": {
-    "at": [
-      103.5,
-      29
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_SCREF_BOT": {
-    "at": [
-      69,
-      54.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/R_SCREF_TOP": {
-    "at": [
-      58.5,
-      57
-    ],
-    "rotation": 0
-  },
-  "esc-real/drive/U_DRV": {
-    "at": [
-      65,
-      64
-    ],
-    "rotation": 0
-  },
-  "esc-real/fault/C_ENABLE": {
-    "at": [
-      51,
-      106
-    ],
-    "rotation": 0
-  },
-  "esc-real/fault/C_LATCH": {
-    "at": [
-      59,
-      106
-    ],
-    "rotation": 0
-  },
-  "esc-real/fault/C_OC_SUP_U": {
-    "at": [
-      30,
-      91
-    ],
-    "rotation": 0
-  },
-  "esc-real/fault/C_OC_SUP_V": {
-    "at": [
-      65,
-      91
-    ],
-    "rotation": 0
-  },
-  "esc-real/fault/C_OC_SUP_W": {
-    "at": [
-      100,
-      91
-    ],
-    "rotation": 0
-  },
-  "esc-real/fault/D_DISARM": {
-    "at": [
-      55,
-      109
-    ],
-    "rotation": 0
-  },
-  "esc-real/fault/D_DRIVER": {
-    "at": [
-      55,
-      105
-    ],
-    "rotation": 0
-  },
-  "esc-real/fault/D_OC_UN": {
-    "at": [
-      30,
-      100
-    ],
-    "rotation": 0
-  },
-  "esc-real/fault/D_OC_UP": {
-    "at": [
-      24,
-      95
-    ],
-    "rotation": 0
-  },
-  "esc-real/fault/D_OC_VN": {
-    "at": [
-      65,
-      100
-    ],
-    "rotation": 0
-  },
-  "esc-real/fault/D_OC_VP": {
-    "at": [
-      59,
-      95
-    ],
-    "rotation": 0
-  },
-  "esc-real/fault/D_OC_WN": {
-    "at": [
-      100,
-      100
-    ],
-    "rotation": 0
-  },
-  "esc-real/fault/D_OC_WP": {
-    "at": [
-      94,
-      95
-    ],
-    "rotation": 0
-  },
-  "esc-real/fault/D_OV": {
-    "at": [
-      59,
-      109
-    ],
-    "rotation": 0
-  },
-  "esc-real/fault/D_RESET": {
-    "at": [
-      55,
-      113
-    ],
-    "rotation": 0
-  },
-  "esc-real/fault/R_ARM": {
-    "at": [
-      51,
-      112
-    ],
-    "rotation": 0
-  },
-  "esc-real/fault/R_DISARM": {
-    "at": [
-      59,
-      112
-    ],
-    "rotation": 0
-  },
-  "esc-real/fault/R_DRV_FAULT": {
-    "at": [
-      51,
-      104
-    ],
-    "rotation": 0
-  },
-  "esc-real/fault/R_FAULT": {
-    "at": [
-      59,
-      104
-    ],
-    "rotation": 0
-  },
-  "esc-real/fault/R_OE": {
-    "at": [
-      51,
-      114
-    ],
-    "rotation": 0
-  },
-  "esc-real/fault/U_ENABLE": {
-    "at": [
-      65,
-      108
-    ],
-    "rotation": 0
-  },
-  "esc-real/fault/U_LATCH": {
-    "at": [
-      47,
-      109
-    ],
-    "rotation": 0
-  },
-  "esc-real/fault/U_OC_U": {
-    "at": [
-      30,
-      95
-    ],
-    "rotation": 0
-  },
-  "esc-real/fault/U_OC_V": {
-    "at": [
-      65,
-      95
-    ],
-    "rotation": 0
-  },
-  "esc-real/fault/U_OC_W": {
-    "at": [
-      100,
-      95
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/C_CAN": {
-    "at": [
-      135,
-      141
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/C_CAN_TERM": {
-    "at": [
-      147,
-      141
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/C_CMD": {
-    "at": [
-      52,
-      143
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/C_HALL_HF": {
-    "at": [
-      17.5,
-      141
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/C_HALL_PWR": {
-    "at": [
-      22,
-      138
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/C_HALL_U": {
-    "at": [
-      26.5,
-      141
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/C_HALL_V": {
-    "at": [
-      17.5,
-      139
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/C_HALL_W": {
-    "at": [
-      26.5,
-      139
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/J_BR_TEMP": {
-    "at": [
-      113,
-      145
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/J_CAN": {
-    "at": [
-      136,
-      145
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/J_CMD": {
-    "at": [
-      39,
-      145
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/J_HALL": {
-    "at": [
-      12,
-      145
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/J_SWD": {
-    "at": [
-      96,
-      146
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/J_UART": {
-    "at": [
-      57,
-      145
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/R_CAN_H": {
-    "at": [
-      147,
-      143.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/R_CAN_L": {
-    "at": [
-      147,
-      146.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/R_CAN_LINK": {
-    "at": [
-      135,
-      139
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/R_CAN_TX": {
-    "at": [
-      147,
-      139
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/R_CMD_PD": {
-    "at": [
-      52,
-      141
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/R_CMD_SER": {
-    "at": [
-      52,
-      145
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/R_HALL_PU_U": {
-    "at": [
-      18,
-      137
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/R_HALL_PU_V": {
-    "at": [
-      26,
-      137
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/R_HALL_PU_W": {
-    "at": [
-      22,
-      135.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/R_HALL_PWR": {
-    "at": [
-      22,
-      140.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/R_HALL_SER_U": {
-    "at": [
-      29.5,
-      143
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/R_HALL_SER_V": {
-    "at": [
-      22,
-      150.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/R_HALL_SER_W": {
-    "at": [
-      29.5,
-      145
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/R_SWCLK": {
-    "at": [
-      97,
-      141
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/R_SWDIO": {
-    "at": [
-      97,
-      139
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/R_UART_PU": {
-    "at": [
-      52,
-      139
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/R_UART_RX": {
-    "at": [
-      52,
-      147
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/R_UART_TX": {
-    "at": [
-      48.5,
-      141
-    ],
-    "rotation": 0
-  },
-  "esc-real/interfaces/U_CAN": {
-    "at": [
-      141,
-      139
-    ],
-    "rotation": 0
-  },
-  "esc-real/inverter/C_LINK_U1": {
-    "at": [
-      40,
-      40
-    ],
-    "rotation": 0
-  },
-  "esc-real/inverter/C_LINK_U2": {
-    "at": [
-      41.5,
-      36
-    ],
-    "rotation": 0
-  },
-  "esc-real/inverter/C_LINK_UHF": {
-    "at": [
-      30,
-      39
-    ],
-    "rotation": 0
-  },
-  "esc-real/inverter/C_LINK_V1": {
-    "at": [
-      75,
-      40
-    ],
-    "rotation": 0
-  },
-  "esc-real/inverter/C_LINK_V2": {
-    "at": [
-      76.5,
-      36
-    ],
-    "rotation": 0
-  },
-  "esc-real/inverter/C_LINK_VHF": {
-    "at": [
-      65,
-      39
-    ],
-    "rotation": 0
-  },
-  "esc-real/inverter/C_LINK_W1": {
-    "at": [
-      110,
-      40
-    ],
-    "rotation": 0
-  },
-  "esc-real/inverter/C_LINK_W2": {
-    "at": [
-      111.5,
-      36
-    ],
-    "rotation": 0
-  },
-  "esc-real/inverter/C_LINK_WHF": {
-    "at": [
-      100,
-      39
-    ],
-    "rotation": 0
-  },
-  "esc-real/inverter/C_SNUB_U": {
-    "at": [
-      37.5,
-      28.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/inverter/C_SNUB_V": {
-    "at": [
-      72.5,
-      28.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/inverter/C_SNUB_W": {
-    "at": [
-      107.5,
-      28.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/inverter/J_U": {
-    "at": [
-      25.240000000000002,
-      72
-    ],
-    "rotation": 0
-  },
-  "esc-real/inverter/J_V": {
-    "at": [
-      60.24,
-      72
-    ],
-    "rotation": 0
-  },
-  "esc-real/inverter/J_W": {
-    "at": [
-      95.24,
-      72
-    ],
-    "rotation": 0
-  },
-  "esc-real/inverter/Q_UH": {
-    "at": [
-      24.92,
-      33
-    ],
-    "rotation": 0
-  },
-  "esc-real/inverter/Q_UL": {
-    "at": [
-      24.92,
-      47
-    ],
-    "rotation": 0
-  },
-  "esc-real/inverter/Q_VH": {
-    "at": [
-      59.92,
-      33
-    ],
-    "rotation": 0
-  },
-  "esc-real/inverter/Q_VL": {
-    "at": [
-      59.92,
-      47
-    ],
-    "rotation": 0
-  },
-  "esc-real/inverter/Q_WH": {
-    "at": [
-      94.92,
-      33
-    ],
-    "rotation": 0
-  },
-  "esc-real/inverter/Q_WL": {
-    "at": [
-      94.92,
-      47
-    ],
-    "rotation": 0
-  },
-  "esc-real/inverter/R_SHUNT_U": {
-    "at": [
-      30,
-      58
-    ],
-    "rotation": 0
-  },
-  "esc-real/inverter/R_SHUNT_V": {
-    "at": [
-      65,
-      58
-    ],
-    "rotation": 0
-  },
-  "esc-real/inverter/R_SHUNT_W": {
-    "at": [
-      100,
-      58
-    ],
-    "rotation": 0
-  },
-  "esc-real/inverter/R_SNUB_U": {
-    "at": [
-      35,
-      41.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/inverter/R_SNUB_V": {
-    "at": [
-      70,
-      41.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/inverter/R_SNUB_W": {
-    "at": [
-      105,
-      41.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/power/C_BULK1": {
-    "at": [
-      22.25,
-      14
-    ],
-    "rotation": 0
-  },
-  "esc-real/power/C_BULK2": {
-    "at": [
-      40.25,
-      14
-    ],
-    "rotation": 0
-  },
-  "esc-real/power/C_BULK3": {
-    "at": [
-      58.25,
-      14
-    ],
-    "rotation": 0
-  },
-  "esc-real/power/C_BULK4": {
-    "at": [
-      76.25,
-      14
-    ],
-    "rotation": 0
-  },
-  "esc-real/power/C_BULK5": {
-    "at": [
-      94.25,
-      14
-    ],
-    "rotation": 0
-  },
-  "esc-real/power/C_BULK6": {
-    "at": [
-      112.25,
-      14
-    ],
-    "rotation": 0
-  },
-  "esc-real/power/J_DC": {
-    "at": [
-      153,
-      12
-    ],
-    "rotation": 0
-  },
-  "esc-real/power/R_BLEED1": {
-    "at": [
-      149,
-      28
-    ],
-    "rotation": 0
-  },
-  "esc-real/power/R_BLEED2": {
-    "at": [
-      158,
-      28
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/C_I_ADC_U": {
-    "at": [
-      30,
-      88
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/C_I_ADC_V": {
-    "at": [
-      65,
-      88
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/C_I_ADC_W": {
-    "at": [
-      100,
-      88
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/C_I_DIFF_U": {
-    "at": [
-      26.5,
-      88
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/C_I_DIFF_V": {
-    "at": [
-      61.5,
-      88
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/C_I_DIFF_W": {
-    "at": [
-      96.5,
-      88
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/C_I_SUP_U": {
-    "at": [
-      33.5,
-      88
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/C_I_SUP_V": {
-    "at": [
-      68.5,
-      88
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/C_I_SUP_W": {
-    "at": [
-      103.5,
-      88
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/C_OC_HI": {
-    "at": [
-      116,
-      80
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/C_OC_LO": {
-    "at": [
-      116,
-      90
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/C_TEMP_BRAKE": {
-    "at": [
-      108,
-      91
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/C_TEMP_MOTOR": {
-    "at": [
-      116,
-      92
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/C_TEMP_PWR": {
-    "at": [
-      112,
-      93.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/C_V_ADC_BUS": {
-    "at": [
-      108,
-      93
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/C_V_ADC_U": {
-    "at": [
-      34,
-      65.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/C_V_ADC_V": {
-    "at": [
-      56,
-      65.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/C_V_ADC_W": {
-    "at": [
-      104,
-      65.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/D_V_BUSHI": {
-    "at": [
-      112,
-      85
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/D_V_BUSLO": {
-    "at": [
-      108,
-      85
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/D_V_UHI": {
-    "at": [
-      30,
-      64.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/D_V_ULO": {
-    "at": [
-      26,
-      64.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/D_V_VHI": {
-    "at": [
-      70,
-      64.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/D_V_VLO": {
-    "at": [
-      74,
-      64.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/D_V_WHI": {
-    "at": [
-      100,
-      64.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/D_V_WLO": {
-    "at": [
-      96,
-      64.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_I_ADC_U": {
-    "at": [
-      24,
-      84
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_I_ADC_V": {
-    "at": [
-      59,
-      84
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_I_ADC_W": {
-    "at": [
-      94,
-      84
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_I_UN": {
-    "at": [
-      36,
-      84
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_I_UP": {
-    "at": [
-      24,
-      82
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_I_VN": {
-    "at": [
-      71,
-      84
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_I_VP": {
-    "at": [
-      59,
-      82
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_I_WN": {
-    "at": [
-      94,
-      82
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_I_WP": {
-    "at": [
-      94,
-      86
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_OC_HI_BOT": {
-    "at": [
-      119.5,
-      80
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_OC_HI_TOP": {
-    "at": [
-      119.5,
-      90
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_OC_LO_BOT": {
-    "at": [
-      104,
-      90
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_OC_LO_TOP": {
-    "at": [
-      115.5,
-      94
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_TEMP_BRAKE": {
-    "at": [
-      119.5,
-      92
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_TEMP_MOTOR": {
-    "at": [
-      112,
-      95.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_TEMP_PWR": {
-    "at": [
-      108.5,
-      95
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_TEMP_SER_BRAKE": {
-    "at": [
-      119,
-      94
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_TEMP_SER_MOTOR": {
-    "at": [
-      115.5,
-      96
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_TEMP_SER_PWR": {
-    "at": [
-      108.5,
-      97
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_V_ADC_BUS": {
-    "at": [
-      112,
-      97.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_V_ADC_U": {
-    "at": [
-      34,
-      63.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_V_ADC_V": {
-    "at": [
-      55,
-      63.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_V_ADC_W": {
-    "at": [
-      104,
-      63.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_V_BUS_BOT": {
-    "at": [
-      119,
-      96
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_V_BUS_T1": {
-    "at": [
-      112,
-      81.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_V_BUS_T2": {
-    "at": [
-      112,
-      88.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_V_U_BOT": {
-    "at": [
-      115.5,
-      98
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_V_U_T1": {
-    "at": [
-      116,
-      85
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_V_U_T2": {
-    "at": [
-      116,
-      82.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_V_V_BOT": {
-    "at": [
-      108.5,
-      99
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_V_V_T1": {
-    "at": [
-      116,
-      87.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_V_V_T2": {
-    "at": [
-      108,
-      81.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_V_W_BOT": {
-    "at": [
-      112,
-      99.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_V_W_T1": {
-    "at": [
-      108,
-      88.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/R_V_W_T2": {
-    "at": [
-      112,
-      91
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/TH_PWR": {
-    "at": [
-      121,
-      48
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/U_I_U": {
-    "at": [
-      30,
-      84
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/U_I_V": {
-    "at": [
-      65,
-      84
-    ],
-    "rotation": 0
-  },
-  "esc-real/sense/U_I_W": {
-    "at": [
-      100,
-      84
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/C_ANALOG": {
-    "at": [
-      117,
-      129
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/C_ANALOG_HF": {
-    "at": [
-      125,
-      129
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/C_BST_AUX": {
-    "at": [
-      139.5,
-      96
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/C_BST_LOGIC": {
-    "at": [
-      139.5,
-      120
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/C_COUPLE_AUX": {
-    "at": [
-      130.5,
-      104
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/C_COUPLE_LOGIC": {
-    "at": [
-      130.5,
-      128
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/C_IN_AUX1": {
-    "at": [
-      135,
-      95
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/C_IN_AUX2": {
-    "at": [
-      135,
-      105
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/C_IN_LOGIC1": {
-    "at": [
-      135,
-      119
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/C_IN_LOGIC2": {
-    "at": [
-      135,
-      129
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/C_LDO_IN": {
-    "at": [
-      121,
-      125.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/C_LDO_OUT": {
-    "at": [
-      121,
-      132.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/C_OUT_AUX1": {
-    "at": [
-      128.5,
-      100
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/C_OUT_AUX2": {
-    "at": [
-      141.5,
-      100
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/C_OUT_LOGIC1": {
-    "at": [
-      128.5,
-      124
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/C_OUT_LOGIC2": {
-    "at": [
-      141.5,
-      124
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/C_RIPPLE_AUX": {
-    "at": [
-      139.5,
-      104
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/C_RIPPLE_LOGIC": {
-    "at": [
-      139.5,
-      128
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/FB_ANALOG": {
-    "at": [
-      117,
-      127
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/L_AUX": {
-    "at": [
-      154,
-      100
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/L_LOGIC": {
-    "at": [
-      154,
-      124
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/R_FB_AUX_BOT": {
-    "at": [
-      139.5,
-      94
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/R_FB_AUX_TOP": {
-    "at": [
-      130.5,
-      106
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/R_FB_LOGIC_BOT": {
-    "at": [
-      139.5,
-      118
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/R_FB_LOGIC_TOP": {
-    "at": [
-      130.5,
-      130
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/R_LDO_EN": {
-    "at": [
-      125,
-      127
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/R_RIPPLE_AUX": {
-    "at": [
-      130.5,
-      95.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/R_RIPPLE_LOGIC": {
-    "at": [
-      130.5,
-      119.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/R_RON_AUX": {
-    "at": [
-      139.5,
-      106
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/R_RON_LOGIC": {
-    "at": [
-      139.5,
-      130
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/R_UVLO_AUX_BOT": {
-    "at": [
-      135,
-      92
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/R_UVLO_AUX_TOP": {
-    "at": [
-      135,
-      108
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/R_UVLO_LOGIC_BOT": {
-    "at": [
-      135,
-      116
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/R_UVLO_LOGIC_TOP": {
-    "at": [
-      135,
-      132
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/U_BUCK_AUX": {
-    "at": [
-      135,
-      100
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/U_BUCK_LOGIC": {
-    "at": [
-      135,
-      124
-    ],
-    "rotation": 0
-  },
-  "esc-real/supplies/U_LDO": {
-    "at": [
-      121,
-      129
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_12V": {
-    "at": [
-      99,
-      119
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_3V3": {
-    "at": [
-      99,
-      116.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_3V3A": {
-    "at": [
-      96.5,
-      119
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_5V": {
-    "at": [
-      101.5,
-      119
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_ARMED": {
-    "at": [
-      99,
-      121.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_BOOT_RET_U": {
-    "at": [
-      42,
-      64
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_BOOT_RET_V": {
-    "at": [
-      77.5,
-      64
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_BOOT_RET_W": {
-    "at": [
-      112,
-      64
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_BOOT_U": {
-    "at": [
-      42,
-      61.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_BOOT_V": {
-    "at": [
-      77.5,
-      61.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_BOOT_W": {
-    "at": [
-      112,
-      61.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_BUS": {
-    "at": [
-      96.5,
-      116.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_DRIVER_FAULT": {
-    "at": [
-      101.5,
-      116.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_EN_U": {
-    "at": [
-      39.5,
-      64
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_EN_V": {
-    "at": [
-      77.5,
-      66.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_EN_W": {
-    "at": [
-      109.5,
-      64
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_FAULT": {
-    "at": [
-      96.5,
-      121.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_G_BR": {
-    "at": [
-      153,
-      59
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_G_UH": {
-    "at": [
-      44.5,
-      44.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_G_UL": {
-    "at": [
-      45,
-      47
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_G_VH": {
-    "at": [
-      79.5,
-      44.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_G_VL": {
-    "at": [
-      80,
-      47
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_G_WH": {
-    "at": [
-      114.5,
-      44.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_G_WL": {
-    "at": [
-      115,
-      47
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_GND": {
-    "at": [
-      101.5,
-      121.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_I_U": {
-    "at": [
-      44.5,
-      64
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_I_V": {
-    "at": [
-      80,
-      64
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_I_W": {
-    "at": [
-      114.5,
-      64
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_IN_U": {
-    "at": [
-      42,
-      66.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_IN_V": {
-    "at": [
-      75,
-      61
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_IN_W": {
-    "at": [
-      112,
-      66.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_KS_BR": {
-    "at": [
-      153,
-      56.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_KS_UH": {
-    "at": [
-      43.5,
-      53
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_KS_UL": {
-    "at": [
-      41,
-      55
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_KS_VH": {
-    "at": [
-      78.5,
-      53
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_KS_VL": {
-    "at": [
-      76,
-      55
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_KS_WH": {
-    "at": [
-      113.5,
-      53
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_KS_WL": {
-    "at": [
-      111,
-      55
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_REG12": {
-    "at": [
-      99,
-      114
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_T_BRAKE": {
-    "at": [
-      150.5,
-      59
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_T_MOTOR": {
-    "at": [
-      94,
-      119
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_T_PWR": {
-    "at": [
-      104,
-      119
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_V_BUS": {
-    "at": [
-      99,
-      124
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_V_U": {
-    "at": [
-      39.5,
-      61.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_V_V": {
-    "at": [
-      80,
-      61.5
-    ],
-    "rotation": 0
-  },
-  "esc-real/test/TP_V_W": {
-    "at": [
-      109.5,
-      61.5
-    ],
-    "rotation": 0
-  }
+	"esc-real/brake/C_BR_DRV": {
+		"at": [140.5, 60],
+		"rotation": 0
+	},
+	"esc-real/brake/C_BR_DRV_HF": {
+		"at": [136.5, 60],
+		"rotation": 0
+	},
+	"esc-real/brake/C_BRAKE_BUS": {
+		"at": [145, 78],
+		"rotation": 0
+	},
+	"esc-real/brake/C_BRAKE_REF": {
+		"at": [137, 86],
+		"rotation": 0
+	},
+	"esc-real/brake/C_BUS_CMP": {
+		"at": [145, 86],
+		"rotation": 0
+	},
+	"esc-real/brake/C_OV_BUS": {
+		"at": [141, 75],
+		"rotation": 0
+	},
+	"esc-real/brake/C_OV_REF": {
+		"at": [145, 76],
+		"rotation": 0
+	},
+	"esc-real/brake/J_BRAKE": {
+		"at": [153, 72],
+		"rotation": 0
+	},
+	"esc-real/brake/Q_BR": {
+		"at": [139.92, 48],
+		"rotation": 0
+	},
+	"esc-real/brake/R_BR_GS": {
+		"at": [144.5, 57],
+		"rotation": 0
+	},
+	"esc-real/brake/R_BR_IN": {
+		"at": [144.5, 63],
+		"rotation": 0
+	},
+	"esc-real/brake/R_BR_OFF": {
+		"at": [140.5, 57.5],
+		"rotation": 0
+	},
+	"esc-real/brake/R_BR_ON": {
+		"at": [140.5, 62.5],
+		"rotation": 0
+	},
+	"esc-real/brake/R_BRAKE_BUS_BOT": {
+		"at": [137, 88],
+		"rotation": 0
+	},
+	"esc-real/brake/R_BRAKE_BUS_T1": {
+		"at": [141, 77.5],
+		"rotation": 0
+	},
+	"esc-real/brake/R_BRAKE_BUS_T2": {
+		"at": [141, 86.5],
+		"rotation": 0
+	},
+	"esc-real/brake/R_BRAKE_HYST": {
+		"at": [135, 82],
+		"rotation": 0
+	},
+	"esc-real/brake/R_BRAKE_REF_BOT": {
+		"at": [145, 88],
+		"rotation": 0
+	},
+	"esc-real/brake/R_BRAKE_REF_TOP": {
+		"at": [137.5, 75],
+		"rotation": 0
+	},
+	"esc-real/brake/R_OV_BUS_BOT": {
+		"at": [133.5, 84.5],
+		"rotation": 0
+	},
+	"esc-real/brake/R_OV_BUS_T1": {
+		"at": [147, 82],
+		"rotation": 0
+	},
+	"esc-real/brake/R_OV_BUS_T2": {
+		"at": [137, 77.5],
+		"rotation": 0
+	},
+	"esc-real/brake/R_OV_HYST": {
+		"at": [148.5, 84.5],
+		"rotation": 0
+	},
+	"esc-real/brake/R_OV_REF_BOT": {
+		"at": [133, 79.5],
+		"rotation": 0
+	},
+	"esc-real/brake/R_OV_REF_TOP": {
+		"at": [144.5, 74],
+		"rotation": 0
+	},
+	"esc-real/brake/U_BR_DRV": {
+		"at": [145, 60],
+		"rotation": 0
+	},
+	"esc-real/brake/U_BUS_CMP": {
+		"at": [141, 82],
+		"rotation": 0
+	},
+	"esc-real/control/C_MCU_24": {
+		"at": [65, 132.5],
+		"rotation": 0
+	},
+	"esc-real/control/C_MCU_36": {
+		"at": [61.5, 132.5],
+		"rotation": 0
+	},
+	"esc-real/control/C_MCU_48": {
+		"at": [68.5, 132.5],
+		"rotation": 0
+	},
+	"esc-real/control/C_MCU_BULK": {
+		"at": [65, 119],
+		"rotation": 0
+	},
+	"esc-real/control/C_MCU_VBAT": {
+		"at": [57.5, 126],
+		"rotation": 0
+	},
+	"esc-real/control/C_MCU_VDDA": {
+		"at": [72.5, 126],
+		"rotation": 0
+	},
+	"esc-real/control/C_MCU_VREF": {
+		"at": [61, 119.5],
+		"rotation": 0
+	},
+	"esc-real/control/C_NRST": {
+		"at": [69, 119.5],
+		"rotation": 0
+	},
+	"esc-real/control/C_RESET": {
+		"at": [57.5, 124],
+		"rotation": 0
+	},
+	"esc-real/control/C_RESET_CT": {
+		"at": [72.5, 124],
+		"rotation": 0
+	},
+	"esc-real/control/D_LED_PWR": {
+		"at": [28, 132],
+		"rotation": 0
+	},
+	"esc-real/control/D_LED_STATUS": {
+		"at": [28, 125],
+		"rotation": 0
+	},
+	"esc-real/control/R_BOOT": {
+		"at": [57.5, 128],
+		"rotation": 0
+	},
+	"esc-real/control/R_EN_REQ_U": {
+		"at": [72.5, 128],
+		"rotation": 0
+	},
+	"esc-real/control/R_EN_REQ_V": {
+		"at": [57.5, 122],
+		"rotation": 0
+	},
+	"esc-real/control/R_EN_REQ_W": {
+		"at": [72.5, 122],
+		"rotation": 0
+	},
+	"esc-real/control/R_LED_PWR": {
+		"at": [57.5, 130],
+		"rotation": 0
+	},
+	"esc-real/control/R_LED_STATUS": {
+		"at": [72.5, 130],
+		"rotation": 0
+	},
+	"esc-real/control/R_RESET": {
+		"at": [65, 134.5],
+		"rotation": 0
+	},
+	"esc-real/control/R_RESET_BTN": {
+		"at": [61.5, 134.5],
+		"rotation": 0
+	},
+	"esc-real/control/SW_RESET": {
+		"at": [17, 125],
+		"rotation": 0
+	},
+	"esc-real/control/U_MCU": {
+		"at": [65, 126],
+		"rotation": 0
+	},
+	"esc-real/control/U_RESET": {
+		"at": [79, 126],
+		"rotation": 0
+	},
+	"esc-real/drive/C_BOOT_U": {
+		"at": [30.5, 41.5],
+		"rotation": 0
+	},
+	"esc-real/drive/C_BOOT_V": {
+		"at": [65.5, 41.5],
+		"rotation": 0
+	},
+	"esc-real/drive/C_BOOT_W": {
+		"at": [100.5, 41.5],
+		"rotation": 0
+	},
+	"esc-real/drive/C_CP": {
+		"at": [69.5, 61.5],
+		"rotation": 0
+	},
+	"esc-real/drive/C_REG": {
+		"at": [60, 65],
+		"rotation": 0
+	},
+	"esc-real/drive/C_REG_HF": {
+		"at": [71.5, 59.5],
+		"rotation": 0
+	},
+	"esc-real/drive/C_SCREF": {
+		"at": [58.5, 59],
+		"rotation": 0
+	},
+	"esc-real/drive/C_VS": {
+		"at": [59.5, 62],
+		"rotation": 0
+	},
+	"esc-real/drive/C_VS_HF": {
+		"at": [65, 54.5],
+		"rotation": 0
+	},
+	"esc-real/drive/D_OFF_UH": {
+		"at": [34.5, 38.5],
+		"rotation": 0
+	},
+	"esc-real/drive/D_OFF_UL": {
+		"at": [41.5, 50],
+		"rotation": 0
+	},
+	"esc-real/drive/D_OFF_VH": {
+		"at": [69.5, 38.5],
+		"rotation": 0
+	},
+	"esc-real/drive/D_OFF_VL": {
+		"at": [76.5, 50],
+		"rotation": 0
+	},
+	"esc-real/drive/D_OFF_WH": {
+		"at": [104.5, 38.5],
+		"rotation": 0
+	},
+	"esc-real/drive/D_OFF_WL": {
+		"at": [111.5, 50],
+		"rotation": 0
+	},
+	"esc-real/drive/R_CP": {
+		"at": [71.5, 57.5],
+		"rotation": 0
+	},
+	"esc-real/drive/R_DT": {
+		"at": [61, 54.5],
+		"rotation": 0
+	},
+	"esc-real/drive/R_EN_SER_U": {
+		"at": [44.5, 40],
+		"rotation": 0
+	},
+	"esc-real/drive/R_EN_SER_V": {
+		"at": [79.5, 40],
+		"rotation": 0
+	},
+	"esc-real/drive/R_EN_SER_W": {
+		"at": [114.5, 40],
+		"rotation": 0
+	},
+	"esc-real/drive/R_EN_U": {
+		"at": [44.5, 42],
+		"rotation": 0
+	},
+	"esc-real/drive/R_EN_V": {
+		"at": [79.5, 42],
+		"rotation": 0
+	},
+	"esc-real/drive/R_EN_W": {
+		"at": [114.5, 42],
+		"rotation": 0
+	},
+	"esc-real/drive/R_GATE_UH": {
+		"at": [41.5, 33],
+		"rotation": 0
+	},
+	"esc-real/drive/R_GATE_UL": {
+		"at": [41.5, 47],
+		"rotation": 0
+	},
+	"esc-real/drive/R_GATE_VH": {
+		"at": [76.5, 33],
+		"rotation": 0
+	},
+	"esc-real/drive/R_GATE_VL": {
+		"at": [76.5, 47],
+		"rotation": 0
+	},
+	"esc-real/drive/R_GATE_WH": {
+		"at": [111.5, 33],
+		"rotation": 0
+	},
+	"esc-real/drive/R_GATE_WL": {
+		"at": [111.5, 47],
+		"rotation": 0
+	},
+	"esc-real/drive/R_GS_UH": {
+		"at": [41.5, 30],
+		"rotation": 0
+	},
+	"esc-real/drive/R_GS_UL": {
+		"at": [41.5, 44],
+		"rotation": 0
+	},
+	"esc-real/drive/R_GS_VH": {
+		"at": [76.5, 30],
+		"rotation": 0
+	},
+	"esc-real/drive/R_GS_VL": {
+		"at": [76.5, 44],
+		"rotation": 0
+	},
+	"esc-real/drive/R_GS_WH": {
+		"at": [111.5, 30],
+		"rotation": 0
+	},
+	"esc-real/drive/R_GS_WL": {
+		"at": [111.5, 44],
+		"rotation": 0
+	},
+	"esc-real/drive/R_OFF_UH": {
+		"at": [41.5, 27.5],
+		"rotation": 0
+	},
+	"esc-real/drive/R_OFF_UL": {
+		"at": [40, 52.5],
+		"rotation": 0
+	},
+	"esc-real/drive/R_OFF_VH": {
+		"at": [76.5, 27.5],
+		"rotation": 0
+	},
+	"esc-real/drive/R_OFF_VL": {
+		"at": [75, 52.5],
+		"rotation": 0
+	},
+	"esc-real/drive/R_OFF_WH": {
+		"at": [111.5, 27.5],
+		"rotation": 0
+	},
+	"esc-real/drive/R_OFF_WL": {
+		"at": [110, 52.5],
+		"rotation": 0
+	},
+	"esc-real/drive/R_PWM_SER_U": {
+		"at": [36, 52],
+		"rotation": 0
+	},
+	"esc-real/drive/R_PWM_SER_V": {
+		"at": [71, 52],
+		"rotation": 0
+	},
+	"esc-real/drive/R_PWM_SER_W": {
+		"at": [106, 52],
+		"rotation": 0
+	},
+	"esc-real/drive/R_PWM_U": {
+		"at": [33.5, 29],
+		"rotation": 0
+	},
+	"esc-real/drive/R_PWM_V": {
+		"at": [68.5, 29],
+		"rotation": 0
+	},
+	"esc-real/drive/R_PWM_W": {
+		"at": [103.5, 29],
+		"rotation": 0
+	},
+	"esc-real/drive/R_SCREF_BOT": {
+		"at": [69, 54.5],
+		"rotation": 0
+	},
+	"esc-real/drive/R_SCREF_TOP": {
+		"at": [58.5, 57],
+		"rotation": 0
+	},
+	"esc-real/drive/U_DRV": {
+		"at": [65, 64],
+		"rotation": 0
+	},
+	"esc-real/fault/C_ENABLE": {
+		"at": [51, 106],
+		"rotation": 0
+	},
+	"esc-real/fault/C_LATCH": {
+		"at": [59, 106],
+		"rotation": 0
+	},
+	"esc-real/fault/C_OC_SUP_U": {
+		"at": [30, 91],
+		"rotation": 0
+	},
+	"esc-real/fault/C_OC_SUP_V": {
+		"at": [65, 91],
+		"rotation": 0
+	},
+	"esc-real/fault/C_OC_SUP_W": {
+		"at": [100, 91],
+		"rotation": 0
+	},
+	"esc-real/fault/D_DISARM": {
+		"at": [55, 109],
+		"rotation": 0
+	},
+	"esc-real/fault/D_DRIVER": {
+		"at": [55, 105],
+		"rotation": 0
+	},
+	"esc-real/fault/D_OC_UN": {
+		"at": [30, 100],
+		"rotation": 0
+	},
+	"esc-real/fault/D_OC_UP": {
+		"at": [24, 95],
+		"rotation": 0
+	},
+	"esc-real/fault/D_OC_VN": {
+		"at": [65, 100],
+		"rotation": 0
+	},
+	"esc-real/fault/D_OC_VP": {
+		"at": [59, 95],
+		"rotation": 0
+	},
+	"esc-real/fault/D_OC_WN": {
+		"at": [100, 100],
+		"rotation": 0
+	},
+	"esc-real/fault/D_OC_WP": {
+		"at": [94, 95],
+		"rotation": 0
+	},
+	"esc-real/fault/D_OV": {
+		"at": [59, 109],
+		"rotation": 0
+	},
+	"esc-real/fault/D_RESET": {
+		"at": [55, 113],
+		"rotation": 0
+	},
+	"esc-real/fault/R_ARM": {
+		"at": [51, 112],
+		"rotation": 0
+	},
+	"esc-real/fault/R_DISARM": {
+		"at": [59, 112],
+		"rotation": 0
+	},
+	"esc-real/fault/R_DRV_FAULT": {
+		"at": [51, 104],
+		"rotation": 0
+	},
+	"esc-real/fault/R_FAULT": {
+		"at": [59, 104],
+		"rotation": 0
+	},
+	"esc-real/fault/R_OE": {
+		"at": [51, 114],
+		"rotation": 0
+	},
+	"esc-real/fault/U_ENABLE": {
+		"at": [65, 108],
+		"rotation": 0
+	},
+	"esc-real/fault/U_LATCH": {
+		"at": [47, 109],
+		"rotation": 0
+	},
+	"esc-real/fault/U_OC_U": {
+		"at": [30, 95],
+		"rotation": 0
+	},
+	"esc-real/fault/U_OC_V": {
+		"at": [65, 95],
+		"rotation": 0
+	},
+	"esc-real/fault/U_OC_W": {
+		"at": [100, 95],
+		"rotation": 0
+	},
+	"esc-real/interfaces/C_CAN": {
+		"at": [135, 141],
+		"rotation": 0
+	},
+	"esc-real/interfaces/C_CAN_TERM": {
+		"at": [147, 141],
+		"rotation": 0
+	},
+	"esc-real/interfaces/C_CMD": {
+		"at": [52, 143],
+		"rotation": 0
+	},
+	"esc-real/interfaces/C_HALL_HF": {
+		"at": [17.5, 141],
+		"rotation": 0
+	},
+	"esc-real/interfaces/C_HALL_PWR": {
+		"at": [22, 138],
+		"rotation": 0
+	},
+	"esc-real/interfaces/C_HALL_U": {
+		"at": [26.5, 141],
+		"rotation": 0
+	},
+	"esc-real/interfaces/C_HALL_V": {
+		"at": [17.5, 139],
+		"rotation": 0
+	},
+	"esc-real/interfaces/C_HALL_W": {
+		"at": [26.5, 139],
+		"rotation": 0
+	},
+	"esc-real/interfaces/J_BR_TEMP": {
+		"at": [113, 145],
+		"rotation": 0
+	},
+	"esc-real/interfaces/J_CAN": {
+		"at": [136, 145],
+		"rotation": 0
+	},
+	"esc-real/interfaces/J_CMD": {
+		"at": [39, 145],
+		"rotation": 0
+	},
+	"esc-real/interfaces/J_HALL": {
+		"at": [12, 145],
+		"rotation": 0
+	},
+	"esc-real/interfaces/J_SWD": {
+		"at": [96, 146],
+		"rotation": 0
+	},
+	"esc-real/interfaces/J_UART": {
+		"at": [57, 145],
+		"rotation": 0
+	},
+	"esc-real/interfaces/R_CAN_H": {
+		"at": [147, 143.5],
+		"rotation": 0
+	},
+	"esc-real/interfaces/R_CAN_L": {
+		"at": [147, 146.5],
+		"rotation": 0
+	},
+	"esc-real/interfaces/R_CAN_LINK": {
+		"at": [135, 139],
+		"rotation": 0
+	},
+	"esc-real/interfaces/R_CAN_TX": {
+		"at": [147, 139],
+		"rotation": 0
+	},
+	"esc-real/interfaces/R_CMD_PD": {
+		"at": [52, 141],
+		"rotation": 0
+	},
+	"esc-real/interfaces/R_CMD_SER": {
+		"at": [52, 145],
+		"rotation": 0
+	},
+	"esc-real/interfaces/R_HALL_PU_U": {
+		"at": [18, 137],
+		"rotation": 0
+	},
+	"esc-real/interfaces/R_HALL_PU_V": {
+		"at": [26, 137],
+		"rotation": 0
+	},
+	"esc-real/interfaces/R_HALL_PU_W": {
+		"at": [22, 135.5],
+		"rotation": 0
+	},
+	"esc-real/interfaces/R_HALL_PWR": {
+		"at": [22, 140.5],
+		"rotation": 0
+	},
+	"esc-real/interfaces/R_HALL_SER_U": {
+		"at": [29.5, 143],
+		"rotation": 0
+	},
+	"esc-real/interfaces/R_HALL_SER_V": {
+		"at": [22, 150.5],
+		"rotation": 0
+	},
+	"esc-real/interfaces/R_HALL_SER_W": {
+		"at": [29.5, 145],
+		"rotation": 0
+	},
+	"esc-real/interfaces/R_SWCLK": {
+		"at": [97, 141],
+		"rotation": 0
+	},
+	"esc-real/interfaces/R_SWDIO": {
+		"at": [97, 139],
+		"rotation": 0
+	},
+	"esc-real/interfaces/R_UART_PU": {
+		"at": [52, 139],
+		"rotation": 0
+	},
+	"esc-real/interfaces/R_UART_RX": {
+		"at": [52, 147],
+		"rotation": 0
+	},
+	"esc-real/interfaces/R_UART_TX": {
+		"at": [48.5, 141],
+		"rotation": 0
+	},
+	"esc-real/interfaces/U_CAN": {
+		"at": [141, 139],
+		"rotation": 0
+	},
+	"esc-real/inverter/C_LINK_U1": {
+		"at": [40, 40],
+		"rotation": 0
+	},
+	"esc-real/inverter/C_LINK_U2": {
+		"at": [41.5, 36],
+		"rotation": 0
+	},
+	"esc-real/inverter/C_LINK_UHF": {
+		"at": [30, 39],
+		"rotation": 0
+	},
+	"esc-real/inverter/C_LINK_V1": {
+		"at": [75, 40],
+		"rotation": 0
+	},
+	"esc-real/inverter/C_LINK_V2": {
+		"at": [76.5, 36],
+		"rotation": 0
+	},
+	"esc-real/inverter/C_LINK_VHF": {
+		"at": [65, 39],
+		"rotation": 0
+	},
+	"esc-real/inverter/C_LINK_W1": {
+		"at": [110, 40],
+		"rotation": 0
+	},
+	"esc-real/inverter/C_LINK_W2": {
+		"at": [111.5, 36],
+		"rotation": 0
+	},
+	"esc-real/inverter/C_LINK_WHF": {
+		"at": [100, 39],
+		"rotation": 0
+	},
+	"esc-real/inverter/C_SNUB_U": {
+		"at": [37.5, 28.5],
+		"rotation": 0
+	},
+	"esc-real/inverter/C_SNUB_V": {
+		"at": [72.5, 28.5],
+		"rotation": 0
+	},
+	"esc-real/inverter/C_SNUB_W": {
+		"at": [107.5, 28.5],
+		"rotation": 0
+	},
+	"esc-real/inverter/J_U": {
+		"at": [25.240000000000002, 72],
+		"rotation": 0
+	},
+	"esc-real/inverter/J_V": {
+		"at": [60.24, 72],
+		"rotation": 0
+	},
+	"esc-real/inverter/J_W": {
+		"at": [95.24, 72],
+		"rotation": 0
+	},
+	"esc-real/inverter/Q_UH": {
+		"at": [24.92, 33],
+		"rotation": 0
+	},
+	"esc-real/inverter/Q_UL": {
+		"at": [24.92, 47],
+		"rotation": 0
+	},
+	"esc-real/inverter/Q_VH": {
+		"at": [59.92, 33],
+		"rotation": 0
+	},
+	"esc-real/inverter/Q_VL": {
+		"at": [59.92, 47],
+		"rotation": 0
+	},
+	"esc-real/inverter/Q_WH": {
+		"at": [94.92, 33],
+		"rotation": 0
+	},
+	"esc-real/inverter/Q_WL": {
+		"at": [94.92, 47],
+		"rotation": 0
+	},
+	"esc-real/inverter/R_SHUNT_U": {
+		"at": [30, 58],
+		"rotation": 0
+	},
+	"esc-real/inverter/R_SHUNT_V": {
+		"at": [65, 58],
+		"rotation": 0
+	},
+	"esc-real/inverter/R_SHUNT_W": {
+		"at": [100, 58],
+		"rotation": 0
+	},
+	"esc-real/inverter/R_SNUB_U": {
+		"at": [35, 41.5],
+		"rotation": 0
+	},
+	"esc-real/inverter/R_SNUB_V": {
+		"at": [70, 41.5],
+		"rotation": 0
+	},
+	"esc-real/inverter/R_SNUB_W": {
+		"at": [105, 41.5],
+		"rotation": 0
+	},
+	"esc-real/power/C_BULK1": {
+		"at": [22.25, 14],
+		"rotation": 0
+	},
+	"esc-real/power/C_BULK2": {
+		"at": [40.25, 14],
+		"rotation": 0
+	},
+	"esc-real/power/C_BULK3": {
+		"at": [58.25, 14],
+		"rotation": 0
+	},
+	"esc-real/power/C_BULK4": {
+		"at": [76.25, 14],
+		"rotation": 0
+	},
+	"esc-real/power/C_BULK5": {
+		"at": [94.25, 14],
+		"rotation": 0
+	},
+	"esc-real/power/C_BULK6": {
+		"at": [112.25, 14],
+		"rotation": 0
+	},
+	"esc-real/power/J_DC": {
+		"at": [153, 12],
+		"rotation": 0
+	},
+	"esc-real/power/R_BLEED1": {
+		"at": [149, 28],
+		"rotation": 0
+	},
+	"esc-real/power/R_BLEED2": {
+		"at": [158, 28],
+		"rotation": 0
+	},
+	"esc-real/sense/C_I_ADC_U": {
+		"at": [30, 88],
+		"rotation": 0
+	},
+	"esc-real/sense/C_I_ADC_V": {
+		"at": [65, 88],
+		"rotation": 0
+	},
+	"esc-real/sense/C_I_ADC_W": {
+		"at": [100, 88],
+		"rotation": 0
+	},
+	"esc-real/sense/C_I_DIFF_U": {
+		"at": [26.5, 88],
+		"rotation": 0
+	},
+	"esc-real/sense/C_I_DIFF_V": {
+		"at": [61.5, 88],
+		"rotation": 0
+	},
+	"esc-real/sense/C_I_DIFF_W": {
+		"at": [96.5, 88],
+		"rotation": 0
+	},
+	"esc-real/sense/C_I_SUP_U": {
+		"at": [33.5, 88],
+		"rotation": 0
+	},
+	"esc-real/sense/C_I_SUP_V": {
+		"at": [68.5, 88],
+		"rotation": 0
+	},
+	"esc-real/sense/C_I_SUP_W": {
+		"at": [103.5, 88],
+		"rotation": 0
+	},
+	"esc-real/sense/C_OC_HI": {
+		"at": [116, 80],
+		"rotation": 0
+	},
+	"esc-real/sense/C_OC_LO": {
+		"at": [116, 90],
+		"rotation": 0
+	},
+	"esc-real/sense/C_TEMP_BRAKE": {
+		"at": [108, 91],
+		"rotation": 0
+	},
+	"esc-real/sense/C_TEMP_MOTOR": {
+		"at": [116, 92],
+		"rotation": 0
+	},
+	"esc-real/sense/C_TEMP_PWR": {
+		"at": [112, 93.5],
+		"rotation": 0
+	},
+	"esc-real/sense/C_V_ADC_BUS": {
+		"at": [108, 93],
+		"rotation": 0
+	},
+	"esc-real/sense/C_V_ADC_U": {
+		"at": [34, 65.5],
+		"rotation": 0
+	},
+	"esc-real/sense/C_V_ADC_V": {
+		"at": [56, 65.5],
+		"rotation": 0
+	},
+	"esc-real/sense/C_V_ADC_W": {
+		"at": [104, 65.5],
+		"rotation": 0
+	},
+	"esc-real/sense/D_V_BUSHI": {
+		"at": [112, 85],
+		"rotation": 0
+	},
+	"esc-real/sense/D_V_BUSLO": {
+		"at": [108, 85],
+		"rotation": 0
+	},
+	"esc-real/sense/D_V_UHI": {
+		"at": [30, 64.5],
+		"rotation": 0
+	},
+	"esc-real/sense/D_V_ULO": {
+		"at": [26, 64.5],
+		"rotation": 0
+	},
+	"esc-real/sense/D_V_VHI": {
+		"at": [70, 64.5],
+		"rotation": 0
+	},
+	"esc-real/sense/D_V_VLO": {
+		"at": [74, 64.5],
+		"rotation": 0
+	},
+	"esc-real/sense/D_V_WHI": {
+		"at": [100, 64.5],
+		"rotation": 0
+	},
+	"esc-real/sense/D_V_WLO": {
+		"at": [96, 64.5],
+		"rotation": 0
+	},
+	"esc-real/sense/R_I_ADC_U": {
+		"at": [24, 84],
+		"rotation": 0
+	},
+	"esc-real/sense/R_I_ADC_V": {
+		"at": [59, 84],
+		"rotation": 0
+	},
+	"esc-real/sense/R_I_ADC_W": {
+		"at": [94, 84],
+		"rotation": 0
+	},
+	"esc-real/sense/R_I_UN": {
+		"at": [36, 84],
+		"rotation": 0
+	},
+	"esc-real/sense/R_I_UP": {
+		"at": [24, 82],
+		"rotation": 0
+	},
+	"esc-real/sense/R_I_VN": {
+		"at": [71, 84],
+		"rotation": 0
+	},
+	"esc-real/sense/R_I_VP": {
+		"at": [59, 82],
+		"rotation": 0
+	},
+	"esc-real/sense/R_I_WN": {
+		"at": [94, 82],
+		"rotation": 0
+	},
+	"esc-real/sense/R_I_WP": {
+		"at": [94, 86],
+		"rotation": 0
+	},
+	"esc-real/sense/R_OC_HI_BOT": {
+		"at": [119.5, 80],
+		"rotation": 0
+	},
+	"esc-real/sense/R_OC_HI_TOP": {
+		"at": [119.5, 90],
+		"rotation": 0
+	},
+	"esc-real/sense/R_OC_LO_BOT": {
+		"at": [104, 90],
+		"rotation": 0
+	},
+	"esc-real/sense/R_OC_LO_TOP": {
+		"at": [115.5, 94],
+		"rotation": 0
+	},
+	"esc-real/sense/R_TEMP_BRAKE": {
+		"at": [119.5, 92],
+		"rotation": 0
+	},
+	"esc-real/sense/R_TEMP_MOTOR": {
+		"at": [112, 95.5],
+		"rotation": 0
+	},
+	"esc-real/sense/R_TEMP_PWR": {
+		"at": [108.5, 95],
+		"rotation": 0
+	},
+	"esc-real/sense/R_TEMP_SER_BRAKE": {
+		"at": [119, 94],
+		"rotation": 0
+	},
+	"esc-real/sense/R_TEMP_SER_MOTOR": {
+		"at": [115.5, 96],
+		"rotation": 0
+	},
+	"esc-real/sense/R_TEMP_SER_PWR": {
+		"at": [108.5, 97],
+		"rotation": 0
+	},
+	"esc-real/sense/R_V_ADC_BUS": {
+		"at": [112, 97.5],
+		"rotation": 0
+	},
+	"esc-real/sense/R_V_ADC_U": {
+		"at": [34, 63.5],
+		"rotation": 0
+	},
+	"esc-real/sense/R_V_ADC_V": {
+		"at": [55, 63.5],
+		"rotation": 0
+	},
+	"esc-real/sense/R_V_ADC_W": {
+		"at": [104, 63.5],
+		"rotation": 0
+	},
+	"esc-real/sense/R_V_BUS_BOT": {
+		"at": [119, 96],
+		"rotation": 0
+	},
+	"esc-real/sense/R_V_BUS_T1": {
+		"at": [112, 81.5],
+		"rotation": 0
+	},
+	"esc-real/sense/R_V_BUS_T2": {
+		"at": [112, 88.5],
+		"rotation": 0
+	},
+	"esc-real/sense/R_V_U_BOT": {
+		"at": [115.5, 98],
+		"rotation": 0
+	},
+	"esc-real/sense/R_V_U_T1": {
+		"at": [116, 85],
+		"rotation": 0
+	},
+	"esc-real/sense/R_V_U_T2": {
+		"at": [116, 82.5],
+		"rotation": 0
+	},
+	"esc-real/sense/R_V_V_BOT": {
+		"at": [108.5, 99],
+		"rotation": 0
+	},
+	"esc-real/sense/R_V_V_T1": {
+		"at": [116, 87.5],
+		"rotation": 0
+	},
+	"esc-real/sense/R_V_V_T2": {
+		"at": [108, 81.5],
+		"rotation": 0
+	},
+	"esc-real/sense/R_V_W_BOT": {
+		"at": [112, 99.5],
+		"rotation": 0
+	},
+	"esc-real/sense/R_V_W_T1": {
+		"at": [108, 88.5],
+		"rotation": 0
+	},
+	"esc-real/sense/R_V_W_T2": {
+		"at": [112, 91],
+		"rotation": 0
+	},
+	"esc-real/sense/TH_PWR": {
+		"at": [121, 48],
+		"rotation": 0
+	},
+	"esc-real/sense/U_I_U": {
+		"at": [30, 84],
+		"rotation": 0
+	},
+	"esc-real/sense/U_I_V": {
+		"at": [65, 84],
+		"rotation": 0
+	},
+	"esc-real/sense/U_I_W": {
+		"at": [100, 84],
+		"rotation": 0
+	},
+	"esc-real/supplies/C_ANALOG": {
+		"at": [117, 129],
+		"rotation": 0
+	},
+	"esc-real/supplies/C_ANALOG_HF": {
+		"at": [125, 129],
+		"rotation": 0
+	},
+	"esc-real/supplies/C_BST_AUX": {
+		"at": [139.5, 96],
+		"rotation": 0
+	},
+	"esc-real/supplies/C_BST_LOGIC": {
+		"at": [139.5, 120],
+		"rotation": 0
+	},
+	"esc-real/supplies/C_COUPLE_AUX": {
+		"at": [130.5, 104],
+		"rotation": 0
+	},
+	"esc-real/supplies/C_COUPLE_LOGIC": {
+		"at": [130.5, 128],
+		"rotation": 0
+	},
+	"esc-real/supplies/C_IN_AUX1": {
+		"at": [135, 95],
+		"rotation": 0
+	},
+	"esc-real/supplies/C_IN_AUX2": {
+		"at": [135, 105],
+		"rotation": 0
+	},
+	"esc-real/supplies/C_IN_LOGIC1": {
+		"at": [135, 119],
+		"rotation": 0
+	},
+	"esc-real/supplies/C_IN_LOGIC2": {
+		"at": [135, 129],
+		"rotation": 0
+	},
+	"esc-real/supplies/C_LDO_IN": {
+		"at": [121, 125.5],
+		"rotation": 0
+	},
+	"esc-real/supplies/C_LDO_OUT": {
+		"at": [121, 132.5],
+		"rotation": 0
+	},
+	"esc-real/supplies/C_OUT_AUX1": {
+		"at": [128.5, 100],
+		"rotation": 0
+	},
+	"esc-real/supplies/C_OUT_AUX2": {
+		"at": [141.5, 100],
+		"rotation": 0
+	},
+	"esc-real/supplies/C_OUT_LOGIC1": {
+		"at": [128.5, 124],
+		"rotation": 0
+	},
+	"esc-real/supplies/C_OUT_LOGIC2": {
+		"at": [141.5, 124],
+		"rotation": 0
+	},
+	"esc-real/supplies/C_RIPPLE_AUX": {
+		"at": [139.5, 104],
+		"rotation": 0
+	},
+	"esc-real/supplies/C_RIPPLE_LOGIC": {
+		"at": [139.5, 128],
+		"rotation": 0
+	},
+	"esc-real/supplies/FB_ANALOG": {
+		"at": [117, 127],
+		"rotation": 0
+	},
+	"esc-real/supplies/L_AUX": {
+		"at": [154, 100],
+		"rotation": 0
+	},
+	"esc-real/supplies/L_LOGIC": {
+		"at": [154, 124],
+		"rotation": 0
+	},
+	"esc-real/supplies/R_FB_AUX_BOT": {
+		"at": [139.5, 94],
+		"rotation": 0
+	},
+	"esc-real/supplies/R_FB_AUX_TOP": {
+		"at": [130.5, 106],
+		"rotation": 0
+	},
+	"esc-real/supplies/R_FB_LOGIC_BOT": {
+		"at": [139.5, 118],
+		"rotation": 0
+	},
+	"esc-real/supplies/R_FB_LOGIC_TOP": {
+		"at": [130.5, 130],
+		"rotation": 0
+	},
+	"esc-real/supplies/R_LDO_EN": {
+		"at": [125, 127],
+		"rotation": 0
+	},
+	"esc-real/supplies/R_RIPPLE_AUX": {
+		"at": [130.5, 95.5],
+		"rotation": 0
+	},
+	"esc-real/supplies/R_RIPPLE_LOGIC": {
+		"at": [130.5, 119.5],
+		"rotation": 0
+	},
+	"esc-real/supplies/R_RON_AUX": {
+		"at": [139.5, 106],
+		"rotation": 0
+	},
+	"esc-real/supplies/R_RON_LOGIC": {
+		"at": [139.5, 130],
+		"rotation": 0
+	},
+	"esc-real/supplies/R_UVLO_AUX_BOT": {
+		"at": [135, 92],
+		"rotation": 0
+	},
+	"esc-real/supplies/R_UVLO_AUX_TOP": {
+		"at": [135, 108],
+		"rotation": 0
+	},
+	"esc-real/supplies/R_UVLO_LOGIC_BOT": {
+		"at": [135, 116],
+		"rotation": 0
+	},
+	"esc-real/supplies/R_UVLO_LOGIC_TOP": {
+		"at": [135, 132],
+		"rotation": 0
+	},
+	"esc-real/supplies/U_BUCK_AUX": {
+		"at": [135, 100],
+		"rotation": 0
+	},
+	"esc-real/supplies/U_BUCK_LOGIC": {
+		"at": [135, 124],
+		"rotation": 0
+	},
+	"esc-real/supplies/U_LDO": {
+		"at": [121, 129],
+		"rotation": 0
+	},
+	"esc-real/test/TP_12V": {
+		"at": [99, 119],
+		"rotation": 0
+	},
+	"esc-real/test/TP_3V3": {
+		"at": [99, 116.5],
+		"rotation": 0
+	},
+	"esc-real/test/TP_3V3A": {
+		"at": [96.5, 119],
+		"rotation": 0
+	},
+	"esc-real/test/TP_5V": {
+		"at": [101.5, 119],
+		"rotation": 0
+	},
+	"esc-real/test/TP_ARMED": {
+		"at": [99, 121.5],
+		"rotation": 0
+	},
+	"esc-real/test/TP_BOOT_RET_U": {
+		"at": [42, 64],
+		"rotation": 0
+	},
+	"esc-real/test/TP_BOOT_RET_V": {
+		"at": [77.5, 64],
+		"rotation": 0
+	},
+	"esc-real/test/TP_BOOT_RET_W": {
+		"at": [112, 64],
+		"rotation": 0
+	},
+	"esc-real/test/TP_BOOT_U": {
+		"at": [42, 61.5],
+		"rotation": 0
+	},
+	"esc-real/test/TP_BOOT_V": {
+		"at": [77.5, 61.5],
+		"rotation": 0
+	},
+	"esc-real/test/TP_BOOT_W": {
+		"at": [112, 61.5],
+		"rotation": 0
+	},
+	"esc-real/test/TP_BUS": {
+		"at": [96.5, 116.5],
+		"rotation": 0
+	},
+	"esc-real/test/TP_DRIVER_FAULT": {
+		"at": [101.5, 116.5],
+		"rotation": 0
+	},
+	"esc-real/test/TP_EN_U": {
+		"at": [39.5, 64],
+		"rotation": 0
+	},
+	"esc-real/test/TP_EN_V": {
+		"at": [77.5, 66.5],
+		"rotation": 0
+	},
+	"esc-real/test/TP_EN_W": {
+		"at": [109.5, 64],
+		"rotation": 0
+	},
+	"esc-real/test/TP_FAULT": {
+		"at": [96.5, 121.5],
+		"rotation": 0
+	},
+	"esc-real/test/TP_G_BR": {
+		"at": [153, 59],
+		"rotation": 0
+	},
+	"esc-real/test/TP_G_UH": {
+		"at": [44.5, 44.5],
+		"rotation": 0
+	},
+	"esc-real/test/TP_G_UL": {
+		"at": [45, 47],
+		"rotation": 0
+	},
+	"esc-real/test/TP_G_VH": {
+		"at": [79.5, 44.5],
+		"rotation": 0
+	},
+	"esc-real/test/TP_G_VL": {
+		"at": [80, 47],
+		"rotation": 0
+	},
+	"esc-real/test/TP_G_WH": {
+		"at": [114.5, 44.5],
+		"rotation": 0
+	},
+	"esc-real/test/TP_G_WL": {
+		"at": [115, 47],
+		"rotation": 0
+	},
+	"esc-real/test/TP_GND": {
+		"at": [101.5, 121.5],
+		"rotation": 0
+	},
+	"esc-real/test/TP_I_U": {
+		"at": [44.5, 64],
+		"rotation": 0
+	},
+	"esc-real/test/TP_I_V": {
+		"at": [80, 64],
+		"rotation": 0
+	},
+	"esc-real/test/TP_I_W": {
+		"at": [114.5, 64],
+		"rotation": 0
+	},
+	"esc-real/test/TP_IN_U": {
+		"at": [42, 66.5],
+		"rotation": 0
+	},
+	"esc-real/test/TP_IN_V": {
+		"at": [75, 61],
+		"rotation": 0
+	},
+	"esc-real/test/TP_IN_W": {
+		"at": [112, 66.5],
+		"rotation": 0
+	},
+	"esc-real/test/TP_KS_BR": {
+		"at": [153, 56.5],
+		"rotation": 0
+	},
+	"esc-real/test/TP_KS_UH": {
+		"at": [43.5, 53],
+		"rotation": 0
+	},
+	"esc-real/test/TP_KS_UL": {
+		"at": [41, 55],
+		"rotation": 0
+	},
+	"esc-real/test/TP_KS_VH": {
+		"at": [78.5, 53],
+		"rotation": 0
+	},
+	"esc-real/test/TP_KS_VL": {
+		"at": [76, 55],
+		"rotation": 0
+	},
+	"esc-real/test/TP_KS_WH": {
+		"at": [113.5, 53],
+		"rotation": 0
+	},
+	"esc-real/test/TP_KS_WL": {
+		"at": [111, 55],
+		"rotation": 0
+	},
+	"esc-real/test/TP_REG12": {
+		"at": [99, 114],
+		"rotation": 0
+	},
+	"esc-real/test/TP_T_BRAKE": {
+		"at": [150.5, 59],
+		"rotation": 0
+	},
+	"esc-real/test/TP_T_MOTOR": {
+		"at": [94, 119],
+		"rotation": 0
+	},
+	"esc-real/test/TP_T_PWR": {
+		"at": [104, 119],
+		"rotation": 0
+	},
+	"esc-real/test/TP_V_BUS": {
+		"at": [99, 124],
+		"rotation": 0
+	},
+	"esc-real/test/TP_V_U": {
+		"at": [39.5, 61.5],
+		"rotation": 0
+	},
+	"esc-real/test/TP_V_V": {
+		"at": [80, 61.5],
+		"rotation": 0
+	},
+	"esc-real/test/TP_V_W": {
+		"at": [109.5, 61.5],
+		"rotation": 0
+	}
 }

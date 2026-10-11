@@ -5,8 +5,8 @@ import type { BoardIr } from "@react-pcb/core";
 import {
 	buildBoardPreview,
 	exportBoardPreview,
-	startBoardPreview,
 	type PreviewSnapshot,
+	startBoardPreview,
 } from "@react-pcb/preview";
 import { constraintSource } from "./constraint-fixture.ts";
 import { assertDefined } from "./fixtures.ts";
